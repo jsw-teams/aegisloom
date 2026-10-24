@@ -79,7 +79,7 @@ try {
     [
       "--input-type=module",
       "-e",
-      "const r=await import('@cloud-api-shield/shield/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@cloud-api-shield/shield'); if(p.version!=='1'||typeof e.createShield!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
+      "const r=await import('@cloud-api-shield/shield/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@cloud-api-shield/shield'); const b=await import('@cloud-api-shield/shield/http-boundary'); if(p.version!=='1'||typeof e.createShield!=='function'||typeof b.checkBoundary!=='function'||typeof b.parseStrictJson!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
     ],
     { cwd: directory, encoding: "utf8" },
   );

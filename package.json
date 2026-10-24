@@ -1,6 +1,6 @@
 {
   "name": "@cloud-api-shield/shield",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Portable, privacy-first API security runtime and control tools",
   "license": "Apache-2.0",
   "type": "module",
@@ -20,6 +20,7 @@
     "./control": "./dist/packages/control-plane/index.js",
     "./node": "./dist/packages/runtime/node.js",
     "./backend": "./dist/packages/backend-security/index.js",
+    "./http-boundary": "./dist/packages/http-boundary/index.js",
     "./protocols": "./dist/packages/protocols/index.js",
     "./cloudflare-websocket": "./dist/adapters/cloudflare/websocket.js",
     "./cloudflare-runtime": "./dist/adapters/cloudflare/runtime.js",

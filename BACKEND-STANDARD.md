@@ -51,6 +51,8 @@ CORS/credential policy; this JSON middleware does not emit permissive CORS grant
 Only exact JSON API routes belong inside this middleware. OAuth redirects, embeddable HTML,
 public cacheable assets, large uploads, media and sockets require their own profile and tests.
 Use `createOriginVerifier` independently when the full JSON profile does not fit an application.
+Protocol adapters may import the shared boundary, bounded body reader and strict JSON parser
+from `@cloud-api-shield/shield/http-boundary`; do not duplicate these parsers per business.
 The secret proves the gateway's possession of a credential; it does not attest that an arbitrary
 caller ran a particular policy. Protect the credential and network path accordingly.
 

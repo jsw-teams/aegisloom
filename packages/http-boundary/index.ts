@@ -1,5 +1,7 @@
 import { requireInteger, ShieldError } from "../core/types.js";
 
+export { parseStrictJson } from "./json.js";
+
 export interface BoundaryLimits {
   maxBodyBytes: number;
   maxUrlBytes: number;
