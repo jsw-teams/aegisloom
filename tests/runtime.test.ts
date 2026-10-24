@@ -182,3 +182,14 @@ test("trace IDs do not defeat caches unless the policy actually matches that hea
   assert.equal(normal.status, 200);
   await normal.body?.cancel();
 });
+
+test("services sharing a tenant and complete policy cannot consume each other's cached blocks", async () => {
+  const decisions = new MemoryDecisionStore();
+  const protectedService = await fixture({ decisions });
+  const otherService = await fixture({ decisions, service: "other-service" });
+  assert.equal((await protectedService.handle(request("?q=attack"), context)).status, 403);
+  const result = await otherService.handle(request("?q=attack"), context);
+  assert.equal(result.status, 200);
+  assert.equal(otherService.stats.l2Hits, 0);
+  await result.body?.cancel();
+});

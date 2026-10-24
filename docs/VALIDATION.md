@@ -2,7 +2,7 @@
 
 ## Backend/protocol extension, 2026-10-24
 
-Windows Node 24.19.0 and 22.23.1: **71 main tests passed**; **3 independent converter tests passed**.
+Windows Node 24.19.0 and 22.23.1: the initial **71 main tests passed**; **3 independent converter tests passed**.
 `npm run check`
 passed schema freshness, typecheck, lint, tests, build, five sandbox bundles, actual isolated tarball
 installation/audit and local-process smoke. The final public-browser-origin policy adjustment was
@@ -27,6 +27,13 @@ separate raw/boundary tests still reject forged Host values. No network probe is
 
 The previous suite and benchmark below predate these protocol extensions; the benchmark has not
 been rerun and must not be cited as their measured performance.
+
+A later service-scope regression raises the suite to 72 tests: services sharing a tenant and a
+complete policy cannot consume each other's cached blocks. Runtime, proxy and workerd regressions
+passed after adding service/protocol-mode cache namespaces and capturing origin credentials.
+The first GitHub run passed both Ubuntu jobs; Windows checkout line conversion exposed a schema
+freshness failure. `.gitattributes` now fixes source files to LF across platforms; no freshness
+check was removed or relaxed. Final CI status is available in the repository's Actions history.
 
 Local environment: Windows x64. All 56 main tests passed on Node.js 24.19.0 and 22.23.1. Node 22
 emits an experimental SQLite API warning; Node 24 is recommended. CI includes Windows/Linux and

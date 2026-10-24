@@ -338,6 +338,8 @@ export async function createShield(input: ShieldOptions) {
       const key = await digest(
         stableJson([
           options.tenant,
+          options.service,
+          mode,
           version,
           request.method,
           url.href,

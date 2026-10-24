@@ -1,10 +1,11 @@
 # Changed files / 实际文件清单
 
-This repository was empty at task start. The following 140 source, configuration, test and documentation files were created. Generated dist, local databases, node_modules and local operational artifacts are excluded.
+This repository was empty at task start. The following 141 source, configuration, test and documentation files were created. Generated dist, local databases, node_modules and local operational artifacts are excluded.
 
 初始仓库为空；以下为实际新增文件。构建产物与本地测试状态不入库。
 
 - [.editorconfig](../.editorconfig)
+- [.gitattributes](../.gitattributes)
 - [.github/workflows/ci.yml](../.github/workflows/ci.yml)
 - [.gitignore](../.gitignore)
 - [ARCHITECTURE.md](../ARCHITECTURE.md)

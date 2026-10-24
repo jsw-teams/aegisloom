@@ -41,8 +41,9 @@ export function createProxy(options: ProxyOptions) {
     !(options.allowLoopbackHttp && loopback && origin.protocol === "http:")
   )
     throw new Error("Upstream TLS required (only explicit loopback development HTTP allowed)");
-  if (options.originToken.length < 32 || /[^\x21-\x7e]/.test(options.originToken))
-    throw new Error("Origin authentication token must contain >=32 visible ASCII characters");
+  const originToken = options.originToken;
+  if (!/^[\x21-\x7e]{32,2048}$/.test(originToken))
+    throw new Error("Origin authentication token must contain 32..2048 visible ASCII characters");
   const timeout = requireInteger(options.timeoutMs ?? 10000, 1, 120000, "proxy timeout");
   const maxResponse = requireInteger(
     options.maxResponseBytes ?? 16777216,
@@ -90,7 +91,7 @@ export function createProxy(options: ProxyOptions) {
       )
         headers.delete(name);
     }
-    headers.set("x-shield-origin-auth", options.originToken);
+    headers.set("x-shield-origin-auth", originToken);
     headers.set("accept-encoding", "identity");
     const abort = new AbortController();
     let completed = false;
