@@ -1,0 +1,91 @@
+{
+  "name": "@cloud-api-shield/shield",
+  "version": "0.1.0",
+  "description": "Portable, privacy-first API security runtime and control tools",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "bin": {
+    "api-shield": "dist/packages/cli/main.js"
+  },
+  "exports": {
+    ".": "./dist/packages/runtime/index.js",
+    "./rules": "./dist/packages/rule-ir/index.js",
+    "./cache": "./dist/packages/decision-cache/index.js",
+    "./cloud": "./dist/packages/cloud-compiler/index.js",
+    "./learning": "./dist/packages/learning/index.js",
+    "./vulnerability": "./dist/packages/vulnerability/index.js",
+    "./control": "./dist/packages/control-plane/index.js",
+    "./node": "./dist/packages/runtime/node.js",
+    "./backend": "./dist/packages/backend-security/index.js",
+    "./protocols": "./dist/packages/protocols/index.js",
+    "./cloudflare-websocket": "./dist/adapters/cloudflare/websocket.js",
+    "./cloudflare-runtime": "./dist/adapters/cloudflare/runtime.js",
+    "./community": "./dist/integrations/threat-intelligence/index.js",
+    "./converter-import": "./dist/integrations/rule-converter/index.js",
+    "./sbom": "./dist/integrations/sbom/index.js",
+    "./schema": "./packages/rule-ir/schema.json"
+  },
+  "files": [
+    "dist/packages",
+    "dist/adapters",
+    "dist/integrations",
+    "packages/rule-ir/schema.json",
+    "*.md",
+    "LICENSE",
+    "NOTICE",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check packages adapters integrations tests examples benchmarks scripts",
+    "format": "biome check --write packages adapters integrations tests examples benchmarks scripts",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts",
+    "test:integration": "node --import tsx --test tests/runtime.test.ts tests/control.test.ts tests/cloud.test.ts tests/proxy.test.ts tests/signing.test.ts tests/workerd.test.ts",
+    "test:security": "node --import tsx --test tests/security.test.ts tests/community.test.ts tests/resources.test.ts tests/backend.test.ts tests/protocols.test.ts",
+    "dev": "tsx examples/local/server.ts",
+    "benchmark": "tsx benchmarks/runtime.ts",
+    "verify:package": "node scripts/verify-package.mjs",
+    "check": "npm run schema:check && npm run typecheck && npm run lint && npm test && npm run test:converter && npm run build && npm run check:edge && npm run verify:package && npm run smoke:local",
+    "schema:generate": "node scripts/generate-validator.mjs",
+    "check:edge": "node --experimental-vm-modules scripts/check-edge.mjs",
+    "test:converter": "npm --prefix api-shield-convert test",
+    "smoke:local": "node scripts/smoke-local.mjs",
+    "test:workerd": "node --import tsx --test tests/workerd.test.ts",
+    "cloudflare:dry-run": "wrangler deploy --dry-run --config deploy/cloudflare/wrangler.jsonc --outdir artifacts/cloudflare",
+    "schema:check": "node scripts/generate-validator.mjs --check"
+  },
+  "dependencies": {
+    "@alicloud/esa20240910": "3.15.0",
+    "@alicloud/openapi-client": "0.4.15",
+    "ajv": "8.20.0",
+    "re2js": "2.9.0",
+    "semver": "7.8.5",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.2",
+    "@types/node": "26.6.5",
+    "@types/semver": "7.8.0",
+    "@vercel/sdk": "1.28.51",
+    "acorn": "8.19.0",
+    "esbuild": "0.28.2",
+    "miniflare": "5.20261019.2-beta",
+    "tencentcloud-sdk-nodejs-teo": "4.1.331",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "wrangler": "4.152.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "undici": "7.30.1"
+    },
+    "tencentcloud-sdk-nodejs-common": {
+      "uuid": "11.1.1"
+    }
+  }
+}

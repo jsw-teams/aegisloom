@@ -1,0 +1,99 @@
+{
+  "at": "2026-10-24T12:21:28.312Z",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13500H"
+  },
+  "kind": "offline-in-process-only",
+  "results": {
+    "allow": {
+      "requests": 3000,
+      "p50Ms": 0.15459999999995944,
+      "p95Ms": 0.37969999999995707,
+      "p99Ms": 0.5780999999999494,
+      "cpuMicrosecondsPerRequest": 198,
+      "heapDeltaBytes": 3417264,
+      "l1HitRate": 0,
+      "l2HitRate": 0,
+      "ruleEvaluationsPerRequest": 1,
+      "attackOriginReachRate": null,
+      "syntheticNormalBlockRate": 0
+    },
+    "first-rule": {
+      "requests": 3000,
+      "p50Ms": 0.1207000000001699,
+      "p95Ms": 0.3928000000000793,
+      "p99Ms": 0.7198000000000775,
+      "cpuMicrosecondsPerRequest": 182.33333333333334,
+      "heapDeltaBytes": 6072840,
+      "l1HitRate": 0,
+      "l2HitRate": 0,
+      "ruleEvaluationsPerRequest": 1,
+      "attackOriginReachRate": 0,
+      "syntheticNormalBlockRate": null
+    },
+    "l1": {
+      "requests": 3000,
+      "p50Ms": 0.09400000000005093,
+      "p95Ms": 0.2319999999999709,
+      "p99Ms": 0.34600000000000364,
+      "cpuMicrosecondsPerRequest": 135.33333333333334,
+      "heapDeltaBytes": 4021736,
+      "l1HitRate": 0.9996666666666667,
+      "l2HitRate": 0,
+      "ruleEvaluationsPerRequest": 0.0003333333333333333,
+      "attackOriginReachRate": 0,
+      "syntheticNormalBlockRate": null
+    },
+    "l2": {
+      "requests": 3000,
+      "p50Ms": 0.10249999999996362,
+      "p95Ms": 0.27500000000009095,
+      "p99Ms": 0.3997999999996864,
+      "cpuMicrosecondsPerRequest": 161.33333333333334,
+      "heapDeltaBytes": 711968,
+      "l1HitRate": 0,
+      "l2HitRate": 1,
+      "ruleEvaluationsPerRequest": 0,
+      "attackOriginReachRate": 0,
+      "syntheticNormalBlockRate": null
+    }
+  },
+  "stats": {
+    "requests": 9000,
+    "ruleEvaluations": 6001,
+    "l1Hits": 2999,
+    "l2Hits": 0,
+    "blocked": 6000,
+    "originRequests": 3000,
+    "eventFailures": 0,
+    "storageFailures": 0
+  },
+  "l2Stats": {
+    "requests": 3000,
+    "ruleEvaluations": 0,
+    "l1Hits": 0,
+    "l2Hits": 3000,
+    "blocked": 3000,
+    "originRequests": 0,
+    "eventFailures": 0,
+    "storageFailures": 0
+  },
+  "memory": {
+    "rss": 115593216,
+    "heapTotal": 55046144,
+    "heapUsed": 31696344,
+    "external": 7575337,
+    "arrayBuffers": 3382944
+  },
+  "revocationAuthorityTransactionMs": 0.4531000000001768,
+  "unavailable": [
+    "Cloud POP enforcement latency",
+    "Cross-region L2 latency",
+    "Real traffic false-positive rate",
+    "Streaming origin throughput",
+    "Raw HTTP/2 HTTP/3 protocol performance"
+  ]
+}

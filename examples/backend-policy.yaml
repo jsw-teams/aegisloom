@@ -1,0 +1,17 @@
+version: "1"
+tenant: my-tenant
+service: my-api
+hosts: [origin.example.com]
+sessionOrigins: [https://api.example.com]
+maxBodyBytes: 32768
+timeoutMs: 5000
+maxConcurrentRequests: 64
+routes:
+  - path: /api/health
+    methods: [GET]
+    auth: public
+    body: none
+  - path: /api/profile
+    methods: [POST]
+    auth: session
+    body: json

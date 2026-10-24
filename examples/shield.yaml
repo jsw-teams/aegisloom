@@ -1,0 +1,22 @@
+tenant: local
+service: api
+publicHosts: ["127.0.0.1:8787"]
+policyFile: rules.yaml
+routes:
+  - path: /api/echo
+    methods: [GET, POST]
+    authenticated: false
+    body: json
+  - path: /api/login
+    methods: [POST]
+    authenticated: false
+    body: json
+origin: https://your-private-origin.example
+allowedOrigins: [https://your-private-origin.example]
+originTokenEnv: SHIELD_ORIGIN_TOKEN
+listen:
+  host: 127.0.0.1
+  port: 8787
+decisions:
+  kind: sqlite
+  path: ../shield.db

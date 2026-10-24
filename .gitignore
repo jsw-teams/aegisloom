@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+*.tgz
+artifacts/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+deploy/cloudflare/wrangler.operator.jsonc

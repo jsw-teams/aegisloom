@@ -1,0 +1,13 @@
+[
+  { "name": "normal", "url": "https://simulation.test/api/echo?q=hello", "expectedStatus": 204 },
+  {
+    "name": "attack",
+    "url": "https://simulation.test/api/echo?q=shield-attack-test",
+    "expectedStatus": 403
+  },
+  {
+    "name": "repeat attack",
+    "url": "https://simulation.test/api/echo?q=shield-attack-test",
+    "expectedStatus": 403
+  }
+]

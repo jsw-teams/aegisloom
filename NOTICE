@@ -1,0 +1,10 @@
+Cloud API Shield
+Copyright 2026 Cloud API Shield contributors
+
+Licensed under the Apache License, Version 2.0.
+Third-party libraries retain their respective licenses; see package-lock.json and installed licenses.
+No third-party WAF ruleset is included.
+
+The GO-2023-2102 regression fixture was retrieved from the official Go vulnerability database:
+https://vuln.go.dev/ID/GO-2023-2102.json
+Its contents remain attributable to the upstream Go vulnerability database contributors.
