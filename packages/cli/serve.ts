@@ -70,7 +70,6 @@ export async function serve(configPath: string): Promise<void> {
     },
     event: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
   });
-  const host = `${config.listen.host}:${config.listen.port}`;
   const server = createNodeServer(
     (req, incoming) =>
       shield.handle(
@@ -84,12 +83,16 @@ export async function serve(configPath: string): Promise<void> {
         },
         incoming.url,
       ),
-    host,
+    config.publicHosts[0]!,
   );
   server.listen(config.listen.port, config.listen.host);
   await once(server, "listening");
   shutdown(server, () => authority?.close());
-  process.stderr.write(`Cloud API Shield listening at http://${host}; policy ${shield.version}\n`);
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No TCP listener");
+  process.stderr.write(
+    `Cloud API Shield listening at http://${config.listen.host}:${address.port}; Host ${config.publicHosts[0]}; policy ${shield.version}\n`,
+  );
 }
 export async function serveControl(path: string, tenant: string, port: number): Promise<void> {
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(tenant) || !Number.isInteger(port) || port < 1 || port > 65535)

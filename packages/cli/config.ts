@@ -56,6 +56,8 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     !raw.service ||
     !Array.isArray(raw.routes) ||
     !Array.isArray(raw.publicHosts) ||
+    raw.publicHosts.length !== 1 ||
+    typeof raw.publicHosts[0] !== "string" ||
     typeof raw.policyFile !== "string" ||
     (raw.upstream
       ? !raw.upstream.file ||
@@ -69,12 +71,24 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
         typeof raw.originTokenEnv !== "string") ||
     raw.listen?.host !== "127.0.0.1" ||
     !Number.isInteger(raw.listen.port) ||
-    raw.listen.port < 1 ||
+    raw.listen.port < 0 ||
     raw.listen.port > 65535 ||
     !["sqlite", "http"].includes(raw.decisions?.kind)
   )
     throw new Error(
       "Invalid run configuration; CLI listener is loopback-only, use an authenticated TLS ingress for external access",
+    );
+  const publicUrl = new URL(`https://${raw.publicHosts[0]}`);
+  if (
+    publicUrl.host !== raw.publicHosts[0] ||
+    publicUrl.pathname !== "/" ||
+    publicUrl.username ||
+    publicUrl.password ||
+    publicUrl.search ||
+    publicUrl.hash
+  )
+    throw new Error(
+      "CLI requires one exact canonical public Host; listener address is configured separately",
     );
   raw.policyFile = resolve(dirname(resolve(path)), raw.policyFile);
   if (raw.upstream) raw.upstream.file = resolve(dirname(resolve(path)), raw.upstream.file);

@@ -90,6 +90,16 @@ try {
     stdio: "pipe",
   });
   console.log(consumer.trim());
+  const executable =
+    process.platform === "win32"
+      ? join(directory, "node_modules/@cloud-api-shield/shield/dist/packages/cli/main.js")
+      : join(directory, "node_modules/.bin/api-shield");
+  const cliVersion = execFileSync(process.execPath, [executable, "--version"], {
+    cwd: directory,
+    encoding: "utf8",
+  }).trim();
+  if (cliVersion !== manifest.version)
+    throw new Error("Installed CLI shim did not execute or reported the wrong version");
   console.log(
     "Isolated consumer dependency audit passed; package-manager overrides were not inherited.",
   );

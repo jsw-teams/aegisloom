@@ -1,11 +1,11 @@
 # Delivery status / 开发状态
 
-This file is the capability ledger, updated through 0.1.2. “Implemented” means executable code plus local tests;
+This file is the capability ledger, updated through 2026.10.1. “Implemented” means executable code plus local tests;
 “offline contract” is not live platform verification. Nothing has been published to a registry or
 cloud account by this task.
 
 0.1.2 adds [configuration-driven cloud/VPS origins and pinned rule imports](SOURCE-CONFIG.md),
-with JSON Schema and CLI validation/import, plus a [reproducible actual-execution video](DEMO.md).
+with JSON Schema and CLI validation/import, plus a [inline VM terminal recordings](../README.md#actual-vm-recordings).
 GitHub source/releases are published; npm registry publication and live cloud deployments are not claimed.
 
 The original 56-test suite passed on Windows Node 22.23.1 and 24.19.0; later backend/protocol
@@ -60,3 +60,5 @@ real application auth/CSRF/storage contracts and isolated cloud tests before any
 
 中文：后续阶段不是空目录占位；当前只交付有实现和测试的组件。上表缺口不得在 README、
 发布说明或对外宣传中描述为已经具备的生产能力。Phase 1 支持范围之外的请求默认明确拒绝。
+
+2026.10.1 replaces the previous custom recording console with actual existing WSL2 desktop/xterm captures, removes its standalone demo document, adopts YYYY.M.N versioning, fixes configured CLI Host handling and Linux npm-bin symlink entry execution, and removes the converter’s unnecessary Core dependency. No existing web site files are changed by these recording updates.

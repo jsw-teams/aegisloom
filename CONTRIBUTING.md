@@ -22,3 +22,5 @@ existing validation record has **no live provider results**.
 中文：按功能提交小改动，保留跨平台能力；提交前运行完整检查。新增安全能力必须明确可观察
 边界和失败策略，回归覆盖攻击与正常业务，不能只测示例字符串。独立转换器使用自己的包、锁
 文件和测试，拆出独立仓库后不应依赖主仓库路径。贡献以 Apache-2.0 提交。
+
+Releases use YYYY.M.N: year, month (without a leading zero), and this project’s release ordinal in that month. Never change an existing tag or replace a package asset. Use npm version YYYY.M.N --no-git-tag-version to synchronize the CLI constant, then run npm run check. The independent converter counts its releases independently.

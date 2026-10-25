@@ -8,8 +8,7 @@ verification/audit and separate-process smoke. New tests validate configured clo
 origins and secret references, source pins/licenses/service scope, bounded local/remote imports,
 redirect/compression refusal and configuration-relative upstream selection.
 
-`npm run demo:record` asserts 14 actual local scenarios before producing the video and evidence.
-See [recording procedure](DEMO.md). These results do not verify a remote VPS, cloud account,
+The previous 0.1.2 custom-console recording has been superseded by the actual VM terminal recordings embedded in the READMEs. These results do not verify a remote VPS, cloud account,
 production domain or full CRS conversion.
 
 The same source commit passed Ubuntu/Windows × Node 22/24 in
@@ -133,3 +132,11 @@ unavailable and must not be inferred from unit fixtures.
 
 中文：验证结果只对实际执行的环境和支持配置负责。Mock 用于接口契约，沙箱用于可移植性，
 真实云防火墙效果与生产误报率仍需要单独记录。请勿把这些不同层级的证据混为一谈。
+
+## Actual VM and CalVer release, 2026-10-25
+
+The existing CodexRecordingVM WSL2 guest uses kernel 6.18.33.1-microsoft-standard-WSL2 and Node 22.22.0. The recorder installs actual built tarballs, executes 29 real commands in xterm and records the X11 desktop using FFmpeg. It verifies native IR import, source pins, TLS origin authentication, HTTP 200/403, rule/L1/L2, a second runtime process, revocation, independent SecLang conversion, activation/rollback, checksum refusal and lossy refusal. Source cloud/VPS example inventory is distinct from the isolated HTTPS test origin. No real provider account or external VPS is probed.
+
+Real VM installation exposed and fixed CLI public-Host/listener coupling and the Linux npm-bin symlink entry guard. The new TCP child-process regression and installed-package verification cover these issues. CalVer YYYY.M.N is checked against the CLI version constant.
+
+Final local check on Windows Node 24.19.0: npm run check passes 77 main tests and 3 converter tests, schema/version/typecheck/lint, five edge sandboxes, build, installed-tarball imports/CLI execution/audit and process smoke. The recording uses the independently installed Linux CLI binary (including its real npm symlink). The native IR source is fetched over an actual isolated HTTPS connection before checksum and Schema validation. No response is stubbed by a browser controller.

@@ -4,7 +4,7 @@ Two distinct inventories share a versioned [JSON Schema](../integrations/rule-co
 An operator-owned YAML/JSON file defines both. Request parameters never select an upstream or rule URL.
 This is a control-plane import facility; it runs outside the online request path.
 
-两类来源均通过配置文件设置，完整实例见 [sources.yaml](../examples/demo/sources.yaml)：
+两类来源均通过配置文件设置，完整实例见 [sources.yaml](../examples/sources/sources.yaml)：
 
 - `upstreams`：云服务或第三方 VPS 的固定 HTTPS 源站，`kind` 仅用于资产分类，不改变检测能力。
   配置独立 `originTokenEnv`、代理超时和最大响应量。拒绝 HTTP、URL 凭据、路径、查询参数。
@@ -17,7 +17,7 @@ This is a control-plane import facility; it runs outside the online request path
 ```sh
 npm ci
 npm run build
-node dist/packages/cli/main.js sources-check examples/demo/sources.yaml
+node dist/packages/cli/main.js sources-check examples/sources/sources.yaml
 # Edit the example HTTPS origin, publicHosts, routes and secret environment references first.
 node dist/packages/cli/main.js serve examples/shield-vps.yaml
 ```
@@ -38,7 +38,7 @@ certificate provisioning, network isolation and platform-specific protocols rema
 
 ```sh
 # Offline, native YAML IR; output must be a NEW file.
-node dist/packages/cli/main.js sources-import examples/demo/sources.yaml local-ir candidate.json
+node dist/packages/cli/main.js sources-import examples/sources/sources.yaml local-ir candidate.json
 node dist/packages/cli/main.js validate candidate.json
 node dist/packages/cli/main.js explain candidate.json
 # Test with your own normal/attack corpus, then explicitly set policyFile and reload the runtime.
@@ -52,8 +52,8 @@ node dist/packages/cli/main.js explain candidate.json
 For a non-IR source, run the **separate** converter on the exact pinned bytes:
 
 ```sh
-node api-shield-convert/src/cli.mjs examples/demo/method.conf seclang method.conf demo-1 Apache-2.0 api > report.json
-node dist/packages/cli/main.js sources-import examples/demo/sources.yaml seclang-method candidate-method.json report.json
+node api-shield-convert/src/cli.mjs examples/sources/method.conf seclang method.conf demo-1 Apache-2.0 api > report.json
+node dist/packages/cli/main.js sources-import examples/sources/sources.yaml seclang-method candidate-method.json report.json
 ```
 
 `exact`/`runtime-only` 且无语义限制的转换结果才可导入；`partial`、`unsupported`、来源不一致、
@@ -63,3 +63,5 @@ node dist/packages/cli/main.js sources-import examples/demo/sources.yaml seclang
 
 目前不支持私有来源的凭据注入、签名 feed 信任链、镜像回退或无人值守来源更新。
 No cloud-management API is called by these commands.
+
+The Node CLI accepts one exact public Host independently of its loopback listener address; requests through a TLS ingress must preserve that configured Host. Port 0 explicitly requests an OS-assigned local listener. These settings are exercised in the actual VM terminal recording and TCP regression.

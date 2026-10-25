@@ -15,10 +15,10 @@ import { attackRule } from "./helpers.js";
 
 test("shipped demonstration sources retain valid byte-level pins after formatting", async () => {
   const { readSources } = await import("../packages/cli/sources.js");
-  const file = "examples/demo/sources.yaml";
+  const file = "examples/sources/sources.yaml";
   const sources = await readSources(file);
   for (const source of sources.ruleSources) {
-    const original = await readFile(`examples/demo/${source.location}`);
+    const original = await readFile(`examples/sources/${source.location}`);
     assert.equal(await digest(original), source.sha256);
   }
   assert.equal((await importConfiguredSource(file, "local-ir")).rules.length, 1);

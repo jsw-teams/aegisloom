@@ -1,8 +1,40 @@
 # Cloud API Shield
 
-[真实功能演示视频](docs/DEMO.md) · [配置云端/VPS 源站与规则来源](docs/SOURCE-CONFIG.md)
+[配置云端/VPS 源站与规则来源](docs/SOURCE-CONFIG.md)
 
 [English](README.md) · Apache-2.0 · TypeScript / ESM · Node.js 22.13+（推荐 24）
+
+采用 **YYYY.M.N** 版本号：`2026.10.1` 为 2026 年 10 月第 1 次发布；同月递增最后一段，跨月重置。Git 标签加 `v`，已发布版本不修改。
+
+## 虚拟机实际操作
+
+以下 GIF 直接录制已有 CodexRecordingVM（WSL2）的真实 Openbox 桌面和 xterm。终端执行实际安装的 CLI，在隔离 HTTPS 源站上验证，使用单独信任的本地证书，没有定制 HTML 控制台或伪终端，没有生产数据或云 WAF 发布。SQL 形态载荷用于验证画面中自编规则，不能据此声称完整 SQL 注入或某个 CVE 防护。
+
+云端/VPS 配置、固定来源导入与 Schema 校验：
+
+![虚拟机终端实录：配置与规则来源导入](docs/media/vm-sources.gif)
+
+正常转发、首次规则拦截、L1、第二进程 L2、源站身份验证和撤销：
+
+![虚拟机终端实录：拦截、缓存和撤销](docs/media/vm-blocking.gif)
+
+独立 SecLang 子集转换、显式启用与回退、校验和失败及有损转换拒绝：
+
+![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
+
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.1)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
+
+复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
+
+```sh
+npm ci
+npm run build
+npm pack --pack-destination artifacts
+# 在 api-shield-convert/ 执行 npm ci 和 npm pack --pack-destination ../artifacts
+npm run demo:record
+```
+
+录制器对 29 条真实终端命令进行断言，通过 FFmpeg x11grab 录制。结束后停止自己的验收进程；若由录制器启动 VM，则关闭该专用 VM，不要指向正在运行其他任务的虚拟机。
 
 跨云 API 安全框架：严格请求边界、可读规则、带撤销语义的安全决策缓存、持久化控制面，
 以及可解释的离线漏洞响应和主动学习组件。核心引擎使用标准 Web APIs，云 SDK 和 SQLite

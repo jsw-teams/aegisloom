@@ -1,5 +1,8 @@
 # Deployment / 部署
 
+Releases use YYYY.M.N (for example v2026.10.1), with a monthly release ordinal. See the inline
+actual VM terminal recordings in the READMEs; recordings do not deploy or verify a cloud account.
+
 Cloud or third-party VPS origins and pinned rule imports can be managed from one YAML/JSON
 inventory. See [source configuration](docs/SOURCE-CONFIG.md) and the runnable
 [VPS configuration](examples/shield-vps.yaml). This is independent of provider-native WAF support.

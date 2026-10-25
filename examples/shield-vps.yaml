@@ -4,7 +4,7 @@ service: api
 publicHosts: [api.example]
 policyFile: rules.yaml
 upstream:
-  file: demo/sources.yaml
+  file: sources/sources.yaml
   id: third-party-vps
 routes:
   - path: /api/echo

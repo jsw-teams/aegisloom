@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import type { ConversionReport } from "../../integrations/rule-converter/index.js";
@@ -11,13 +12,13 @@ import {
   createNetlifyAdapter,
   createVercelAdapter,
 } from "../cloud-compiler/index.js";
+import { SHIELD_VERSION } from "../core/version.js";
 import { MemoryDecisionStore } from "../decision-cache/index.js";
 import { AdaptiveLearner, anomalyCandidate, type Observation } from "../learning/index.js";
 import { explain, loadPolicy, policyVersion } from "../rule-ir/index.js";
 import { createShield } from "../runtime/index.js";
 import { evaluateComponent, queryOsv, VulnerabilityDatabase } from "../vulnerability/index.js";
 import { readData } from "./config.js";
-import { serve, serveControl } from "./serve.js";
 import { importConfiguredSource, readSources } from "./sources.js";
 
 const usage = `Cloud API Shield
@@ -38,6 +39,10 @@ Cloud publication is available through the typed SDK with exact-plan approval; t
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const [command, file, second, third, fourth] = args;
+  if (command === "--version" || command === "-v") {
+    console.log(SHIELD_VERSION);
+    return;
+  }
   if (!command || command === "--help") {
     process.stdout.write(usage);
     return;
@@ -83,10 +88,12 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (command === "serve") {
+    const { serve } = await import("./serve.js");
     await serve(file);
     return;
   }
   if (command === "control") {
+    const { serveControl } = await import("./serve.js");
     if (!second) throw new Error("Tenant required");
     await serveControl(file, second, Number(third ?? 8790));
     return;
@@ -238,7 +245,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   }
   throw new Error(`Unknown command ${command}`);
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href)
   main().catch((error: Error) => {
     process.stderr.write(`${error.message}\n`);
     process.exitCode = 1;

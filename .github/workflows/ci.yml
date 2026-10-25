@@ -19,6 +19,8 @@ jobs:
       - run: npm --prefix api-shield-convert ci
       - name: Static schema validator is current
         run: node scripts/generate-validator.mjs --check
+      - name: Calendar version matches the CLI
+        run: npm run version:check
       - run: npm run typecheck
       - run: npm run lint
       - name: Unit tests
