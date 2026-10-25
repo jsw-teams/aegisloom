@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { stringify } from "yaml";
 
@@ -17,7 +16,6 @@ const source = (id, location, format) => ({
   location,
   format,
   version: "lab-1",
-  sha256: createHash("sha256").update(readFileSync(location)).digest("hex"),
   license: "Apache-2.0",
   service: "api",
 });

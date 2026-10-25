@@ -18,11 +18,11 @@
 
 ![虚拟机终端实录：拦截、缓存和撤销](docs/media/vm-blocking.gif)
 
-独立 SecLang 子集转换、显式启用与回退、校验和失败及有损转换拒绝：
+独立 SecLang 子集转换、显式启用与回退、转换后原文变更及有损转换拒绝：
 
 ![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
 
-[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.1)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.2)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
 
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 

@@ -18,11 +18,11 @@ HTTP 200/403, first rule hit, L1, a second process L2, origin authentication and
 
 ![Actual VM terminal: blocking, L1/L2 and revocation](docs/media/vm-blocking.gif)
 
-Independent SecLang subset import, explicit activation/rollback, checksum and lossy-conversion refusal:
+Independent SecLang subset import, explicit activation/rollback, changed-source and lossy-conversion refusal:
 
 ![Actual VM terminal: independent converter and rollback](docs/media/vm-converter.gif)
 
-[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.1). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
+[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.2). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
 npm ci
@@ -116,4 +116,5 @@ requests. WAF mitigation never substitutes for upstream upgrades or verified pro
 
 [SECURITY.md](SECURITY.md) describes reporting and deployment boundaries. Apache-2.0 was chosen
 for permissive cross-cloud use with an explicit patent grant. Third-party dependencies retain their
-own licenses; external rule import requires explicit license approval and checksums.
+own licenses; external rule import requires explicit license approval. Source digests are computed
+internally and converter reports must match the actual bytes; configuration has no checksum setting.

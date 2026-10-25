@@ -17,7 +17,6 @@ export interface ConversionReport {
 export interface SourceIndexEntry {
   url: string;
   version: string;
-  sha256: string;
   license: string;
   enabled: boolean;
 }

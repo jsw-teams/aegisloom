@@ -1,6 +1,6 @@
 {
   "name": "@cloud-api-shield/shield",
-  "version": "2026.10.1",
+  "version": "2026.10.2",
   "description": "Portable, privacy-first API security runtime and control tools",
   "license": "Apache-2.0",
   "type": "module",

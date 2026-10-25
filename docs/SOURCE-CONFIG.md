@@ -8,7 +8,7 @@ This is a control-plane import facility; it runs outside the online request path
 
 - `upstreams`：云服务或第三方 VPS 的固定 HTTPS 源站，`kind` 仅用于资产分类，不改变检测能力。
   配置独立 `originTokenEnv`、代理超时和最大响应量。拒绝 HTTP、URL 凭据、路径、查询参数。
-- `ruleSources`：明确启用、固定版本和 SHA-256、许可证、格式、业务作用域。
+- `ruleSources`：明确启用、来源版本、许可证、格式、业务作用域。配置不含 `sha256` 设置。
   本地文件必须位于配置目录中；远端只接受配置中精确的 HTTPS URL。
   `permittedLicenses` 是部署者明确允许的许可证列表，并不代替法律评估。
 
@@ -45,11 +45,11 @@ node dist/packages/cli/main.js explain candidate.json
 ```
 
 远端下载没有默认定时开启，只在执行导入时访问明确配置的来源。下载不携带凭据或业务数据，
-禁止重定向与压缩，限制 5 秒和 128 KiB，再验证哈希后解析。访问私有 HTTPS 规则服务器可用，
+禁止重定向与压缩，限制 5 秒和 128 KiB，解析前自动计算来源摘要并记录到候选规则 provenance。访问私有 HTTPS 规则服务器可用，
 但规则配置必须由可信管理员维护；不是面向不可信租户的任意 URL 下载服务。文件路径包含
 符号链接时，其目标也必须由该管理员控制。现阶段每次导入一个固定来源，没有自动合并冲突。
 
-For a non-IR source, run the **separate** converter on the exact pinned bytes:
+For a non-IR source, run the **separate** converter on the exact source bytes:
 
 ```sh
 node api-shield-convert/src/cli.mjs examples/sources/method.conf seclang method.conf demo-1 Apache-2.0 api > report.json
@@ -60,6 +60,12 @@ node dist/packages/cli/main.js sources-import examples/sources/sources.yaml secl
 哈希错误、未批准许可证或跨业务作用域均拒绝。完整 CRS、Sigma、Nuclei、Suricata 不会被当作
 等价单条 block 规则。没有内置或默认下载第三方规则集。导入产生**候选文件**，不会自动部署
 或变更活跃策略；AI 输出和转换器自报 exact 都不能替代攻击/正常样本回归。
+
+The source inventory has no manual checksum option. The importer computes SHA-256 internally for
+audit provenance and verifies a converter report against the actual original bytes. This is not an
+independently approved integrity pin: a remote URL may change its content while declaring the same
+version. Review candidate diffs and regressions before explicit activation; unattended activation
+from mutable remote sources is not supported. 已发布的安装包仍由包管理器 lockfile 校验完整性。
 
 目前不支持私有来源的凭据注入、签名 feed 信任链、镜像回退或无人值守来源更新。
 No cloud-management API is called by these commands.

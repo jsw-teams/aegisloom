@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import type { ConversionReport } from "../integrations/rule-converter/index.js";
 import {
   importSource,
   type SourceConfig,
@@ -11,15 +12,20 @@ import {
 import { readRunConfig } from "../packages/cli/config.js";
 import { importConfiguredSource } from "../packages/cli/sources.js";
 import { digest } from "../packages/core/types.js";
+import { loadPolicy } from "../packages/rule-ir/index.js";
 import { attackRule } from "./helpers.js";
 
-test("shipped demonstration sources retain valid byte-level pins after formatting", async () => {
+test("shipped sources need no checksum settings and import records the actual bytes", async () => {
   const { readSources } = await import("../packages/cli/sources.js");
   const file = "examples/sources/sources.yaml";
   const sources = await readSources(file);
   for (const source of sources.ruleSources) {
     const original = await readFile(`examples/sources/${source.location}`);
-    assert.equal(await digest(original), source.sha256);
+    assert.equal(Object.hasOwn(source, "sha256"), false);
+    if (source.format === "shield-ir") {
+      const policy = await importSource(sources, source.id, original);
+      assert.equal(policy.rules[0]?.provenance?.sha256, await digest(original));
+    }
   }
   assert.equal((await importConfiguredSource(file, "local-ir")).rules.length, 1);
 });
@@ -54,7 +60,6 @@ async function config(): Promise<SourceConfig> {
         location: "policy.json",
         format: "shield-ir",
         version: "1.0",
-        sha256: await digest(bytes),
         license: "Apache-2.0",
         service: "api",
       },
@@ -81,11 +86,15 @@ test("configured cloud and VPS origins are exact HTTPS targets with secret refer
   assert.throws(() => validateSources({ ...good, script: "unsafe" }), /Invalid/);
 });
 
-test("source pins, licenses, enabled state and service scope gate actual import", async () => {
+test("source schema, licenses, enabled state and service scope gate actual import", async () => {
   const good = await config();
   const policy = await importSource(good, "local", bytes);
   assert.equal(policy.rules[0]?.provenance?.sha256, await digest(bytes));
-  await assert.rejects(importSource(good, "local", new Uint8Array([1])), /checksum/);
+  await assert.rejects(importSource(good, "local", new Uint8Array([1])));
+  assert.throws(
+    () => validateSources({ ...good, ruleSources: [{ ...good.ruleSources[0], sha256: "manual" }] }),
+    /Invalid/,
+  );
   await assert.rejects(
     importSource({ ...good, permittedLicenses: ["MIT"] }, "local", bytes),
     /license/,
@@ -116,6 +125,47 @@ test("source pins, licenses, enabled state and service scope gate actual import"
     assert.throws(() =>
       validateSources({ ...good, ruleSources: [{ ...good.ruleSources[0], location }] }),
     );
+});
+
+test("conversion report must match actual source bytes without a configured checksum", async () => {
+  const good = await config();
+  const source = good.ruleSources[0]!;
+  source.format = "seclang";
+  const hash = await digest(bytes);
+  const report: ConversionReport = {
+    protocol: "shield-convert/1",
+    status: "exact",
+    limitations: [],
+    source: {
+      url: source.location,
+      version: source.version,
+      license: source.license,
+      format: "seclang",
+      sha256: hash,
+    },
+    policy: loadPolicy({
+      version: "1",
+      rules: [
+        {
+          ...attackRule,
+          provenance: {
+            source: source.location,
+            version: source.version,
+            license: source.license,
+            sha256: hash,
+            limitations: [],
+          },
+        },
+      ],
+    }),
+  };
+  assert.equal((await importSource(good, "local", bytes, report)).rules.length, 1);
+  await assert.rejects(
+    importSource(good, "local", new TextEncoder().encode("changed"), report),
+    /Conversion does not match/,
+  );
+  report.source.version = "different";
+  await assert.rejects(importSource(good, "local", bytes, report), /Conversion does not match/);
 });
 
 test("bounded file and remote downloads validate bytes before policy parsing", async () => {

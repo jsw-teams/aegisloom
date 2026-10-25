@@ -20,7 +20,6 @@ ruleSources:
     location: policy.yaml
     format: shield-ir
     version: demo-1
-    sha256: 9cc5cd178d2a8ae1c8eb8be5aff96decb285660e771c8b05d065f58b5928c6f0
     license: Apache-2.0
     service: api
   - id: seclang-method
@@ -28,6 +27,5 @@ ruleSources:
     location: method.conf
     format: seclang
     version: demo-1
-    sha256: c28ff888eb013e5b1118645a8ee33879bb5b42fe714c3e44677c54cb8e17b69c
     license: Apache-2.0
     service: api

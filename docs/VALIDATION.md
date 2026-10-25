@@ -137,6 +137,11 @@ unavailable and must not be inferred from unit fixtures.
 
 The existing CodexRecordingVM WSL2 guest uses kernel 6.18.33.1-microsoft-standard-WSL2 and Node 22.22.0. The recorder installs actual built tarballs, executes 29 real commands in xterm and records the X11 desktop using FFmpeg. It verifies native IR import, source pins, TLS origin authentication, HTTP 200/403, rule/L1/L2, a second runtime process, revocation, independent SecLang conversion, activation/rollback, checksum refusal and lossy refusal. Source cloud/VPS example inventory is distinct from the isolated HTTPS test origin. No real provider account or external VPS is probed.
 
+2026.10.2 removes manual source checksum settings. Digests are computed internally; conversion
+reports must match actual bytes. Changed native IR is a new candidate with new provenance, not an
+automatically trusted update. Windows npm run check passes 78 main tests and 3 converter tests,
+including report/source tampering and rejection of the removed configuration field.
+
 Real VM installation exposed and fixed CLI public-Host/listener coupling and the Linux npm-bin symlink entry guard. The new TCP child-process regression and installed-package verification cover these issues. CalVer YYYY.M.N is checked against the CLI version constant.
 
 Final local check on Windows Node 24.19.0: npm run check passes 77 main tests and 3 converter tests, schema/version/typecheck/lint, five edge sandboxes, build, installed-tarball imports/CLI execution/audit and process smoke. The recording uses the independently installed Linux CLI binary (including its real npm symlink). The native IR source is fetched over an actual isolated HTTPS connection before checksum and Schema validation. No response is stubbed by a browser controller.

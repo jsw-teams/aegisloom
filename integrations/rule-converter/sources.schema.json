@@ -36,16 +36,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "id",
-          "enabled",
-          "location",
-          "format",
-          "version",
-          "sha256",
-          "license",
-          "service"
-        ],
+        "required": ["id", "enabled", "location", "format", "version", "license", "service"],
         "properties": {
           "id": { "$ref": "#/definitions/id" },
           "enabled": { "type": "boolean" },
@@ -54,7 +45,6 @@
             "enum": ["shield-ir", "seclang", "crowdsec-appsec", "suricata", "sigma", "nuclei"]
           },
           "version": { "type": "string", "minLength": 1, "maxLength": 128 },
-          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
           "license": { "type": "string", "minLength": 1, "maxLength": 128 },
           "service": { "$ref": "#/definitions/id" }
         }

@@ -18,7 +18,6 @@ export interface RuleSource {
   location: string;
   format: "shield-ir" | ConversionReport["source"]["format"];
   version: string;
-  sha256: string;
   license: string;
   service: string;
 }
@@ -55,7 +54,7 @@ export function validateSources(input: unknown): SourceConfig {
   return config;
 }
 
-/** Verifies the configured pin BEFORE accepting IR or a separately generated converter report. */
+/** Computes provenance from the received bytes; imports are candidates, never auto-activated. */
 export async function importSource(
   config: SourceConfig,
   id: string,
@@ -65,18 +64,18 @@ export async function importSource(
   const checked = validateSources(config);
   const source = checked.ruleSources.find((s) => s.id === id && s.enabled);
   if (!source) throw new Error("Unknown or disabled rule source");
-  if (bytes.length > 131072 || (await digest(bytes)) !== source.sha256)
-    throw new Error("Source checksum mismatch or size limit exceeded");
+  if (bytes.length > 131072) throw new Error("Source size limit exceeded");
+  const sha256 = await digest(bytes);
   let policy: Policy;
   if (source.format === "shield-ir") {
     if (report) throw new Error("Native IR source does not accept a converter report");
     policy = loadPolicy(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-    // Pin the actual operator-approved origin; do not accept self-asserted provenance.
+    // Record actual bytes and configured metadata, replacing self-asserted provenance.
     for (const rule of policy.rules)
       rule.provenance = {
         source: source.location,
         version: source.version,
-        sha256: source.sha256,
+        sha256,
         license: source.license,
         limitations: [],
       };
@@ -85,7 +84,7 @@ export async function importSource(
       !report ||
       report.source.url !== source.location ||
       report.source.version !== source.version ||
-      report.source.sha256 !== source.sha256 ||
+      report.source.sha256 !== sha256 ||
       report.source.license !== source.license ||
       report.source.format !== source.format
     )

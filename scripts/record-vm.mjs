@@ -15,7 +15,10 @@ const manifest = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"
 const version = manifest.version;
 const lab = `/opt/recording/cloud-api-shield-${Date.now()}`;
 const core = resolve(root, `artifacts/cloud-api-shield-shield-${version}.tgz`);
-const converter = resolve(root, `artifacts/api-shield-convert-${version}.tgz`);
+const converterVersion = JSON.parse(
+  await readFile(resolve(root, "api-shield-convert/package.json"), "utf8"),
+).version;
+const converter = resolve(root, `artifacts/api-shield-convert-${converterVersion}.tgz`);
 const title = "Cloud API Shield | CodexRecordingVM WSL2";
 const runningBytes = execFileSync(wsl, ["--list", "--running", "--quiet"], { windowsHide: true });
 const wasRunning = runningBytes
@@ -311,8 +314,8 @@ try {
     check: (text) => assert.match(text, /HTTP\/1.1 200/),
   });
   await command(
-    "printf '\\n# changed without updating the pin\\n' >> rules.yaml; api-shield sources-import sources.yaml native rejected.json",
-    { exit: 1, check: (text) => assert.match(text, /checksum mismatch/) },
+    "printf '\\n# changed after conversion\\n' >> method.conf; api-shield sources-import sources.yaml method rejected.json report.json",
+    { exit: 1, check: (text) => assert.match(text, /Conversion does not match configured source/) },
   );
   await command(
     "api-shield-convert unsupported.conf seclang unsupported.conf lab-1 Apache-2.0 api > unsupported-report.json",
