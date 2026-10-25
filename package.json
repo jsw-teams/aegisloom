@@ -1,6 +1,6 @@
 {
   "name": "@cloud-api-shield/shield",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Portable, privacy-first API security runtime and control tools",
   "license": "Apache-2.0",
   "type": "module",
@@ -26,6 +26,7 @@
     "./cloudflare-runtime": "./dist/adapters/cloudflare/runtime.js",
     "./community": "./dist/integrations/threat-intelligence/index.js",
     "./converter-import": "./dist/integrations/rule-converter/index.js",
+    "./sources": "./dist/integrations/rule-converter/sources.js",
     "./sbom": "./dist/integrations/sbom/index.js",
     "./schema": "./packages/rule-ir/schema.json"
   },
@@ -45,7 +46,7 @@
     "lint": "biome check packages adapters integrations tests examples benchmarks scripts",
     "format": "biome check --write packages adapters integrations tests examples benchmarks scripts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts",
+    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts tests/sources.test.ts",
     "test:integration": "node --import tsx --test tests/runtime.test.ts tests/control.test.ts tests/cloud.test.ts tests/proxy.test.ts tests/signing.test.ts tests/workerd.test.ts",
     "test:security": "node --import tsx --test tests/security.test.ts tests/community.test.ts tests/resources.test.ts tests/backend.test.ts tests/protocols.test.ts",
     "dev": "tsx examples/local/server.ts",
@@ -58,7 +59,9 @@
     "smoke:local": "node scripts/smoke-local.mjs",
     "test:workerd": "node --import tsx --test tests/workerd.test.ts",
     "cloudflare:dry-run": "wrangler deploy --dry-run --config deploy/cloudflare/wrangler.jsonc --outdir artifacts/cloudflare",
-    "schema:check": "node scripts/generate-validator.mjs --check"
+    "schema:check": "node scripts/generate-validator.mjs --check",
+    "demo:serve": "tsx examples/demo/server.ts",
+    "demo:record": "node --import tsx scripts/record-demo.mjs"
   },
   "dependencies": {
     "@alicloud/esa20240910": "3.15.0",
@@ -76,6 +79,7 @@
     "acorn": "8.19.0",
     "esbuild": "0.28.2",
     "miniflare": "5.20261019.2-beta",
+    "playwright": "1.63.0",
     "tencentcloud-sdk-nodejs-teo": "4.1.331",
     "tsx": "4.23.15",
     "typescript": "7.0.2",

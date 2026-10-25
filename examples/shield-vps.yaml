@@ -1,0 +1,20 @@
+# Same runtime on a cloud host or VPS. Put a configured TLS ingress in front of this loopback listener.
+tenant: local
+service: api
+publicHosts: [api.example]
+policyFile: rules.yaml
+upstream:
+  file: demo/sources.yaml
+  id: third-party-vps
+routes:
+  - path: /api/echo
+    methods: [GET, POST]
+    authenticated: true
+    body: json
+clientTokenEnv: SHIELD_CLIENT_TOKEN
+listen:
+  host: 127.0.0.1
+  port: 8787
+decisions:
+  kind: sqlite
+  path: ../shield.db

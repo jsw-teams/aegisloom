@@ -1,5 +1,17 @@
 # Validation evidence / 验证记录
 
+## Configured sources and video, 2026-10-25
+
+Windows Node 24.19.0: `npm run check` passed 76 main tests, 3 independent converter tests,
+schema freshness, typecheck/lint, build, five browser-target sandbox executions, installed-tarball
+verification/audit and separate-process smoke. New tests validate configured cloud/VPS HTTPS
+origins and secret references, source pins/licenses/service scope, bounded local/remote imports,
+redirect/compression refusal and configuration-relative upstream selection.
+
+`npm run demo:record` asserts 14 actual local scenarios before producing the video and evidence.
+See [recording procedure](DEMO.md). These results do not verify a remote VPS, cloud account,
+production domain or full CRS conversion.
+
 ## Backend/protocol extension, 2026-10-24
 
 Windows Node 24.19.0 and 22.23.1: the initial **71 main tests passed**; **3 independent converter tests passed**.

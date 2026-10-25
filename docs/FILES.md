@@ -1,8 +1,6 @@
-# Changed files / 实际文件清单
+# Project files / 实际文件清单
 
-This repository was empty at task start. The following 141 source, configuration, test and documentation files were created. Generated dist, local databases, node_modules and local operational artifacts are excluded.
-
-初始仓库为空；以下为实际新增文件。构建产物与本地测试状态不入库。
+155 tracked/source files through 0.1.2. Generated builds, recordings, databases and dependencies are excluded; MP4/evidence are release assets.
 
 - [.editorconfig](../.editorconfig)
 - [.gitattributes](../.gitattributes)
@@ -45,12 +43,15 @@ This repository was empty at task start. The following 141 source, configuration
 - [deploy/cloudflare/worker.ts](../deploy/cloudflare/worker.ts)
 - [deploy/cloudflare/wrangler.jsonc](../deploy/cloudflare/wrangler.jsonc)
 - [docs/ADR.md](../docs/ADR.md)
+- [docs/DEMO.md](../docs/DEMO.md)
 - [docs/FILES.md](../docs/FILES.md)
 - [docs/RESEARCH.md](../docs/RESEARCH.md)
+- [docs/SOURCE-CONFIG.md](../docs/SOURCE-CONFIG.md)
 - [docs/STATUS.md](../docs/STATUS.md)
 - [docs/THREAT-MODEL.md](../docs/THREAT-MODEL.md)
 - [docs/VALIDATION.md](../docs/VALIDATION.md)
 - [docs/benchmark-win32-node24.json](../docs/benchmark-win32-node24.json)
+- [docs/media/demo-poster.png](../docs/media/demo-poster.png)
 - [examples/backend-policy.yaml](../examples/backend-policy.yaml)
 - [examples/cloud/cloudflare.ts](../examples/cloud/cloudflare.ts)
 - [examples/cloud/edgeone.ts](../examples/cloud/edgeone.ts)
@@ -58,13 +59,21 @@ This repository was empty at task start. The following 141 source, configuration
 - [examples/cloud/handler.ts](../examples/cloud/handler.ts)
 - [examples/cloud/netlify.ts](../examples/cloud/netlify.ts)
 - [examples/cloud/vercel.ts](../examples/cloud/vercel.ts)
+- [examples/demo/index.html](../examples/demo/index.html)
+- [examples/demo/method.conf](../examples/demo/method.conf)
+- [examples/demo/policy.yaml](../examples/demo/policy.yaml)
+- [examples/demo/server.ts](../examples/demo/server.ts)
+- [examples/demo/sources.yaml](../examples/demo/sources.yaml)
 - [examples/inventory.json](../examples/inventory.json)
 - [examples/learning-observations.json](../examples/learning-observations.json)
 - [examples/local/server.ts](../examples/local/server.ts)
 - [examples/rules.yaml](../examples/rules.yaml)
 - [examples/samples.json](../examples/samples.json)
+- [examples/shield-vps.yaml](../examples/shield-vps.yaml)
 - [examples/shield.yaml](../examples/shield.yaml)
 - [integrations/rule-converter/index.ts](../integrations/rule-converter/index.ts)
+- [integrations/rule-converter/sources.schema.json](../integrations/rule-converter/sources.schema.json)
+- [integrations/rule-converter/sources.ts](../integrations/rule-converter/sources.ts)
 - [integrations/sbom/index.ts](../integrations/sbom/index.ts)
 - [integrations/threat-intelligence/index.ts](../integrations/threat-intelligence/index.ts)
 - [package-lock.json](../package-lock.json)
@@ -76,6 +85,7 @@ This repository was empty at task start. The following 141 source, configuration
 - [packages/cli/config.ts](../packages/cli/config.ts)
 - [packages/cli/main.ts](../packages/cli/main.ts)
 - [packages/cli/serve.ts](../packages/cli/serve.ts)
+- [packages/cli/sources.ts](../packages/cli/sources.ts)
 - [packages/cloud-compiler/adapter.ts](../packages/cloud-compiler/adapter.ts)
 - [packages/cloud-compiler/compile.ts](../packages/cloud-compiler/compile.ts)
 - [packages/cloud-compiler/http.ts](../packages/cloud-compiler/http.ts)
@@ -119,6 +129,7 @@ This repository was empty at task start. The following 141 source, configuration
 - [packages/vulnerability/workflow.ts](../packages/vulnerability/workflow.ts)
 - [scripts/check-edge.mjs](../scripts/check-edge.mjs)
 - [scripts/generate-validator.mjs](../scripts/generate-validator.mjs)
+- [scripts/record-demo.mjs](../scripts/record-demo.mjs)
 - [scripts/smoke-local.mjs](../scripts/smoke-local.mjs)
 - [scripts/verify-package.mjs](../scripts/verify-package.mjs)
 - [tests/backend.test.ts](../tests/backend.test.ts)
@@ -141,6 +152,7 @@ This repository was empty at task start. The following 141 source, configuration
 - [tests/runtime.test.ts](../tests/runtime.test.ts)
 - [tests/security.test.ts](../tests/security.test.ts)
 - [tests/signing.test.ts](../tests/signing.test.ts)
+- [tests/sources.test.ts](../tests/sources.test.ts)
 - [tests/vulnerability.test.ts](../tests/vulnerability.test.ts)
 - [tests/workerd.test.ts](../tests/workerd.test.ts)
 - [tsconfig.build.json](../tsconfig.build.json)

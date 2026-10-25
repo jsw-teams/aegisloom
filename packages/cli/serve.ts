@@ -8,6 +8,7 @@ import { loadPolicy } from "../rule-ir/index.js";
 import { createShield } from "../runtime/index.js";
 import { createNodeServer } from "../runtime/node.js";
 import { envSecret, readData, readRunConfig } from "./config.js";
+import { readSources } from "./sources.js";
 
 function authorized(header: string | null, secret: string): boolean {
   const provided = Buffer.from(header?.startsWith("Bearer ") ? header.slice(7) : "");
@@ -32,6 +33,10 @@ function shutdown(server: Server, close: () => void) {
 }
 export async function serve(configPath: string): Promise<void> {
   const config = await readRunConfig(configPath);
+  const upstream = config.upstream
+    ? (await readSources(config.upstream.file)).upstreams.find((s) => s.id === config.upstream!.id)
+    : undefined;
+  if (config.upstream && !upstream) throw new Error("Unknown configured upstream");
   const authority =
     config.decisions.kind === "sqlite" ? new SqliteAuthority(config.decisions.path) : undefined;
   const store =
@@ -45,6 +50,9 @@ export async function serve(configPath: string): Promise<void> {
       : undefined);
   if (!store) throw new Error("No decision store configured");
   const clientToken = config.clientTokenEnv ? envSecret(config.clientTokenEnv) : undefined;
+  const originToken = envSecret(upstream?.originTokenEnv ?? config.originTokenEnv!);
+  if (clientToken && clientToken === originToken)
+    throw new Error("Client and origin credentials must be independent");
   const shield = await createShield({
     tenant: config.tenant,
     service: config.service,
@@ -53,9 +61,12 @@ export async function serve(configPath: string): Promise<void> {
     policy: loadPolicy(await readData(config.policyFile)),
     decisions: store,
     proxy: {
-      origin: config.origin,
-      allowedOrigins: config.allowedOrigins,
-      originToken: envSecret(config.originTokenEnv),
+      origin: upstream?.origin ?? config.origin!,
+      allowedOrigins: upstream ? [upstream.origin] : config.allowedOrigins!,
+      originToken,
+      ...(upstream
+        ? { timeoutMs: upstream.timeoutMs, maxResponseBytes: upstream.maxResponseBytes }
+        : {}),
     },
     event: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
   });

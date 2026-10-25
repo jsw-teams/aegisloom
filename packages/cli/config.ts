@@ -9,9 +9,10 @@ export interface RunConfig {
   publicHosts: string[];
   routes: Route[];
   policyFile: string;
-  origin: string;
-  allowedOrigins: string[];
-  originTokenEnv: string;
+  origin?: string;
+  allowedOrigins?: string[];
+  originTokenEnv?: string;
+  upstream?: { file: string; id: string };
   clientTokenEnv?: string;
   listen: { host: "127.0.0.1"; port: number };
   decisions: { kind: "sqlite"; path: string } | { kind: "http"; url: string; tokenEnv: string };
@@ -45,6 +46,7 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     "clientTokenEnv",
     "listen",
     "decisions",
+    "upstream",
   ];
   if (
     !raw ||
@@ -54,10 +56,17 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     !raw.service ||
     !Array.isArray(raw.routes) ||
     !Array.isArray(raw.publicHosts) ||
-    !Array.isArray(raw.allowedOrigins) ||
     typeof raw.policyFile !== "string" ||
-    typeof raw.origin !== "string" ||
-    typeof raw.originTokenEnv !== "string" ||
+    (raw.upstream
+      ? !raw.upstream.file ||
+        !raw.upstream.id ||
+        Object.keys(raw.upstream).some((k) => !["file", "id"].includes(k)) ||
+        raw.origin !== undefined ||
+        raw.originTokenEnv !== undefined ||
+        raw.allowedOrigins !== undefined
+      : !Array.isArray(raw.allowedOrigins) ||
+        typeof raw.origin !== "string" ||
+        typeof raw.originTokenEnv !== "string") ||
     raw.listen?.host !== "127.0.0.1" ||
     !Number.isInteger(raw.listen.port) ||
     raw.listen.port < 1 ||
@@ -68,6 +77,7 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
       "Invalid run configuration; CLI listener is loopback-only, use an authenticated TLS ingress for external access",
     );
   raw.policyFile = resolve(dirname(resolve(path)), raw.policyFile);
+  if (raw.upstream) raw.upstream.file = resolve(dirname(resolve(path)), raw.upstream.file);
   if (raw.decisions.kind === "sqlite")
     raw.decisions.path = resolve(dirname(resolve(path)), raw.decisions.path);
   return raw;

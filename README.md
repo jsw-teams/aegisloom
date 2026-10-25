@@ -1,5 +1,7 @@
 # Cloud API Shield
 
+[Watch the actual feature video](docs/DEMO.md) · [Configure cloud/VPS origins and rule sources](docs/SOURCE-CONFIG.md)
+
 [简体中文](README.zh-CN.md) · Apache-2.0 · TypeScript / ESM · Node.js 22.13+ (24 recommended)
 
 A portable API security runtime with strict HTTP handling, versioned rules, revocable security

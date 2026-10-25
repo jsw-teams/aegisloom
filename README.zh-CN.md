@@ -1,5 +1,7 @@
 # Cloud API Shield
 
+[真实功能演示视频](docs/DEMO.md) · [配置云端/VPS 源站与规则来源](docs/SOURCE-CONFIG.md)
+
 [English](README.md) · Apache-2.0 · TypeScript / ESM · Node.js 22.13+（推荐 24）
 
 跨云 API 安全框架：严格请求边界、可读规则、带撤销语义的安全决策缓存、持久化控制面，

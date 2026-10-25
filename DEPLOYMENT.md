@@ -1,5 +1,9 @@
 # Deployment / 部署
 
+Cloud or third-party VPS origins and pinned rule imports can be managed from one YAML/JSON
+inventory. See [source configuration](docs/SOURCE-CONFIG.md) and the runnable
+[VPS configuration](examples/shield-vps.yaml). This is independent of provider-native WAF support.
+
 For the Cloudflare validation Worker, service bindings, secrets and an unchanged-production-route
 test sequence, see [deploy/cloudflare](deploy/cloudflare/README.md). Backend adoption follows
 [BACKEND-STANDARD.md](BACKEND-STANDARD.md); media/WS/gRPC-Web require [protocol profiles](PROTOCOLS.md).

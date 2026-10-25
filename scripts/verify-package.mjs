@@ -16,6 +16,8 @@ for (const path of [
   "dist/packages/runtime/index.js",
   "dist/packages/backend-security/index.js",
   "dist/packages/protocols/index.js",
+  "dist/integrations/rule-converter/sources.js",
+  "dist/integrations/rule-converter/sources.schema.json",
   "dist/adapters/cloudflare/runtime.js",
   "dist/adapters/vercel/index.js",
   "LICENSE",
@@ -79,7 +81,7 @@ try {
     [
       "--input-type=module",
       "-e",
-      "const r=await import('@cloud-api-shield/shield/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@cloud-api-shield/shield'); const b=await import('@cloud-api-shield/shield/http-boundary'); if(p.version!=='1'||typeof e.createShield!=='function'||typeof b.checkBoundary!=='function'||typeof b.parseStrictJson!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
+      "const r=await import('@cloud-api-shield/shield/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@cloud-api-shield/shield'); const b=await import('@cloud-api-shield/shield/http-boundary'); const s=await import('@cloud-api-shield/shield/sources'); s.validateSources({version:'1',upstreams:[],ruleSources:[],permittedLicenses:['Apache-2.0']}); if(p.version!=='1'||typeof e.createShield!=='function'||typeof b.checkBoundary!=='function'||typeof b.parseStrictJson!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
     ],
     { cwd: directory, encoding: "utf8" },
   );

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import type { ConversionReport } from "../../integrations/rule-converter/index.js";
 import { importInventory } from "../../integrations/sbom/index.js";
 import { validateBackendPolicy } from "../backend-security/index.js";
 import {
@@ -17,13 +18,16 @@ import { createShield } from "../runtime/index.js";
 import { evaluateComponent, queryOsv, VulnerabilityDatabase } from "../vulnerability/index.js";
 import { readData } from "./config.js";
 import { serve, serveControl } from "./serve.js";
+import { importConfiguredSource, readSources } from "./sources.js";
 
-const usage = `Cloud API Shield 0.1.0
+const usage = `Cloud API Shield
   api-shield validate|explain <policy.yaml>
   api-shield backend-check <backend-policy.yaml>
   api-shield simulate <policy.yaml> <samples.json>
   api-shield compatibility <policy.yaml> [maxRules=5]
   api-shield serve <shield.yaml>
+  api-shield sources-check <sources.yaml>
+  api-shield sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
   api-shield control <state.db> <tenant> [port=8790]
   api-shield assess <inventory.json> <osv-records.json>
   api-shield osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
@@ -39,6 +43,32 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (!file) throw new Error(usage);
+  if (command === "sources-check") {
+    const config = await readSources(file);
+    console.log(
+      JSON.stringify({
+        valid: true,
+        upstreams: config.upstreams.length,
+        ruleSources: config.ruleSources.length,
+      }),
+    );
+    return;
+  }
+  if (command === "sources-import") {
+    if (!second || !third) throw new Error("Source ID and new output file required");
+    const report = fourth ? ((await readData(fourth)) as ConversionReport) : undefined;
+    const policy = await importConfiguredSource(file, second, report);
+    await writeFile(third, JSON.stringify(policy, null, 2), { flag: "wx" });
+    console.log(
+      JSON.stringify({
+        imported: second,
+        rules: policy.rules.length,
+        output: third,
+        deployment: "not-deployed; run regression tests and explicitly activate the policy",
+      }),
+    );
+    return;
+  }
   if (command === "backend-check") {
     const policy = validateBackendPolicy(await readData(file));
     console.log(

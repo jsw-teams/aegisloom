@@ -1,8 +1,12 @@
 # Delivery status / 开发状态
 
-This file is the capability ledger for 0.1.0. “Implemented” means executable code plus local tests;
+This file is the capability ledger, updated through 0.1.2. “Implemented” means executable code plus local tests;
 “offline contract” is not live platform verification. Nothing has been published to a registry or
 cloud account by this task.
+
+0.1.2 adds [configuration-driven cloud/VPS origins and pinned rule imports](SOURCE-CONFIG.md),
+with JSON Schema and CLI validation/import, plus a [reproducible actual-execution video](DEMO.md).
+GitHub source/releases are published; npm registry publication and live cloud deployments are not claimed.
 
 The original 56-test suite passed on Windows Node 22.23.1 and 24.19.0; later backend/protocol
 extensions and workerd acceptance are recorded separately in [validation](VALIDATION.md).
