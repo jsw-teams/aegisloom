@@ -7,13 +7,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const directory = await mkdtemp(join(tmpdir(), "shield-smoke-"));
-const port = 30000 + Math.floor(Math.random() * 20000);
 const admin = "smoke-test-admin-token-32-characters-long";
 const tsx = new URL("../node_modules/tsx/dist/loader.mjs", import.meta.url).href;
 const entry = fileURLToPath(new URL("../examples/local/server.ts", import.meta.url));
 const child = spawn(process.execPath, ["--import", tsx, entry], {
   cwd: directory,
-  env: { ...process.env, SHIELD_LOCAL_BASE_PORT: String(port), SHIELD_ADMIN_TOKEN: admin },
+  env: { ...process.env, SHIELD_LOCAL_BASE_PORT: "0", SHIELD_ADMIN_TOKEN: admin },
   stdio: ["ignore", "pipe", "pipe"],
   windowsHide: true,
 });
@@ -30,12 +29,25 @@ try {
   await new Promise((resolve, reject) => {
     startupTimer = setTimeout(() => reject(new Error(`Local startup timeout: ${errors}`)), 20000);
     child.stdout.on("data", () => {
-      if (output.includes("Shield:")) resolve();
+      if (
+        output
+          .split(/\r?\n/)
+          .slice(0, -1)
+          .some((line) => line.startsWith('{"ready":'))
+      )
+        resolve();
     });
     child.once("exit", (code) => reject(new Error(`Local startup exit ${code}: ${errors}`)));
   });
   clearTimeout(startupTimer);
-  const base = `http://127.0.0.1:${port}`;
+  const ready = output
+    .split(/\r?\n/)
+    .filter((line) => line.startsWith('{"ready":'))
+    .map((line) => JSON.parse(line).ready)[0];
+  assert.ok(ready);
+  for (const endpoint of Object.values(ready))
+    assert.equal(new URL(endpoint).hostname, "127.0.0.1");
+  const base = ready.edge;
   for (const [path, expected] of [
     ["/api/echo?q=hello", 200],
     ["/api/echo?q=shield-attack-test", 403],
@@ -46,10 +58,10 @@ try {
     assert.equal(r.status, expected);
     await r.arrayBuffer();
   }
-  const direct = await fetch(`http://127.0.0.1:${port + 1}/api/echo`);
+  const direct = await fetch(`${ready.origin}/api/echo`);
   assert.equal(direct.status, 403);
   await direct.arrayBuffer();
-  const endpoint = `http://127.0.0.1:${port + 3}`;
+  const endpoint = ready.control;
   const unauthorized = await fetch(`${endpoint}/v1/generation`);
   assert.equal(unauthorized.status, 401);
   await unauthorized.arrayBuffer();

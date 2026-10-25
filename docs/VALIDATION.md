@@ -12,6 +12,12 @@ redirect/compression refusal and configuration-relative upstream selection.
 See [recording procedure](DEMO.md). These results do not verify a remote VPS, cloud account,
 production domain or full CRS conversion.
 
+The same source commit passed Ubuntu/Windows × Node 22/24 in
+[CI run 40188836636](https://github.com/jsw-teams/api-shield/actions/runs/40188836636).
+The local-process smoke harness subsequently switched from random consecutive port guesses to
+OS-assigned port-zero listeners after reviewing an older Windows bind-conflict failure; that
+startup/control/revocation smoke passed locally on Node 22.23.1 and 24.19.0.
+
 ## Backend/protocol extension, 2026-10-24
 
 Windows Node 24.19.0 and 22.23.1: the initial **71 main tests passed**; **3 independent converter tests passed**.

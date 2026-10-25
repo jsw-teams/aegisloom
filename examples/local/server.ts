@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createControlHandler } from "../../packages/control-plane/handler.js";
 import { SqliteAuthority } from "../../packages/control-plane/sqlite.js";
 import { loadPolicy } from "../../packages/rule-ir/index.js";
-import { createShield } from "../../packages/runtime/index.js";
+import { createShield, type ShieldOptions } from "../../packages/runtime/index.js";
 import { createNodeServer } from "../../packages/runtime/node.js";
 
 const secret = process.env.SHIELD_ORIGIN_TOKEN ?? randomBytes(32).toString("hex");
@@ -12,23 +12,26 @@ const adminToken = process.env.SHIELD_ADMIN_TOKEN ?? randomBytes(32).toString("h
 const runtimeToken = process.env.SHIELD_RUNTIME_TOKEN ?? randomBytes(32).toString("hex");
 const store = new SqliteAuthority("shield-local.db");
 const basePort = Number(process.env.SHIELD_LOCAL_BASE_PORT ?? 8787);
-if (!Number.isInteger(basePort) || basePort < 1024 || basePort > 65532)
+if (!Number.isInteger(basePort) || (basePort !== 0 && basePort < 1024) || basePort > 65532)
   throw new Error("Invalid local base port");
-const edgeHost = `127.0.0.1:${basePort}`;
-const originHost = `127.0.0.1:${basePort + 1}`;
-const controlHost = `127.0.0.1:${basePort + 3}`;
-const origin = createNodeServer(async (req) => {
-  const given = Buffer.from(req.headers.get("x-shield-origin-auth") ?? "");
-  const expected = Buffer.from(secret);
-  if (given.length !== expected.length || !timingSafeEqual(given, expected))
-    return new Response(null, { status: 403 });
-  return Response.json({
-    service: "protected-local-api",
-    method: req.method,
-    path: new URL(req.url).pathname,
-  });
-}, originHost);
-const shield = await createShield({
+let edgeHost = `127.0.0.1:${basePort}`;
+let originHost = `127.0.0.1:${basePort + 1}`;
+let controlHost = `127.0.0.1:${basePort + 3}`;
+const origin = createNodeServer(
+  async (req) => {
+    const given = Buffer.from(req.headers.get("x-shield-origin-auth") ?? "");
+    const expected = Buffer.from(secret);
+    if (given.length !== expected.length || !timingSafeEqual(given, expected))
+      return new Response(null, { status: 403 });
+    return Response.json({
+      service: "protected-local-api",
+      method: req.method,
+      path: new URL(req.url).pathname,
+    });
+  },
+  () => originHost,
+);
+const shieldOptions = async (): Promise<ShieldOptions> => ({
   tenant: "local",
   service: "api",
   publicHosts: [edgeHost],
@@ -47,14 +50,17 @@ const shield = await createShield({
   },
   event: (e) => console.log(JSON.stringify(e)),
 });
+let shield: Awaited<ReturnType<typeof createShield>> | undefined;
 const edge = createNodeServer(
-  (req, incoming) =>
-    shield.handle(
-      req,
-      { tenant: "local", verifiedClientIp: incoming.socket.remoteAddress ?? "127.0.0.1" },
-      incoming.url,
-    ),
-  edgeHost,
+  async (req, incoming) =>
+    shield
+      ? shield.handle(
+          req,
+          { tenant: "local", verifiedClientIp: incoming.socket.remoteAddress ?? "127.0.0.1" },
+          incoming.url,
+        )
+      : new Response(null, { status: 503 }),
+  () => edgeHost,
 );
 const control = createNodeServer(
   await createControlHandler(
@@ -65,14 +71,30 @@ const control = createNodeServer(
     ],
     store,
   ),
-  controlHost,
+  () => controlHost,
 );
 const servers = [origin, edge, control];
 try {
   for (const [index, server] of servers.entries()) {
-    server.listen([basePort + 1, basePort, basePort + 3][index], "127.0.0.1");
+    server.listen(basePort === 0 ? 0 : [basePort + 1, basePort, basePort + 3][index], "127.0.0.1");
     await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("No TCP listener");
+    const host = `127.0.0.1:${address.port}`;
+    if (index === 0) originHost = host;
+    else if (index === 1) edgeHost = host;
+    else controlHost = host;
   }
+  shield = await createShield(await shieldOptions());
+  console.log(
+    JSON.stringify({
+      ready: {
+        edge: `http://${edgeHost}`,
+        origin: `http://${originHost}`,
+        control: `http://${controlHost}`,
+      },
+    }),
+  );
   console.log(`Shield: http://${edgeHost}/api/echo ; authenticated control: http://${controlHost}`);
   console.log(
     "Control tokens come from SHIELD_ADMIN_TOKEN/SHIELD_RUNTIME_TOKEN; generated fallback tokens are intentionally not printed.",
