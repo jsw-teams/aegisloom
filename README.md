@@ -8,7 +8,7 @@ Versioning: **YYYY.M.N** — `2026.10.1` means the first release in October 2026
 
 ## Actual VM recordings
 
-The following GIFs capture the existing CodexRecordingVM WSL2 guest's real Openbox desktop and xterm. Commands execute installed packages against an isolated HTTPS origin with a locally trusted certificate; they do not deploy cloud rules or use production data. The SQL-like payload tests the displayed authored rule, not comprehensive SQL injection or CVE coverage.
+These VM desktop recordings show CLI rule import, automatic application, blocking, caches and revocation. The acceptance origin executes a real SQLite query: an unprotected injection returns two rows, while the protected endpoint blocks 16 attack inputs before they reach the origin and passes 11 normal requests.
 
 Configuration, pinned source import and Schema validation:
 
@@ -22,7 +22,7 @@ Independent SecLang subset import, explicit activation/rollback, changed-source 
 
 ![Actual VM terminal: independent converter and rollback](docs/media/vm-converter.gif)
 
-[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
+[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2). See `scripts/recording/catalog-*` for the tested contract and inputs. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
 npm install
@@ -32,13 +32,13 @@ npm pack --pack-destination artifacts
 npm run demo:record
 ```
 
-The recorder asserts 29 real shell commands and captures X11 pixels with FFmpeg. Only its own acceptance processes are stopped. If it started the guest, it terminates that dedicated guest afterwards; do not point it at a guest running your other work.
+The recorder asserts every real shell command and captures X11 pixels with FFmpeg. Only its own acceptance processes are stopped. If it started the guest, it terminates that dedicated guest afterwards; do not point it at a guest running your other work.
 
 A portable API security runtime with strict HTTP handling, versioned rules, revocable security
 decisions, an authenticated control API, and offline adaptive security tools. The engine uses Web
 APIs; Node-specific persistence and cloud SDKs live outside its dependency graph.
 
-**Status: an implemented, tested first release, not a production certification.** Phase 1 is runnable
+Phase 1 is runnable
 end to end. Later phases contain working components with the limitations below. The generic test suite does not require a cloud account; deployment-specific live verification is maintained by each operator. See [delivery status](docs/STATUS.md),
 [threat model](docs/THREAT-MODEL.md), and [validation evidence](docs/VALIDATION.md).
 
@@ -48,7 +48,7 @@ end to end. Later phases contain working components with the limitations below. 
 | Backend standard | [Unified contract](BACKEND-STANDARD.md), origin-key rotation, strict JSON middleware, required auth/authorization/CSRF callbacks, safe output and redacted events; CLI configuration check | Application adoption and production ingress evidence still required; JSON middleware is not a universal wrapper for HTML/media |
 | Protocols | [Media streaming](PROTOCOLS.md), experimental WebSocket handshake IR/cache + bounded message relay, binary gRPC-Web envelope checking | Native gRPC adapter unsupported; protobuf authorization and established-socket revocation require further integration |
 | Decisions | Bounded LRU/TTL; tenant isolation; epochs/CAS; shared reference store; authenticated HTTP store; SQLite WAL authority and audit | Memory store is process-local. SQLite is a single-node authority; HTTP reads are a working cross-process path, not a Redis/KV implementation |
-| Control | Tenant-bound runtime/admin credentials; versioned policies; activation/rollback; decision revocation | Control listener binds loopback; deploy behind TLS/private ingress. Runtime policy changes require explicit engine reload/deployment |
+| Control | Tenant-bound runtime/admin credentials; versioned policies; activation/rollback; decision revocation | Control listener binds loopback; deploy behind TLS/private ingress. Node serve reloads policy-file updates; edge bundles use their deployment pipeline |
 | Local / VPS / containers | Node daemon, persistent SQLite, strict HTTP parser, configurable bind IP; Docker Compose and systemd installation profiles | Node process integration tested; container image and Linux service require operator-side execution |
 | Five provider integrations | Browser-target runtime bundles and sandbox block/proxy checks for Cloudflare, Netlify, Vercel, ESA and EdgeOne | Sandbox verification is not provider deployment verification |
 | Native firewalls | Real Cloudflare REST, ESA SDK, Vercel REST + draft activation, EdgeOne TC3 REST lifecycle code; plan approval, drift/readback/revoke/retry tests | Conservative method/canonical IPv4 compiler subset. Path/body/header/query rules stay runtime-only. Netlify native management unsupported. Quotas are explicit operator inputs |

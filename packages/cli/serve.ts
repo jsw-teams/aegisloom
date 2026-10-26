@@ -53,39 +53,60 @@ export async function serve(configPath: string): Promise<void> {
   const originToken = envSecret(upstream?.originTokenEnv ?? config.originTokenEnv!);
   if (clientToken && clientToken === originToken)
     throw new Error("Client and origin credentials must be independent");
-  const shield = await createShield({
-    tenant: config.tenant,
-    service: config.service,
-    publicHosts: config.publicHosts,
-    routes: config.routes,
-    policy: loadPolicy(await readData(config.policyFile)),
-    decisions: store,
-    proxy: {
-      origin: upstream?.origin ?? config.origin!,
-      allowedOrigins: upstream ? [upstream.origin] : config.allowedOrigins!,
-      originToken,
-      allowLoopbackHttp: config.allowLoopbackHttp ?? false,
-      ...(upstream
-        ? { timeoutMs: upstream.timeoutMs, maxResponseBytes: upstream.maxResponseBytes }
-        : {}),
-    },
-    event: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
-  });
-  const server = createNodeServer(
-    (req, incoming) =>
-      shield.handle(
-        req,
-        {
-          tenant: config.tenant,
-          verifiedClientIp: incoming.socket.remoteAddress ?? "127.0.0.1",
-          ...(clientToken && authorized(req.headers.get("authorization"), clientToken)
-            ? { identity: "configured-api-client" }
-            : {}),
-        },
-        incoming.url,
-      ),
-    config.publicHosts[0]!,
-  );
+  const buildShield = async () =>
+    createShield({
+      tenant: config.tenant,
+      service: config.service,
+      publicHosts: config.publicHosts,
+      routes: config.routes,
+      policy: loadPolicy(await readData(config.policyFile)),
+      decisions: store,
+      proxy: {
+        origin: upstream?.origin ?? config.origin!,
+        allowedOrigins: upstream ? [upstream.origin] : config.allowedOrigins!,
+        originToken,
+        allowLoopbackHttp: config.allowLoopbackHttp ?? false,
+        ...(upstream
+          ? { timeoutMs: upstream.timeoutMs, maxResponseBytes: upstream.maxResponseBytes }
+          : {}),
+      },
+      event: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
+    });
+  let shield = await buildShield(),
+    nextReload = 0;
+  let reloading: Promise<void> | undefined;
+  const server = createNodeServer(async (req, incoming) => {
+    if (Date.now() >= nextReload && !reloading) {
+      nextReload = Date.now() + 1000;
+      reloading = buildShield()
+        .then((next) => {
+          if (next.version !== shield.version) {
+            shield = next;
+            process.stderr.write(
+              `${JSON.stringify({ event: "policy-reloaded", version: next.version })}\n`,
+            );
+          }
+        })
+        .catch(() => {
+          process.stderr.write('{"event":"policy-reload-rejected"}\n');
+        })
+        .finally(() => {
+          reloading = undefined;
+        });
+    }
+    await reloading;
+    return shield.handle(
+      req,
+      {
+        tenant: config.tenant,
+        verifiedClientIp: incoming.socket.remoteAddress ?? "127.0.0.1",
+        ...(clientToken && authorized(req.headers.get("authorization"), clientToken)
+          ? { identity: "configured-api-client" }
+          : {}),
+      },
+      incoming.url,
+    );
+  }, config.publicHosts[0]!);
   server.listen(config.listen.port, config.listen.host);
   await once(server, "listening");
   shutdown(server, () => authority?.close());

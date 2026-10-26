@@ -1,0 +1,22 @@
+{
+  "attacks": [
+    "1 OR 1=1",
+    "1 or 2>1--",
+    "1/**/OR/**/1=1",
+    "1\tOR\t1=1",
+    "1\nOR\n1=1",
+    "1 UNION SELECT 2,'other'",
+    "1; SELECT 2",
+    "1%20OR%201=1",
+    "1%2520OR%25201=1",
+    "1--",
+    "1/*",
+    "1' OR '1'='1",
+    "0x1",
+    "1e0",
+    "1,2",
+    "１"
+  ],
+  "legitimate": ["1", "2", "3", "10", "9999", "123456789"],
+  "normalQueryValues": ["O'Reilly", "select a book", "union square", "中文检索", "1 OR 1=1"]
+}

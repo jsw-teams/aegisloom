@@ -28,6 +28,7 @@ import { createErrorPages, type ErrorPages } from "./error-pages.js";
 import { createProxy, type ProxyOptions } from "./proxy.js";
 
 export type { SecurityEvent, TrustedContext } from "../core/types.js";
+export { createHeaderPolicy, validateHeaderPolicy } from "./header-policy.js";
 export type { ProxyOptions } from "./proxy.js";
 
 export interface Route {

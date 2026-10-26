@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "id": "no-url-access-token",
+      "name": "Keep bearer access tokens out of URLs",
+      "service": "api",
+      "priority": 10,
+      "when": { "field": "query", "key": "access_token", "op": "exists", "value": true },
+      "then": { "action": "block" },
+      "community": { "report": false }
+    }
+  ]
+}

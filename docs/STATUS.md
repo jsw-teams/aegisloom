@@ -74,7 +74,8 @@ on the current Windows host (no Docker engine).
 
 Public/private HTTPS sources now support environment-only read credentials and an explicit
 serial background polling daemon. Bounded SQLite candidates retain provenance, conversion status,
-real-runtime attack/legitimate regression evidence and redacted audit attempts. Active policy is
-never changed by synchronization. Private authentication is Mock-tested; no operator private rule
-repository has been configured. Full CRS and arbitrary third-party formats still require supported
+real-runtime attack/legitimate regression evidence and redacted audit attempts. Explicit application
+configuration authorizes atomic policy rebuilds after per-rule and merged regression checks. Node
+serve reloads valid policy changes; failed updates retain the running engine. Private deployments
+can apply local rules from their authenticated repository checkout without a Worker GitHub token. Full CRS and arbitrary third-party formats still require supported
 external converters and differential testing; downloaded bytes are not claimed as equivalent protection.

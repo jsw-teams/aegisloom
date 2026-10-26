@@ -31,6 +31,7 @@ const usage = `ShieldWeave
   shieldweave sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
   shieldweave sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
   shieldweave sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
+  shieldweave sources-apply <sources.yaml>
   shieldweave sources-export <candidates.db> <source-id> <hash> <new-policy.json>
   shieldweave control <state.db> <tenant> [port=8790]
   shieldweave assess <inventory.json> <osv-records.json>
@@ -51,6 +52,11 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (!file) throw new Error(usage);
+  if (command === "sources-apply") {
+    const { applySources } = await import("../control-plane/source-apply.js");
+    console.log(JSON.stringify(await applySources(file)));
+    return;
+  }
   if (command === "sources-export") {
     if (!second || !third || !fourth)
       throw new Error("Source ID, candidate hash and new output file required");
@@ -86,7 +92,9 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const interval = Number(third ?? 3600) * 1000;
     if (!Number.isSafeInteger(interval) || interval < 60000 || interval > 86400000)
       throw new Error("Sync interval must be 60..86400 seconds");
-    const { SourceSyncStore, synchronizeSources } = await import("../control-plane/source-sync.js");
+    const { SourceSyncStore, synchronizeSources, applySources } = await import(
+      "../control-plane/source-sync.js"
+    );
     const { setTimeout: delay } = await import("node:timers/promises");
     const store = new SourceSyncStore(second),
       abort = new AbortController();
@@ -96,9 +104,34 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     try {
       do {
         const results = await synchronizeSources(file, store, { intervalMs: interval });
-        console.log(JSON.stringify({ results, activated: false }));
+        let application: Awaited<ReturnType<typeof applySources>> | undefined;
+        let applicationFailed = false;
+        if (
+          (await readSources(file)).application &&
+          results.some((result) => result.result !== "not-due")
+        ) {
+          try {
+            application = await applySources(file);
+            store.record(
+              "application",
+              Date.now(),
+              `${application.applied ? "applied" : "unchanged"}:${application.version}`,
+            );
+          } catch {
+            applicationFailed = true;
+            store.record("application", Date.now(), "application-failed");
+          }
+        }
+        console.log(
+          JSON.stringify({
+            results,
+            application,
+            applicationFailed,
+            activated: application?.applied ?? false,
+          }),
+        );
         if (command !== "sources-watch") {
-          if (results.some((r) => r.result === "failed")) process.exitCode = 1;
+          if (applicationFailed || results.some((r) => r.result === "failed")) process.exitCode = 1;
           break;
         }
         await delay(Math.min(interval, 60000), undefined, { signal: abort.signal }).catch(() => {});

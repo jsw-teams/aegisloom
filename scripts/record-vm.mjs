@@ -245,6 +245,9 @@ try {
   await command("shieldweave validate candidate.json", {
     check: (text) => assert.match(text, /"valid":true/),
   });
+  await command("shieldweave sources-sync sources.yaml candidates.db", {
+    check: (text) => assert.match(text, /"activated":true/),
+  });
   segments[0].end = stamp();
   segments.push({ name: "blocking", start: stamp() });
   await command("clear; source ./start-lab.sh", {
@@ -293,6 +296,14 @@ try {
     },
   });
   await command("node event.mjs a", { check: (text) => assert.match(text, /"source": "rule"/) });
+  await command("node verify-catalog.mjs", {
+    check: (text) => {
+      assert.match(text, /"unprotectedRows":2/);
+      assert.match(text, /"attacksBlocked":16/);
+      assert.match(text, /"attackOriginHits":0/);
+      assert.match(text, /"legitimatePassed":11/);
+    },
+  });
   segments[1].end = stamp();
   segments.push({ name: "converter", start: stamp() });
   await command("clear; cat method.conf");

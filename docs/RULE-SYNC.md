@@ -2,7 +2,42 @@
 
 This background pipeline fetches configured source bytes, validates license/scope/IR or converter
 provenance, runs the real runtime against local attack/legitimate samples, and archives candidates
-in SQLite. It never changes the active policy. Network downloads run outside the request path.
+in SQLite. Sources are candidates by default. Explicit automatic-application configuration enables
+validated rebuilds of the active policy. Network downloads run outside the request path.
+
+## Automatic application / 自动应用
+
+```yaml
+application:
+  policyFile: rules/active.json
+  baselineFile: rules/baseline.json
+  regressionFile: rules/regression.json
+  service: api
+```
+
+Set `autoApply: true` and `regressionFile` on each authorized source. Run
+`shieldweave sources-apply sources.yaml`, or enable `sources-sync` / `sources-watch` with this
+configuration. Every enabled rule must independently match an attack sample; both attack and
+legitimate samples are required per source and in the merged policy. The baseline is always
+retained. Duplicate IDs, incompatible semantics, conversion loss and failed regressions reject
+the entire update. A file lease excludes concurrent writers; an fsynced temporary file is atomically
+renamed over the active file. Identical updates do not rewrite it. Disabling/removing a source
+withdraws its rules after the next successful rebuild. A failed update preserves the last active file.
+
+The currently approved automatic profile is stateless request-header block rules over path,
+method, header and query. Other rules remain reviewable candidates. Node `serve` reloads a valid
+changed policy within one second on the next request and keeps its existing engine on invalid
+updates. A policy version change starts fresh L1 state and uses versioned L2 keys. Edge deployments
+can commit the tested policy to their Git-connected deployment repository and rebuild the Worker.
+`createHeaderPolicy` executes the same matcher before native handlers without consuming DNS/WS
+bodies; it does not replace their authentication. Native L0 firewall publishing remains separately
+authorized through the cloud adapters.
+
+For a private deployment repository, run synchronization in that repository's scheduled workflow.
+Checked-out private files can be configured as relative sources; no cross-repository token or
+Worker variable is needed. For a separate private repository, use the Contents API and a scoped
+Contents:read credential. Keep generated private policy artifacts inside the private deployment
+repository. Git provides revision history and rollback of the applied bundle.
 
 ```yaml
 version: "1"
@@ -78,10 +113,9 @@ Candidate states: `needs-conversion` preserves non-IR bytes; `needs-regression` 
 independent converter. Changed bytes that no longer match the report fail import. Partial or
 unsupported conversions cannot become verified policies. Download/import/test failure leaves
 previous archived candidates intact, records a redacted failed attempt, and makes the one-shot
-CLI exit nonzero. Activation still requires review and the existing explicit policy deployment.
+CLI exit nonzero. Without `application` and source `autoApply`, imports remain candidates.
 
 中文：定时任务只有部署者显式启动后才运行。支持公共、私有 HTTPS 规则库，凭据独立且只读；
-不上传业务流量。规则获取、转换、回归、候选存储分别由独立模块负责。私有库通过离线 Mock
-验证鉴权与日志脱敏；未提供运营者私有规则库，因此没有声称已通过真实私有库联网验收。
+不上传业务流量。显式授权的规则源在独立样本与合并策略回归通过后自动应用；更新失败保留上一版。
 
 References: [GitHub Contents API and raw media type](https://docs.github.com/en/rest/repos/contents), [Docker Compose security/resource fields](https://docs.docker.com/reference/compose-file/services/).

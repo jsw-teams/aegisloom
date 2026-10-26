@@ -3,6 +3,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:https";
+import { catalog } from "./verify-catalog.mjs";
+
+const inventory = catalog();
 
 let hits = 0;
 writeFileSync("origin.pid", String(process.pid));
@@ -30,11 +33,22 @@ const server = createServer(
     }
     hits++;
     writeFileSync("origin-hits.json", JSON.stringify({ hits }));
+    let items;
+    try {
+      items = inventory.query(
+        new URL(request.url, "https://localhost").searchParams.get("id") ?? "1",
+      );
+    } catch {
+      response.writeHead(400);
+      response.end("Invalid inventory query");
+      return;
+    }
     response.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
     response.end(
       `${JSON.stringify({
         service: "isolated-read-only-acceptance-origin",
         method: request.method,
+        items,
         id: new URL(request.url, "https://localhost").searchParams.get("id"),
       })}\n`,
     );

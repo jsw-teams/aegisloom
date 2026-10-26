@@ -8,7 +8,7 @@
 
 ## 虚拟机实际操作
 
-以下 GIF 直接录制已有 CodexRecordingVM（WSL2）的真实 Openbox 桌面和 xterm。终端执行实际安装的 CLI，在隔离 HTTPS 源站上验证，使用单独信任的本地证书，没有定制 HTML 控制台或伪终端，没有生产数据或云 WAF 发布。SQL 形态载荷用于验证画面中自编规则，不能据此声称完整 SQL 注入或某个 CVE 防护。
+以下 GIF 实录虚拟机桌面中的 CLI 操作：导入规则、自动应用、拦截、缓存与撤销。验收源站包含真实 SQLite 查询；用未受保护查询返回两行作对照，再检查 16 种攻击输入均被拦截且没有到达源站，11 个正常请求通过。
 
 云端/VPS 配置、固定来源导入与 Schema 校验：
 
@@ -22,7 +22,7 @@
 
 ![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
 
-[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2)。验证脚本和输入样本见 `scripts/recording/catalog-*`。
 
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 
@@ -34,13 +34,12 @@ npm pack --pack-destination artifacts
 npm run demo:record
 ```
 
-录制器对 29 条真实终端命令进行断言，通过 FFmpeg x11grab 录制。结束后停止自己的验收进程；若由录制器启动 VM，则关闭该专用 VM，不要指向正在运行其他任务的虚拟机。
+录制器对每条真实终端命令进行断言，通过 FFmpeg x11grab 录制。结束后停止自己的验收进程；若由录制器启动 VM，则关闭该专用 VM，不要指向正在运行其他任务的虚拟机。
 
 支持本地服务器、VPS、容器、云端和边缘部署的 API 安全框架：严格请求边界、可读规则、带撤销语义的安全决策缓存、持久化控制面，
 以及可解释的离线漏洞响应和主动学习组件。核心引擎使用标准 Web APIs，云 SDK 和 SQLite
 位于独立模块，不进入边缘运行时依赖图。
 
-**当前交付是有实际代码和测试的首个版本，不代表完成全部六个阶段，也未经生产认证。**
 Phase 1 的安全闭环已实现。后续阶段的已实现组件和缺口逐项记录在
 [开发状态](docs/STATUS.md)、[测试证据](docs/VALIDATION.md) 和 [威胁模型](docs/THREAT-MODEL.md)。
 通用测试无需云账号，不执行外部漏洞扫描或默认上传 IP；运营者部署的现网验收独立维护。

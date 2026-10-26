@@ -5,6 +5,17 @@
   "additionalProperties": false,
   "required": ["version", "upstreams", "ruleSources", "permittedLicenses"],
   "properties": {
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyFile", "baselineFile", "regressionFile", "service"],
+      "properties": {
+        "policyFile": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "baselineFile": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "regressionFile": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "service": { "$ref": "#/definitions/id" }
+      }
+    },
     "version": { "const": "1" },
     "permittedLicenses": {
       "type": "array",
@@ -40,6 +51,7 @@
         "properties": {
           "id": { "$ref": "#/definitions/id" },
           "enabled": { "type": "boolean" },
+          "autoApply": { "type": "boolean", "default": false },
           "location": { "type": "string", "minLength": 1, "maxLength": 2048 },
           "format": {
             "enum": ["shield-ir", "seclang", "crowdsec-appsec", "suricata", "sigma", "nuclei"]

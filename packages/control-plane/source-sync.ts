@@ -7,6 +7,7 @@ import { digest } from "../core/types.js";
 import { verifySourcePolicy } from "./source-regression.js";
 import type { SourceCandidate, SourceSyncStore } from "./source-sync-store.js";
 
+export { applySources, buildSourcePolicy } from "./source-apply.js";
 export { verifySourcePolicy } from "./source-regression.js";
 export { SourceSyncStore } from "./source-sync-store.js";
 

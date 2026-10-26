@@ -23,12 +23,19 @@ export interface RuleSource {
   authTokenEnv?: string;
   regressionFile?: string;
   conversionReportFile?: string;
+  autoApply?: boolean;
 }
 export interface SourceConfig {
   version: "1";
   upstreams: UpstreamSource[];
   ruleSources: RuleSource[];
   permittedLicenses: string[];
+  application?: {
+    policyFile: string;
+    baselineFile: string;
+    regressionFile: string;
+    service: string;
+  };
 }
 // Control-plane configuration validation only; never imported by the online runtime.
 const validate = new Ajv({ allErrors: true, strict: false }).compile(schema);
@@ -36,6 +43,14 @@ export function validateSources(input: unknown): SourceConfig {
   if (!validate(input))
     throw new Error(`Invalid source configuration: ${JSON.stringify(validate.errors)}`);
   const config = structuredClone(input) as unknown as SourceConfig;
+  if (config.application) {
+    const { policyFile, baselineFile, regressionFile } = config.application;
+    for (const file of [policyFile, baselineFile, regressionFile])
+      if (file.startsWith("/") || /^[a-z]:|^\\\\/i.test(file) || file.split(/[\\/]/).includes(".."))
+        throw new Error("Application files must remain within the configuration directory");
+    if (new Set([policyFile, baselineFile, regressionFile]).size !== 3)
+      throw new Error("Application input and output files must be distinct");
+  }
   for (const list of [config.upstreams, config.ruleSources])
     if (new Set(list.map((s) => s.id)).size !== list.length) throw new Error("Duplicate source ID");
   for (const upstream of config.upstreams) {

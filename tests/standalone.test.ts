@@ -141,6 +141,36 @@ test("standalone installed CLI proxies to a real authenticated origin and persis
       running.events().some((e) => e.source === "l2"),
       true,
     );
+    // Policy files published by sources-apply take effect in the running process, without restart.
+    await writeFile(
+      join(directory, "rules.json"),
+      JSON.stringify({
+        version: "1",
+        rules: [
+          {
+            ...attackRule,
+            id: "updated",
+            when: { field: "query", key: "q", op: "eq", value: "new-attack" },
+          },
+        ],
+      }),
+    );
+    await new Promise((done) => setTimeout(done, 1100));
+    assert.equal(
+      await get(running.port, "/api?q=attack"),
+      200,
+      "Old L1/L2 must not retain a withdrawn rule",
+    );
+    assert.equal(await get(running.port, "/api?q=new-attack"), 403);
+    const beforeInvalid = hits;
+    await writeFile(join(directory, "rules.json"), "invalid policy");
+    await new Promise((done) => setTimeout(done, 1100));
+    assert.equal(
+      await get(running.port, "/api?q=new-attack"),
+      403,
+      "Invalid update retains last good engine",
+    );
+    assert.equal(hits, beforeInvalid);
     await writeFile(file, JSON.stringify({ ...config, listen: { host: "0.0.0.0", port: 8787 } }));
     assert.equal((await readRunConfig(file)).listen.host, "0.0.0.0");
   } finally {

@@ -64,8 +64,8 @@ node dist/packages/cli/main.js sources-import examples/sources/sources.yaml secl
 The source inventory has no manual checksum option. The importer computes SHA-256 internally for
 audit provenance and verifies a converter report against the actual original bytes. This is not an
 independently approved integrity pin: a remote URL may change its content while declaring the same
-version. Review candidate diffs and regressions before explicit activation; unattended activation
-from mutable remote sources is not supported. 项目不保存依赖锁文件；每日重新解析、审计并通过回归验证更新。
+version. Configure application and source autoApply to authorize tested automatic updates, as
+described in RULE-SYNC.md. 项目不保存依赖锁文件；每周重新解析、审计并通过回归验证更新。
 
 公共及私有库支持[定时同步](RULE-SYNC.md)，凭据只通过环境变量注入。签名 feed 信任链和镜像回退仍未实现。
 No cloud-management API is called by these commands.

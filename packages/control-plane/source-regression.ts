@@ -14,11 +14,16 @@ export interface RegressionSample {
 }
 
 /** Executes the real runtime with an in-process origin. No sample can trigger network traffic. */
-export async function verifySourcePolicy(policy: Policy, input: unknown): Promise<number> {
+export async function verifySourcePolicy(
+  policy: Policy,
+  input: unknown,
+  options: { requireRuleCoverage?: boolean } = {},
+): Promise<number> {
   if (!Array.isArray(input) || input.length < 2 || input.length > 1000)
     throw new Error("Require 2..1000 regression samples");
   let attacks = 0,
     legitimate = 0;
+  const covered = new Set<string>();
   for (const raw of input) {
     const sample = raw as RegressionSample;
     if (
@@ -57,6 +62,8 @@ export async function verifySourcePolicy(policy: Policy, input: unknown): Promis
       decisions: new MemoryDecisionStore(),
       event: (event) => {
         matched.push(event.source);
+        if (sample.kind === "attack" && event.source === "rule" && event.ruleId)
+          covered.add(event.ruleId);
       },
       routes: [
         {
@@ -91,5 +98,10 @@ export async function verifySourcePolicy(policy: Policy, input: unknown): Promis
       throw new Error("Attack regression must exercise the imported policy");
   }
   if (!attacks || !legitimate) throw new Error("Attack and legitimate samples are both required");
+  if (
+    options.requireRuleCoverage &&
+    policy.rules.some((rule) => rule.enabled && !covered.has(rule.id))
+  )
+    throw new Error("Every enabled rule requires an independent attack regression");
   return input.length;
 }

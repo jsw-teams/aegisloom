@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { stringify } from "yaml";
+import policy from "./catalog-policy.json" with { type: "json" };
 
 mkdirSync("tls", { recursive: true });
 execFileSync(
@@ -33,27 +34,6 @@ secrets.push(`NODE_EXTRA_CA_CERTS=${resolve("tls/cert.pem")}`);
 writeFileSync("private.env", `${secrets.map((line) => `export ${line}`).join("\n")}\n`, {
   mode: 0o600,
 });
-const policy = {
-  version: "1",
-  rules: [
-    {
-      id: "sql-token",
-      name: "SQL token guard for isolated acceptance",
-      service: "api",
-      priority: 10,
-      when: {
-        field: "query",
-        key: "id",
-        op: "contains",
-        value: "' or ",
-        transforms: ["lowercase"],
-      },
-      then: { action: "block" },
-      cache: { enabled: true, ttl: "5m" },
-      community: { report: false },
-    },
-  ],
-};
 writeFileSync("rules.yaml", stringify(policy));
 writeFileSync(
   "method.conf",

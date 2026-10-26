@@ -1,5 +1,30 @@
 # Validation evidence / 验证记录
 
+## ShieldWeave 2026.10.6, 2026-10-26
+
+Windows Node 24.19.0: `npm run check` passed 92 main tests and 3 converter tests,
+including typecheck, lint, schema/build, five runtime sandbox bundles, installed-package
+verification and process smoke. `npm run audit` found zero vulnerabilities. After final changes,
+source application, live policy reload and collision-preservation regressions passed again.
+
+Automatic-application tests cover public/private merge, per-rule coverage, normal-request
+regressions, unchanged-update deduplication, source removal, atomic writer exclusion and retention
+of the previous active policy after fetch/test failure. A real Node child process changes policy
+without restart, stops using withdrawn-rule L1/L2 decisions, and keeps its running engine when
+an invalid policy file arrives.
+
+The recorded catalog origin executes a deliberately vulnerable, read-only SQLite query over
+synthetic rows. An unprotected `1 OR 1=1` returns two rows. The protected numeric-ID contract
+blocks 16 attack inputs with zero attack-origin arrivals and forwards 11 normal requests.
+The test suite also checks both orders of duplicate query parameters and mutation detection
+when the protecting rule is removed. Inputs and contract live in `scripts/recording/catalog-*`.
+
+The actual VM recording runs 31 asserted shell commands: source import and automatic application,
+HTTPS origin authentication, first rule/L1/second-process L2 hits, decision revocation, the SQL
+control/corpus, independent SecLang conversion, activation and rollback. Current GIFs are embedded
+in both READMEs; release assets include the complete recording and command evidence.
+
+
 ## ShieldWeave 2026.10.4, 2026-10-26
 
 Windows Node 24.19.0: npm run check passed 87 main tests, 3 converter tests,

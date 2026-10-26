@@ -70,7 +70,8 @@ Rotate credentials by restarting with a new credential mapping; encryption at re
 and replicated authority HA are operator integrations. SQLite transactions are durable on one host,
 not a cross-region database. Audit capacity fails mutations closed rather than growing forever;
 archive records operationally. API list limits are explicit; do not treat a 1000-entry list as a full
-arbitrary-size export. Policy activation requires explicit runtime reload/redeployment.
+arbitrary-size export. Node serve reloads valid policyFile updates within one second on the next
+request. Control-API activation requires exporting the policy into that file or rebuilding the edge deployment.
 
 ## Cross-cloud runtime artifacts
 
