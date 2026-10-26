@@ -3,7 +3,8 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
       time: "03:00"
       timezone: Asia/Taipei
     open-pull-requests-limit: 10
@@ -19,7 +20,8 @@ updates:
   - package-ecosystem: npm
     directory: /api-shield-convert
     schedule:
-      interval: daily
+      interval: weekly
+      day: monday
       time: "03:00"
       timezone: Asia/Taipei
     open-pull-requests-limit: 10

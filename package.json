@@ -1,6 +1,6 @@
 {
   "name": "@jsw-teams/shieldweave",
-  "version": "2026.10.4",
+  "version": "2026.10.5",
   "description": "Adaptive API protection for local servers, VPS, containers, cloud and edge runtimes",
   "license": "Apache-2.0",
   "type": "module",
@@ -48,7 +48,7 @@
     "lint": "biome check packages adapters integrations tests examples benchmarks scripts",
     "format": "biome check --write packages adapters integrations tests examples benchmarks scripts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts tests/sources.test.ts tests/error-pages.test.ts tests/source-sync.test.ts",
+    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts tests/sources.test.ts tests/error-pages.test.ts tests/source-sync.test.ts tests/dependency-maintenance.test.ts",
     "test:integration": "node --import tsx --test tests/runtime.test.ts tests/control.test.ts tests/cloud.test.ts tests/proxy.test.ts tests/signing.test.ts tests/workerd.test.ts tests/serve.test.ts tests/standalone.test.ts",
     "test:security": "node --import tsx --test tests/security.test.ts tests/community.test.ts tests/resources.test.ts tests/backend.test.ts tests/protocols.test.ts",
     "dev": "tsx examples/local/server.ts",
@@ -66,7 +66,8 @@
     "demo:record": "node scripts/record-vm.mjs",
     "version:check": "node scripts/sync-version.mjs --check",
     "prepare": "npm run build",
-    "audit": "node scripts/audit-dependencies.mjs moderate"
+    "audit": "node scripts/audit-dependencies.mjs moderate",
+    "deps:repair": "node .github/actions/dependency-maintenance/repair.mjs"
   },
   "dependencies": {
     "@alicloud/esa20240910": "^3.15.0",
@@ -77,14 +78,14 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.2",
+    "@biomejs/biome": "^2.6.3",
     "@types/node": "^26.6.5",
     "@types/semver": "^7.8.0",
     "@vercel/sdk": "^1.28.51",
     "acorn": "^8.19.0",
     "esbuild": "^0.28.2",
     "miniflare": "5.20261019.2-beta",
-    "tencentcloud-sdk-nodejs-teo": "^4.1.331",
+    "tencentcloud-sdk-nodejs-teo": "^4.1.332",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "wrangler": "^4.152.0"

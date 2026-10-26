@@ -1,0 +1,17 @@
+name: Weekly converter dependency repair
+on:
+  schedule:
+    - cron: '47 19 * * 0'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  maintain:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: jsw-teams/shieldweave/.github/workflows/dependency-maintenance.yml@main
+    with:
+      directory: api-shield-convert
+      audit-level: moderate
+      verify: npm test

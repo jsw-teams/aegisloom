@@ -168,3 +168,7 @@ including report/source tampering and rejection of the removed configuration fie
 Real VM installation exposed and fixed CLI public-Host/listener coupling and the Linux npm-bin symlink entry guard. The new TCP child-process regression and installed-package verification cover these issues. CalVer YYYY.M.N is checked against the CLI version constant.
 
 Final local check on Windows Node 24.19.0: npm run check passes 77 main tests and 3 converter tests, schema/version/typecheck/lint, five edge sandboxes, build, installed-tarball imports/CLI execution/audit and process smoke. The recording uses the independently installed Linux CLI binary (including its real npm symlink). The native IR source is fetched over an actual isolated HTTPS connection before checksum and Schema validation. No response is stubbed by a browser controller.
+
+## Weekly maintenance, 2026-10-26
+
+The real registry repair planner selected Biome 2.6.3 and the Tencent SDK 4.1.332 within existing compatible ranges, with zero remaining audit findings. The full npm run check suite passed 89 main tests and 3 converter tests, including two maintenance regressions. Temporary resolution locks are removed outside the checkout. Remote scheduled publishing verification is recorded in GitHub Actions; these local results do not claim that every platform permits bot pushes.

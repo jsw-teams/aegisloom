@@ -1,0 +1,101 @@
+name: Weekly dependency repair
+on:
+  schedule:
+    - cron: '37 19 * * 0'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      directory:
+        type: string
+        default: .
+      audit-level:
+        type: string
+        default: moderate
+      verify:
+        type: string
+        default: npm run check
+permissions:
+  contents: read
+concurrency:
+  group: dependency-repair-${{ github.repository }}-${{ inputs.directory || '.' }}
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      changed: ${{ steps.plan.outputs.changed }}
+      blocked: ${{ steps.plan.outputs.blocked }}
+      verified: ${{ steps.verify.outcome == 'success' && steps.integrity.outcome == 'success' && steps.plan.outputs.blocked != 'true' }}
+      base: ${{ steps.base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - id: plan
+        uses: jsw-teams/shieldweave/.github/actions/dependency-maintenance@main
+        with:
+          directory: ${{ inputs.directory || '.' }}
+          audit-level: ${{ inputs.audit-level || 'moderate' }}
+      # Archive the plan BEFORE running updated dependencies; the publishing job never executes them.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-repair-plan
+          path: ${{ runner.temp }}/shieldweave-maintenance/
+          retention-days: 14
+      - name: Install compatible dependencies and verify
+        id: verify
+        if: steps.plan.outputs.blocked != 'true'
+        continue-on-error: true
+        working-directory: ${{ inputs.directory || '.' }}
+        run: |
+          npm install --no-audit --no-fund
+          ${{ inputs.verify || 'npm --prefix api-shield-convert install && npm run check' }}
+      - name: Confirm the tested manifest matches the archived plan
+        id: integrity
+        if: steps.verify.outcome == 'success'
+        continue-on-error: true
+        working-directory: ${{ inputs.directory || '.' }}
+        env:
+          EXPECTED_MANIFEST_HASH: ${{ steps.plan.outputs.manifest-hash }}
+        run: node -e "const fs=require('node:fs'),c=require('node:crypto');const hash=c.createHash('sha256').update(JSON.stringify(JSON.parse(fs.readFileSync('package.json')))).digest('hex');if(hash!==process.env.EXPECTED_MANIFEST_HASH)throw Error('Tested manifest differs from the archived repair plan')"
+      - name: Report unresolved findings or failed regressions
+        if: steps.plan.outputs.blocked == 'true' || steps.verify.outcome == 'failure' || steps.integrity.outcome == 'failure'
+        run: |
+          echo 'Automatic repair withheld; see the candidate report and regression logs.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+  publish:
+    needs: repair
+    if: always() && needs.repair.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          name: dependency-repair-plan
+          path: ${{ runner.temp }}/shieldweave-maintenance/
+      - uses: jsw-teams/shieldweave/.github/actions/dependency-maintenance@main
+        with:
+          mode: publish
+          directory: ${{ inputs.directory || '.' }}
+          verified: ${{ needs.repair.outputs.verified }}
+          base-sha: ${{ needs.repair.outputs.base }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAINTENANCE_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}

@@ -1,0 +1,40 @@
+name: Compatible dependency maintenance
+description: Repair compatible dependency ranges without retaining lockfiles
+inputs:
+  mode:
+    default: repair
+  directory:
+    default: .
+  audit-level:
+    default: moderate
+  verified:
+    default: 'false'
+  base-sha:
+    default: ''
+outputs:
+  changed:
+    value: ${{ steps.run.outputs.changed }}
+  blocked:
+    value: ${{ steps.run.outputs.blocked }}
+  manifest-hash:
+    value: ${{ steps.run.outputs.manifest-hash }}
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        MAINTENANCE_DIRECTORY: ${{ inputs.directory }}
+        AUDIT_LEVEL: ${{ inputs.audit-level }}
+        MAINTENANCE_MODE: ${{ inputs.mode }}
+        MAINTENANCE_VERIFIED: ${{ inputs.verified }}
+        MAINTENANCE_BASE_SHA: ${{ inputs.base-sha }}
+      run: |
+        if [ "$MAINTENANCE_MODE" = repair ]; then
+          node "$GITHUB_ACTION_PATH/repair.mjs"
+        elif [ "$MAINTENANCE_MODE" = publish ]; then
+          node "$GITHUB_ACTION_PATH/publish.mjs"
+        else
+          echo 'Unsupported maintenance mode' >&2
+          exit 1
+        fi

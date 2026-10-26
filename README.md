@@ -132,6 +132,8 @@ retain JSON errors, and the status/HEAD/no-store semantics and decision-cache en
 Never interpolate incoming URLs, headers, identities or rule evidence into a page.
 
 Dependencies use compatible ranges and no tracked lockfile. Run `npm install`, `npm run check` and
-`npm run audit`. Daily Dependabot PRs advance dependency constraints; the audit resolves a fresh,
+`npm run audit`. Weekly Dependabot PRs advance dependency constraints; the audit resolves a fresh,
 disposable tree outside the checkout and removes it afterwards. Updates are tested before merging;
 normal installation therefore resolves current versions rather than reproducing an immutable tree.
+
+[Weekly dependency checks and automatic compatible repairs / 每周依赖检查与自动修复](docs/DEPENDENCIES.md).
