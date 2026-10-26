@@ -21,20 +21,23 @@ import { evaluateComponent, queryOsv, VulnerabilityDatabase } from "../vulnerabi
 import { readData } from "./config.js";
 import { importConfiguredSource, readSources } from "./sources.js";
 
-const usage = `Cloud API Shield
-  api-shield validate|explain <policy.yaml>
-  api-shield backend-check <backend-policy.yaml>
-  api-shield simulate <policy.yaml> <samples.json>
-  api-shield compatibility <policy.yaml> [maxRules=5]
-  api-shield serve <shield.yaml>
-  api-shield sources-check <sources.yaml>
-  api-shield sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
-  api-shield control <state.db> <tenant> [port=8790]
-  api-shield assess <inventory.json> <osv-records.json>
-  api-shield osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
-  api-shield learn <observations.json> <model.json> <tenant> <source1,source2,source3>
-  api-shield revoke <state.db> <tenant> <decision-id>
-  api-shield --help
+const usage = `ShieldWeave
+  shieldweave validate|explain <policy.yaml>
+  shieldweave backend-check <backend-policy.yaml>
+  shieldweave simulate <policy.yaml> <samples.json>
+  shieldweave compatibility <policy.yaml> [maxRules=5]
+  shieldweave serve <shield.yaml>
+  shieldweave sources-check <sources.yaml>
+  shieldweave sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
+  shieldweave sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
+  shieldweave sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
+  shieldweave sources-export <candidates.db> <source-id> <hash> <new-policy.json>
+  shieldweave control <state.db> <tenant> [port=8790]
+  shieldweave assess <inventory.json> <osv-records.json>
+  shieldweave osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
+  shieldweave learn <observations.json> <model.json> <tenant> <source1,source2,source3>
+  shieldweave revoke <state.db> <tenant> <decision-id>
+  shieldweave --help
 Cloud publication is available through the typed SDK with exact-plan approval; this CLI never auto-publishes.
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
@@ -48,6 +51,25 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (!file) throw new Error(usage);
+  if (command === "sources-export") {
+    if (!second || !third || !fourth)
+      throw new Error("Source ID, candidate hash and new output file required");
+    const { SourceSyncStore } = await import("../control-plane/source-sync-store.js");
+    const store = new SourceSyncStore(file);
+    try {
+      const candidate = store.candidate(second, third);
+      if (!candidate?.policy || candidate.status !== "verified")
+        throw new Error("Only verified candidates may be exported for review");
+      await writeFile(fourth, JSON.stringify(candidate.policy, null, 2), {
+        flag: "wx",
+        mode: 0o600,
+      });
+      console.log(JSON.stringify({ source: second, exported: true, activated: false }));
+    } finally {
+      store.close();
+    }
+    return;
+  }
   if (command === "sources-check") {
     const config = await readSources(file);
     console.log(
@@ -57,6 +79,35 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
         ruleSources: config.ruleSources.length,
       }),
     );
+    return;
+  }
+  if (command === "sources-sync" || command === "sources-watch") {
+    if (!second) throw new Error("Candidate database path required");
+    const interval = Number(third ?? 3600) * 1000;
+    if (!Number.isSafeInteger(interval) || interval < 60000 || interval > 86400000)
+      throw new Error("Sync interval must be 60..86400 seconds");
+    const { SourceSyncStore, synchronizeSources } = await import("../control-plane/source-sync.js");
+    const { setTimeout: delay } = await import("node:timers/promises");
+    const store = new SourceSyncStore(second),
+      abort = new AbortController();
+    const stop = () => abort.abort();
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+    try {
+      do {
+        const results = await synchronizeSources(file, store, { intervalMs: interval });
+        console.log(JSON.stringify({ results, activated: false }));
+        if (command !== "sources-watch") {
+          if (results.some((r) => r.result === "failed")) process.exitCode = 1;
+          break;
+        }
+        await delay(Math.min(interval, 60000), undefined, { signal: abort.signal }).catch(() => {});
+      } while (!abort.signal.aborted);
+    } finally {
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      store.close();
+    }
     return;
   }
   if (command === "sources-import") {

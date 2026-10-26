@@ -37,8 +37,8 @@ origin, edit `examples/shield.yaml` and use:
 node dist/packages/cli/main.js serve examples/shield.yaml
 ```
 
-The CLI listener intentionally remains loopback-only. Put it behind a configured TLS/private
-ingress. Its raw Node parser rejects ambiguous framing. Do not put an untrusted public proxy in
+The Node CLI supports explicit loopback or wildcard bind IPs. Default examples bind loopback;
+containers bind 0.0.0.0 internally and publish only a host-loopback port. Put it behind a configured TLS/private ingress. Its raw Node parser rejects ambiguous framing. Do not put an untrusted public proxy in
 front and then trust its forwarded IP header: CLI grouping uses the actual socket peer. For true
 client grouping, write a verified platform integration rather than trusting an arbitrary XFF.
 
@@ -128,3 +128,5 @@ cloud efficacy, cross-region latency and production false-positive rates are exp
 中文：先本机验收，再配置真实源站与最小权限密钥。构建成功和沙箱测试不等于真实平台已
 部署。当前文档不会提供假装通用的一键云发布命令；各账号的触发器、可信客户端信息与源站
 隔离需在授权测试环境验证后才能上线。完整缺口与后续验收见开发状态文档。
+
+See [standalone installation](deploy/standalone/README.md) for Docker, systemd and TLS ingress, and [scheduled rule synchronization](docs/RULE-SYNC.md) for public/private repository polling.

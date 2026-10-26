@@ -1,0 +1,25 @@
+services:
+  shield:
+    build:
+      context: ../..
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      SHIELD_ORIGIN_TOKEN: ${SHIELD_ORIGIN_TOKEN:?Set the origin credential in your shell}
+    volumes:
+      - ./shield.yaml:/etc/shield/shield.yaml:ro
+      - ./rules.yaml:/etc/shield/rules.yaml:ro
+      - shield-state:/data
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    stop_grace_period: 10s
+volumes:
+  shield-state:

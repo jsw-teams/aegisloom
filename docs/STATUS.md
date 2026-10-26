@@ -1,6 +1,6 @@
 # Delivery status / 开发状态
 
-This file is the capability ledger, updated through 2026.10.1. “Implemented” means executable code plus local tests;
+This file is the capability ledger, updated through 2026.10.4. “Implemented” means executable code plus local tests;
 “offline contract” is not live platform verification. Nothing has been published to a registry or
 cloud account by this task.
 
@@ -62,3 +62,19 @@ real application auth/CSRF/storage contracts and isolated cloud tests before any
 发布说明或对外宣传中描述为已经具备的生产能力。Phase 1 支持范围之外的请求默认明确拒绝。
 
 2026.10.1 replaces the previous custom recording console with actual existing WSL2 desktop/xterm captures, removes its standalone demo document, adopts YYYY.M.N versioning, fixes configured CLI Host handling and Linux npm-bin symlink entry execution, and removes the converter’s unnecessary Core dependency. No existing web site files are changed by these recording updates.
+
+## 2026.10.4: ShieldWeave
+
+The public project is renamed ShieldWeave. Hosting is independent of origin location:
+local servers, VPS and containers use the Node entry point; cloud adapters use the same Web runtime.
+Added a multi-stage non-root Docker image, restricted Compose profile, TLS ingress example,
+systemd runtime and hourly rule synchronization timer. A real process test verifies origin auth,
+forwarding, rule/L1 blocks and L2 persistence across restart. Container execution remains unverified
+on the current Windows host (no Docker engine).
+
+Public/private HTTPS sources now support environment-only read credentials and an explicit
+serial background polling daemon. Bounded SQLite candidates retain provenance, conversion status,
+real-runtime attack/legitimate regression evidence and redacted audit attempts. Active policy is
+never changed by synchronization. Private authentication is Mock-tested; no operator private rule
+repository has been configured. Full CRS and arbitrary third-party formats still require supported
+external converters and differential testing; downloaded bytes are not claimed as equivalent protection.

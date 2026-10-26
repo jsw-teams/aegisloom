@@ -64,6 +64,7 @@ export async function serve(configPath: string): Promise<void> {
       origin: upstream?.origin ?? config.origin!,
       allowedOrigins: upstream ? [upstream.origin] : config.allowedOrigins!,
       originToken,
+      allowLoopbackHttp: config.allowLoopbackHttp ?? false,
       ...(upstream
         ? { timeoutMs: upstream.timeoutMs, maxResponseBytes: upstream.maxResponseBytes }
         : {}),
@@ -91,7 +92,7 @@ export async function serve(configPath: string): Promise<void> {
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("No TCP listener");
   process.stderr.write(
-    `Cloud API Shield listening at http://${config.listen.host}:${address.port}; Host ${config.publicHosts[0]}; policy ${shield.version}\n`,
+    `ShieldWeave listening at http://${config.listen.host}:${address.port}; Host ${config.publicHosts[0]}; policy ${shield.version}\n`,
   );
 }
 export async function serveControl(path: string, tenant: string, port: number): Promise<void> {

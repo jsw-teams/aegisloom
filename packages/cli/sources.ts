@@ -21,16 +21,36 @@ export async function importConfiguredSource(
   const config = await readSources(file);
   const source = config.ruleSources.find((s) => s.id === id && s.enabled);
   if (!source) throw new Error("Unknown or disabled rule source");
+  const bytes = await downloadSource(file, source, transport);
+  return importSource(config, id, bytes, report);
+}
+
+/** Background-only bounded reader. Credentials are restricted to the exact configured URL. */
+export async function downloadSource(
+  file: string,
+  source: SourceConfig["ruleSources"][number],
+  transport: typeof fetch = fetch,
+): Promise<Uint8Array> {
   let bytes: Uint8Array;
   if (source.location.startsWith("https://")) {
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 5000);
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     try {
+      const headers = new Headers({
+        "accept-encoding": "identity",
+        accept: "application/vnd.github.raw+json",
+      });
+      if (source.authTokenEnv) {
+        const token = process.env[source.authTokenEnv];
+        if (!token || !/^[\x21-\x7e]{8,2048}$/.test(token))
+          throw new Error("Missing source credential");
+        headers.set("authorization", `Bearer ${token}`);
+      }
       const response = await transport(source.location, {
         redirect: "error",
         signal: abort.signal,
-        headers: { "accept-encoding": "identity" },
+        headers,
       });
       if (
         response.status !== 200 ||
@@ -79,5 +99,5 @@ export async function importConfiguredSource(
       await handle.close();
     }
   }
-  return importSource(config, id, bytes, report);
+  return bytes;
 }

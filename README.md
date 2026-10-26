@@ -1,6 +1,6 @@
-# Cloud API Shield
+# ShieldWeave
 
-[Configure cloud/VPS origins and rule sources](docs/SOURCE-CONFIG.md)
+[Configure local/VPS/cloud deployments and rule sources](docs/SOURCE-CONFIG.md)
 
 [简体中文](README.zh-CN.md) · Apache-2.0 · TypeScript / ESM · Node.js 22.13+ (24 recommended)
 
@@ -22,7 +22,7 @@ Independent SecLang subset import, explicit activation/rollback, changed-source 
 
 ![Actual VM terminal: independent converter and rollback](docs/media/vm-converter.gif)
 
-[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.2). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
+[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
 npm install
@@ -39,8 +39,7 @@ decisions, an authenticated control API, and offline adaptive security tools. Th
 APIs; Node-specific persistence and cloud SDKs live outside its dependency graph.
 
 **Status: an implemented, tested first release, not a production certification.** Phase 1 is runnable
-end to end. Later phases contain working components with the limitations below. No cloud resources
-have been changed or verified against a live account. See [delivery status](docs/STATUS.md),
+end to end. Later phases contain working components with the limitations below. The generic test suite does not require a cloud account; deployment-specific live verification is maintained by each operator. See [delivery status](docs/STATUS.md),
 [threat model](docs/THREAT-MODEL.md), and [validation evidence](docs/VALIDATION.md).
 
 | Capability | Implemented and tested | Boundary |
@@ -49,8 +48,9 @@ have been changed or verified against a live account. See [delivery status](docs
 | Backend standard | [Unified contract](BACKEND-STANDARD.md), origin-key rotation, strict JSON middleware, required auth/authorization/CSRF callbacks, safe output and redacted events; CLI configuration check | Application adoption and production ingress evidence still required; JSON middleware is not a universal wrapper for HTML/media |
 | Protocols | [Media streaming](PROTOCOLS.md), experimental WebSocket handshake IR/cache + bounded message relay, binary gRPC-Web envelope checking | Native gRPC adapter unsupported; protobuf authorization and established-socket revocation require further integration |
 | Decisions | Bounded LRU/TTL; tenant isolation; epochs/CAS; shared reference store; authenticated HTTP store; SQLite WAL authority and audit | Memory store is process-local. SQLite is a single-node authority; HTTP reads are a working cross-process path, not a Redis/KV implementation |
-| Control | Tenant-bound runtime/admin credentials; versioned policies; activation/rollback; decision revocation | CLI listeners bind loopback; deploy behind TLS/private ingress. Runtime policy changes require explicit engine reload/deployment |
-| Five clouds | Browser-target runtime bundles and sandbox block/proxy checks for Cloudflare, Netlify, Vercel, ESA and EdgeOne | Sandbox verification is not provider deployment verification |
+| Control | Tenant-bound runtime/admin credentials; versioned policies; activation/rollback; decision revocation | Control listener binds loopback; deploy behind TLS/private ingress. Runtime policy changes require explicit engine reload/deployment |
+| Local / VPS / containers | Node daemon, persistent SQLite, strict HTTP parser, configurable bind IP; Docker Compose and systemd installation profiles | Node process integration tested; container image and Linux service require operator-side execution |
+| Five provider integrations | Browser-target runtime bundles and sandbox block/proxy checks for Cloudflare, Netlify, Vercel, ESA and EdgeOne | Sandbox verification is not provider deployment verification |
 | Native firewalls | Real Cloudflare REST, ESA SDK, Vercel REST + draft activation, EdgeOne TC3 REST lifecycle code; plan approval, drift/readback/revoke/retry tests | Conservative method/canonical IPv4 compiler subset. Path/body/header/query rules stay runtime-only. Netlify native management unsupported. Quotas are explicit operator inputs |
 | CVE | Real Go OSV fixture; OSV query and dedup; SEMVER evaluation; CycloneDX/SPDX/npm lock import; CVE5, KEV, EPSS ingestion; tested, preauthorized feature isolation | Configuration exposure, arbitrary ecosystem versions, vendor patch verification, precise automatic virtual patches and durable response orchestration remain planned |
 | Learning | Trusted-source API discovery, EWMA/type baselines, poisoning quotas, freeze/rollback, anomaly candidates, shadow/canary evaluation gates | Experimental library/offline CLI. No automatic capture, training, publication or online model installation |
@@ -59,8 +59,14 @@ have been changed or verified against a live account. See [delivery status](docs
 
 Cloudflare has a [validation Worker manifest](deploy/cloudflare/README.md), a real local workerd
 test covering 101 upgrades, origin service bindings, L1/L2 and revoke, and a Wrangler dry-run.
-No production domain, route, existing Worker or live firewall has been changed. This open-source
-project is independent of Cloudflare's commercial API Shield product.
+Provider-native WAF changes require a separate reviewed plan.
+
+## Deploy locally, to a VPS, or to the cloud
+
+ShieldWeave runs as a Node.js daemon on Windows/Linux/macOS, in a container, or through a
+provider adapter. Protecting an origin and hosting the Shield are independent choices. There is
+no five-provider limit for local/VPS hosting. See [standalone installation](deploy/standalone/README.md)
+and [scheduled public/private rule synchronization](docs/RULE-SYNC.md).
 
 ## Run locally
 
@@ -122,7 +128,7 @@ internally and converter reports must match the actual bytes; configuration has 
 Trusted HTML 403/404 pages: pass `errorPages` to `createShield`; each page contains build-generated
 `html` and `contentSecurityPolicy`. Explicit HTML clients receive the configured page; JSON clients
 retain JSON errors, and the status/HEAD/no-store semantics and decision-cache enforcement remain.
-`@cloud-api-shield/shield/responses` also exports the framework-neutral responder for static adapters.
+`@jsw-teams/shieldweave/responses` also exports the framework-neutral responder for static adapters.
 Never interpolate incoming URLs, headers, identities or rule evidence into a page.
 
 Dependencies use compatible ranges and no tracked lockfile. Run `npm install`, `npm run check` and

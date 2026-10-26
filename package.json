@@ -1,14 +1,14 @@
 {
-  "name": "@cloud-api-shield/shield",
-  "version": "2026.10.3",
-  "description": "Portable, privacy-first API security runtime and control tools",
+  "name": "@jsw-teams/shieldweave",
+  "version": "2026.10.4",
+  "description": "Adaptive API protection for local servers, VPS, containers, cloud and edge runtimes",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22.13"
   },
   "bin": {
-    "api-shield": "dist/packages/cli/main.js"
+    "shieldweave": "dist/packages/cli/main.js"
   },
   "exports": {
     ".": "./dist/packages/runtime/index.js",
@@ -29,7 +29,8 @@
     "./sources": "./dist/integrations/rule-converter/sources.js",
     "./sbom": "./dist/integrations/sbom/index.js",
     "./schema": "./packages/rule-ir/schema.json",
-    "./responses": "./dist/packages/runtime/error-pages.js"
+    "./responses": "./dist/packages/runtime/error-pages.js",
+    "./source-sync": "./dist/packages/control-plane/source-sync.js"
   },
   "files": [
     "dist/packages",
@@ -47,8 +48,8 @@
     "lint": "biome check packages adapters integrations tests examples benchmarks scripts",
     "format": "biome check --write packages adapters integrations tests examples benchmarks scripts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts tests/sources.test.ts tests/error-pages.test.ts",
-    "test:integration": "node --import tsx --test tests/runtime.test.ts tests/control.test.ts tests/cloud.test.ts tests/proxy.test.ts tests/signing.test.ts tests/workerd.test.ts tests/serve.test.ts",
+    "test:unit": "node --import tsx --test tests/rules.test.ts tests/cache.test.ts tests/learning.test.ts tests/vulnerability.test.ts tests/feeds.test.ts tests/converter-contract.test.ts tests/sources.test.ts tests/error-pages.test.ts tests/source-sync.test.ts",
+    "test:integration": "node --import tsx --test tests/runtime.test.ts tests/control.test.ts tests/cloud.test.ts tests/proxy.test.ts tests/signing.test.ts tests/workerd.test.ts tests/serve.test.ts tests/standalone.test.ts",
     "test:security": "node --import tsx --test tests/security.test.ts tests/community.test.ts tests/resources.test.ts tests/backend.test.ts tests/protocols.test.ts",
     "dev": "tsx examples/local/server.ts",
     "benchmark": "tsx benchmarks/runtime.ts",
@@ -98,6 +99,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsw-teams/api-shield.git"
+    "url": "git+https://github.com/jsw-teams/shieldweave.git"
   }
 }

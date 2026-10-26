@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly security rule source synchronization
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1h
+RandomizedDelaySec=120
+Unit=shield-source-sync.service
+
+[Install]
+WantedBy=timers.target

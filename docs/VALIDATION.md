@@ -1,5 +1,28 @@
 # Validation evidence / 验证记录
 
+## ShieldWeave 2026.10.4, 2026-10-26
+
+Windows Node 24.19.0: npm run check passed 87 main tests, 3 converter tests,
+typecheck/lint/schema freshness/build, all five Web runtime sandbox bundles,
+installed-tarball imports/audit and a separate-process origin/cache/revocation smoke.
+After the final source-regression and export updates, typecheck/lint and all 7 source-sync /
+standalone tests passed again; the built CLI exported a verified candidate without activation.
+Fresh npm run audit: zero vulnerabilities.
+
+A real unauthenticated public GitHub Contents fetch imported this project's example policy,
+passed two real-runtime regression samples, persisted a verified candidate and reported not-due
+on the next scheduled invocation. This is an example rule-source transport test, not proof of
+third-party CRS coverage. Private source authorization, redaction, failure preservation, capacity,
+conversion status and poisoning/false-positive regression gates are Mock-tested.
+No operator private rule source was supplied; no private live synchronization is claimed.
+
+The standalone test launches the actual CLI against a real socket origin. It checks authenticated
+forwarding, spoofed forwarding-header removal, rule -> L1 blocking and persistent L2 recovery
+after process restart. Docker/Caddy/systemd profiles were reviewed against official documentation;
+no container engine is installed here, so container and Linux-service execution remain unverified.
+Native gRPC and Node WebSocket upgrade support are not claimed.
+
+
 ## Configured sources and video, 2026-10-25
 
 Windows Node 24.19.0: `npm run check` passed 76 main tests, 3 independent converter tests,
@@ -12,7 +35,7 @@ The previous 0.1.2 custom-console recording has been superseded by the actual VM
 production domain or full CRS conversion.
 
 The same source commit passed Ubuntu/Windows × Node 22/24 in
-[CI run 40188836636](https://github.com/jsw-teams/api-shield/actions/runs/40188836636).
+[CI run 40188836636](https://github.com/jsw-teams/shieldweave/actions/runs/40188836636).
 The local-process smoke harness subsequently switched from random consecutive port guesses to
 OS-assigned port-zero listeners after reviewing an older Windows bind-conflict failure; that
 startup/control/revocation smoke passed locally on Node 22.23.1 and 24.19.0.

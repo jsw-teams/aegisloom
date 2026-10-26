@@ -6,7 +6,7 @@ import schema from "./sources.schema.json" with { type: "json" };
 
 export interface UpstreamSource {
   id: string;
-  kind: "cloud" | "vps";
+  kind: "cloud" | "vps" | "local";
   origin: string;
   originTokenEnv: string;
   timeoutMs: number;
@@ -20,6 +20,9 @@ export interface RuleSource {
   version: string;
   license: string;
   service: string;
+  authTokenEnv?: string;
+  regressionFile?: string;
+  conversionReportFile?: string;
 }
 export interface SourceConfig {
   version: "1";
@@ -45,11 +48,25 @@ export function validateSources(input: unknown): SourceConfig {
       throw new Error("Unapproved source license");
     if (source.location.startsWith("https://")) {
       const url = new URL(source.location);
-      if (url.username || url.password || url.hash) throw new Error("Invalid rule source URL");
+      if (
+        url.username ||
+        url.password ||
+        url.hash ||
+        /(?:token|secret|password|key)=/i.test(url.search)
+      )
+        throw new Error("Invalid rule source URL");
     } else if (/^[a-z][a-z0-9+.-]*:/i.test(source.location) || source.location.startsWith("\\\\"))
       throw new Error("Rule sources require HTTPS or an operator-owned relative file");
     else if (source.location.startsWith("/") || source.location.split(/[\\/]/).includes(".."))
       throw new Error("Local rule source must remain within its configuration directory");
+    if (source.authTokenEnv && !source.location.startsWith("https://"))
+      throw new Error("Source credentials require HTTPS");
+    for (const file of [source.regressionFile, source.conversionReportFile])
+      if (
+        file &&
+        (file.startsWith("/") || /^[a-z]:|^\\\\/i.test(file) || file.split(/[\\/]/).includes(".."))
+      )
+        throw new Error("Source auxiliary file must remain within its configuration directory");
   }
   return config;
 }

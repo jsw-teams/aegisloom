@@ -34,7 +34,7 @@ template binding are operator-managed and not claimed as automated here.
 ## Real API use, with explicit plan authorization
 
 ```ts
-import { CloudflareGateway, createCloudflareAdapter } from '@cloud-api-shield/shield/cloud';
+import { CloudflareGateway, createCloudflareAdapter } from '@jsw-teams/shieldweave/cloud';
 const gateway = new CloudflareGateway(zoneId, existingRulesetId, scopedToken);
 const adapter = createCloudflareAdapter({ tenant, service: 'api', maxRules: actualQuota, gateway });
 const plan = await adapter.plan(validatedPolicy); // read-only

@@ -1,0 +1,9 @@
+**
+!Dockerfile
+!package.json
+!.npmrc
+!tsconfig.json
+!tsconfig.build.json
+!packages/**
+!adapters/**
+!integrations/**

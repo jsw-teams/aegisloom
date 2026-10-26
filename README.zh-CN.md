@@ -1,6 +1,6 @@
-# Cloud API Shield
+# ShieldWeave
 
-[配置云端/VPS 源站与规则来源](docs/SOURCE-CONFIG.md)
+[配置本地/VPS/云端部署与规则来源](docs/SOURCE-CONFIG.md)
 
 [English](README.md) · Apache-2.0 · TypeScript / ESM · Node.js 22.13+（推荐 24）
 
@@ -22,7 +22,7 @@
 
 ![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
 
-[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.2)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2)。完整 CRS、原生 gRPC 不支持；真实云账号验收仍未完成。
 
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 
@@ -36,19 +36,19 @@ npm run demo:record
 
 录制器对 29 条真实终端命令进行断言，通过 FFmpeg x11grab 录制。结束后停止自己的验收进程；若由录制器启动 VM，则关闭该专用 VM，不要指向正在运行其他任务的虚拟机。
 
-跨云 API 安全框架：严格请求边界、可读规则、带撤销语义的安全决策缓存、持久化控制面，
+支持本地服务器、VPS、容器、云端和边缘部署的 API 安全框架：严格请求边界、可读规则、带撤销语义的安全决策缓存、持久化控制面，
 以及可解释的离线漏洞响应和主动学习组件。核心引擎使用标准 Web APIs，云 SDK 和 SQLite
 位于独立模块，不进入边缘运行时依赖图。
 
 **当前交付是有实际代码和测试的首个版本，不代表完成全部六个阶段，也未经生产认证。**
 Phase 1 的安全闭环已实现。后续阶段的已实现组件和缺口逐项记录在
 [开发状态](docs/STATUS.md)、[测试证据](docs/VALIDATION.md) 和 [威胁模型](docs/THREAT-MODEL.md)。
-没有使用云账号、部署生产规则、执行外部漏洞扫描或上传 IP。
+通用测试无需云账号，不执行外部漏洞扫描或默认上传 IP；运营者部署的现网验收独立维护。
 
 本地验证包括实际 TCP 控制面、独立进程启动、源站隔离及撤销回归、五家边缘沙箱，
 以及 Cloudflare 本地 workerd 的真实 WebSocket 升级、媒体流和跨实例决策测试。
 最新测试命令、数量和适用环境见 [验证记录](docs/VALIDATION.md)。
-本项目独立于 Cloudflare 的商业 API Shield 产品。
+部署位置与受保护源站相互独立，不限于五家云函数。详见[独立部署](deploy/standalone/README.md)和[公共/私有规则定时同步](docs/RULE-SYNC.md)。
 
 ## 已实现的范围
 
@@ -144,7 +144,7 @@ Web `Request` 无法看到平台已经解析掉的报文帧、重复头的原始
 Trusted HTML 403/404 pages: pass `errorPages` to `createShield`; each page contains build-generated
 `html` and `contentSecurityPolicy`. Explicit HTML clients receive the configured page; JSON clients
 retain JSON errors, and the status/HEAD/no-store semantics and decision-cache enforcement remain.
-`@cloud-api-shield/shield/responses` also exports the framework-neutral responder for static adapters.
+`@jsw-teams/shieldweave/responses` also exports the framework-neutral responder for static adapters.
 Never interpolate incoming URLs, headers, identities or rule evidence into a page.
 
 Dependencies use compatible ranges and no tracked lockfile. Run `npm install`, `npm run check` and

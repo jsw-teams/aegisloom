@@ -20,7 +20,7 @@ execFileSync(
     "-out",
     "tls/cert.pem",
     "-subj",
-    "/CN=Cloud API Shield isolated acceptance",
+    "/CN=ShieldWeave isolated acceptance",
     "-addext",
     "subjectAltName=IP:127.0.0.1",
   ],

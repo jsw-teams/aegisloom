@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { loadPolicy } from "@cloud-api-shield/shield/rules";
+import { loadPolicy } from "@jsw-teams/shieldweave/rules";
 
 const read = (file) => loadPolicy(JSON.parse(readFileSync(file, "utf8")));
 const merged = loadPolicy({

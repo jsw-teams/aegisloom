@@ -14,12 +14,12 @@ await mkdir(resolve(root, "docs/media"), { recursive: true });
 const manifest = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"));
 const version = manifest.version;
 const lab = `/opt/recording/cloud-api-shield-${Date.now()}`;
-const core = resolve(root, `artifacts/cloud-api-shield-shield-${version}.tgz`);
+const core = resolve(root, `artifacts/jsw-teams-shieldweave-${version}.tgz`);
 const converterVersion = JSON.parse(
   await readFile(resolve(root, "api-shield-convert/package.json"), "utf8"),
 ).version;
 const converter = resolve(root, `artifacts/api-shield-convert-${converterVersion}.tgz`);
-const title = "Cloud API Shield | CodexRecordingVM WSL2";
+const title = "ShieldWeave | CodexRecordingVM WSL2";
 const runningBytes = execFileSync(wsl, ["--list", "--running", "--quiet"], { windowsHide: true });
 const wasRunning = runningBytes
   .toString(runningBytes.includes(0) ? "utf16le" : "utf8")
@@ -232,17 +232,17 @@ try {
   startedAt = Date.now();
   await wait(700);
   segments.push({ name: "sources", start: 0 });
-  await command("clear; uname -r; node --version; api-shield --version");
+  await command("clear; uname -r; node --version; shieldweave --version");
   await command("head -n 24 sources.yaml", { hold: 2500 });
   await command("sed -n '25,50p' sources.yaml", { hold: 2500 });
-  await command("api-shield sources-check sources.yaml", {
+  await command("shieldweave sources-check sources.yaml", {
     check: (text) => assert.match(text, /"valid":true/),
   });
   await command("cat rules.yaml", { hold: 2500 });
-  await command("api-shield sources-import sources.yaml native candidate.json", {
+  await command("shieldweave sources-import sources.yaml native candidate.json", {
     check: (text) => assert.match(text, /not-deployed/),
   });
-  await command("api-shield validate candidate.json", {
+  await command("shieldweave validate candidate.json", {
     check: (text) => assert.match(text, /"valid":true/),
   });
   segments[0].end = stamp();
@@ -283,7 +283,7 @@ try {
   await command('curl -si --cacert tls/cert.pem "$(cat origin-url.txt)/api/items?id=1"; echo', {
     check: (text) => assert.match(text, /HTTP\/1.1 403/),
   });
-  await command('api-shield revoke state.db recording "$(node event.mjs a --id)"; sleep 2', {
+  await command('shieldweave revoke state.db recording "$(node event.mjs a --id)"; sleep 2', {
     check: (text) => assert.match(text, /"generation":1/),
   });
   await command(attack, {
@@ -299,9 +299,12 @@ try {
   await command(
     "api-shield-convert method.conf seclang method.conf lab-1 Apache-2.0 api > report.json",
   );
-  await command("api-shield sources-import sources.yaml method candidate-method.json report.json", {
-    check: (text) => assert.match(text, /"rules":1/),
-  });
+  await command(
+    "shieldweave sources-import sources.yaml method candidate-method.json report.json",
+    {
+      check: (text) => assert.match(text, /"rules":1/),
+    },
+  );
   await command("node merge.mjs; node activate.mjs merged-policy.json; source ./start-lab.sh");
   await command('curl -si -X DELETE -H "$H" "$A/api/items?id=1"; echo', {
     check: async (text) => {
@@ -314,7 +317,7 @@ try {
     check: (text) => assert.match(text, /HTTP\/1.1 200/),
   });
   await command(
-    "printf '\\n# changed after conversion\\n' >> method.conf; api-shield sources-import sources.yaml method rejected.json report.json",
+    "printf '\\n# changed after conversion\\n' >> method.conf; shieldweave sources-import sources.yaml method rejected.json report.json",
     { exit: 1, check: (text) => assert.match(text, /Conversion does not match configured source/) },
   );
   await command(
@@ -322,7 +325,7 @@ try {
     { exit: 2 },
   );
   await command(
-    "api-shield sources-import sources.yaml unsupported rejected-lossy.json unsupported-report.json",
+    "shieldweave sources-import sources.yaml unsupported rejected-lossy.json unsupported-report.json",
     { exit: 1, check: (text) => assert.match(text, /Lossy\/unsupported/) },
   );
   segments[2].end = stamp();

@@ -15,7 +15,7 @@ This is a control-plane import facility; it runs outside the online request path
 ## Protect a cloud origin or third-party VPS
 
 ```sh
-npm ci
+npm install
 npm run build
 node dist/packages/cli/main.js sources-check examples/sources/sources.yaml
 # Edit the example HTTPS origin, publicHosts, routes and secret environment references first.
@@ -26,7 +26,7 @@ node dist/packages/cli/main.js serve examples/shield-vps.yaml
 `SHIELD_VPS_ORIGIN_TOKEN` 与 `SHIELD_CLIENT_TOKEN` 必须是不同的至少 32 字符随机密钥。
 源站必须验证注入的 `x-shield-origin-auth`，限制网络入口，禁止直接绕过；服务端默认 TLS
 验证不得关闭。示例没有自动修改 VPS 防火墙或云平台配置，也不自动签发证书。
-CLI 只监听回环地址；前置 TLS 入口的 Host 必须与配置一致。客户端分组使用实际 socket
+CLI 默认示例监听回环地址；容器可显式监听 0.0.0.0；前置 TLS 入口的 Host 必须与配置一致。客户端分组使用实际 socket
 对端，不能把任意 X-Forwarded-For 当作可信身份。应用级 OAuth/对象授权应由真实认证回调接入。
 
 The same portable engine can protect an HTTPS origin on any hosting provider. Runtime portability
@@ -44,7 +44,7 @@ node dist/packages/cli/main.js explain candidate.json
 # Test with your own normal/attack corpus, then explicitly set policyFile and reload the runtime.
 ```
 
-远端下载没有默认定时开启，只在执行导入时访问明确配置的来源。下载不携带凭据或业务数据，
+远端下载没有默认定时开启，只在执行导入时访问明确配置的来源。下载不携带业务数据；可通过 authTokenEnv 向指定 HTTPS 来源发送独立只读凭据，
 禁止重定向与压缩，限制 5 秒和 128 KiB，解析前自动计算来源摘要并记录到候选规则 provenance。访问私有 HTTPS 规则服务器可用，
 但规则配置必须由可信管理员维护；不是面向不可信租户的任意 URL 下载服务。文件路径包含
 符号链接时，其目标也必须由该管理员控制。现阶段每次导入一个固定来源，没有自动合并冲突。
@@ -65,9 +65,9 @@ The source inventory has no manual checksum option. The importer computes SHA-25
 audit provenance and verifies a converter report against the actual original bytes. This is not an
 independently approved integrity pin: a remote URL may change its content while declaring the same
 version. Review candidate diffs and regressions before explicit activation; unattended activation
-from mutable remote sources is not supported. 已发布的安装包仍由包管理器 lockfile 校验完整性。
+from mutable remote sources is not supported. 项目不保存依赖锁文件；每日重新解析、审计并通过回归验证更新。
 
-目前不支持私有来源的凭据注入、签名 feed 信任链、镜像回退或无人值守来源更新。
+公共及私有库支持[定时同步](RULE-SYNC.md)，凭据只通过环境变量注入。签名 feed 信任链和镜像回退仍未实现。
 No cloud-management API is called by these commands.
 
 The Node CLI accepts one exact public Host independently of its loopback listener address; requests through a TLS ingress must preserve that configured Host. Port 0 explicitly requests an OS-assigned local listener. These settings are exercised in the actual VM terminal recording and TCP regression.

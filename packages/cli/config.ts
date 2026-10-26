@@ -14,7 +14,8 @@ export interface RunConfig {
   originTokenEnv?: string;
   upstream?: { file: string; id: string };
   clientTokenEnv?: string;
-  listen: { host: "127.0.0.1"; port: number };
+  listen: { host: "127.0.0.1" | "::1" | "0.0.0.0" | "::"; port: number };
+  allowLoopbackHttp?: boolean;
   decisions: { kind: "sqlite"; path: string } | { kind: "http"; url: string; tokenEnv: string };
 }
 export async function readData(path: string): Promise<unknown> {
@@ -47,6 +48,7 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     "listen",
     "decisions",
     "upstream",
+    "allowLoopbackHttp",
   ];
   if (
     !raw ||
@@ -69,14 +71,15 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
       : !Array.isArray(raw.allowedOrigins) ||
         typeof raw.origin !== "string" ||
         typeof raw.originTokenEnv !== "string") ||
-    raw.listen?.host !== "127.0.0.1" ||
+    !["127.0.0.1", "::1", "0.0.0.0", "::"].includes(raw.listen?.host) ||
+    (raw.allowLoopbackHttp !== undefined && typeof raw.allowLoopbackHttp !== "boolean") ||
     !Number.isInteger(raw.listen.port) ||
     raw.listen.port < 0 ||
     raw.listen.port > 65535 ||
     !["sqlite", "http"].includes(raw.decisions?.kind)
   )
     throw new Error(
-      "Invalid run configuration; CLI listener is loopback-only, use an authenticated TLS ingress for external access",
+      "Invalid run configuration; explicitly select a listen IP and use a TLS ingress for external access",
     );
   const publicUrl = new URL(`https://${raw.publicHosts[0]}`);
   if (

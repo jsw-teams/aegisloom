@@ -24,7 +24,7 @@ this project. This project is independent of Cloudflare's commercial API Shield 
 ## Executable JSON API profile
 
 `packages/backend-security/` exports a portable Web API middleware, origin verifier and strict
-policy validator through `@cloud-api-shield/shield/backend`. The JSON guard enforces B01–B08
+policy validator through `@jsw-teams/shieldweave/backend`. The JSON guard enforces B01–B08
 within its declared profile, with B02/B03/B04 verification delegated to mandatory application
 callbacks. It caps request bytes at 1 MiB, response bytes at 1 MiB, total API work at 30 seconds
 and concurrent admitted operations at 256. Deployment settings can be stricter.
@@ -52,7 +52,7 @@ Only exact JSON API routes belong inside this middleware. OAuth redirects, embed
 public cacheable assets, large uploads, media and sockets require their own profile and tests.
 Use `createOriginVerifier` independently when the full JSON profile does not fit an application.
 Protocol adapters may import the shared boundary, bounded body reader and strict JSON parser
-from `@cloud-api-shield/shield/http-boundary`; do not duplicate these parsers per business.
+from `@jsw-teams/shieldweave/http-boundary`; do not duplicate these parsers per business.
 The secret proves the gateway's possession of a credential; it does not attest that an arbitrary
 caller ran a particular policy. Protect the credential and network path accordingly.
 

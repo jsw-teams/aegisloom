@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/jsw-teams/api-shield/sources-v1",
+  "$id": "https://github.com/jsw-teams/shieldweave/sources-v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "upstreams", "ruleSources", "permittedLicenses"],
@@ -22,7 +22,7 @@
         "required": ["id", "kind", "origin", "originTokenEnv", "timeoutMs", "maxResponseBytes"],
         "properties": {
           "id": { "$ref": "#/definitions/id" },
-          "kind": { "enum": ["cloud", "vps"] },
+          "kind": { "enum": ["cloud", "vps", "local"] },
           "origin": { "type": "string", "minLength": 9, "maxLength": 2048 },
           "originTokenEnv": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,127}$" },
           "timeoutMs": { "type": "integer", "minimum": 1, "maximum": 120000 },
@@ -46,7 +46,10 @@
           },
           "version": { "type": "string", "minLength": 1, "maxLength": 128 },
           "license": { "type": "string", "minLength": 1, "maxLength": 128 },
-          "service": { "$ref": "#/definitions/id" }
+          "service": { "$ref": "#/definitions/id" },
+          "authTokenEnv": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,127}$" },
+          "regressionFile": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "conversionReportFile": { "type": "string", "minLength": 1, "maxLength": 512 }
         }
       }
     }

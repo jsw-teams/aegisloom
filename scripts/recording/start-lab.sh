@@ -8,7 +8,7 @@ for instance in a b; do
     kill -TERM "$(cat "$instance.pid")"
     for attempt in {1..50}; do kill -0 "$(cat "$instance.pid")" 2>/dev/null || break; sleep 0.1; done
   fi
-  node node_modules/@cloud-api-shield/shield/dist/packages/cli/main.js serve "$instance.yaml" >"$instance.events.jsonl" 2>"$instance.startup.log" &
+  node node_modules/@jsw-teams/shieldweave/dist/packages/cli/main.js serve "$instance.yaml" >"$instance.events.jsonl" 2>"$instance.startup.log" &
   echo $! > "$instance.pid"
   for attempt in {1..100}; do grep -q 'listening at http:' "$instance.startup.log" && break; sleep 0.1; done
   grep -q 'listening at http:' "$instance.startup.log" || { cat "$instance.startup.log"; return 1; }

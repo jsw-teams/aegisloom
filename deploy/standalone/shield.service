@@ -1,0 +1,32 @@
+[Unit]
+Description=Portable API security runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=shield
+Group=shield
+WorkingDirectory=/opt/shield
+EnvironmentFile=/etc/shield/secrets.env
+ExecStart=/usr/bin/node /opt/shield/dist/packages/cli/main.js serve /etc/shield/shield.yaml
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+StateDirectory=shield
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+ReadWritePaths=/var/lib/shield
+
+[Install]
+WantedBy=multi-user.target
