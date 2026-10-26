@@ -22,7 +22,7 @@ Independent SecLang subset import, explicit activation/rollback, changed-source 
 
 ![Actual VM terminal: independent converter and rollback](docs/media/vm-converter.gif)
 
-[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2). See `scripts/recording/catalog-*` for the tested contract and inputs. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
+[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.6). See `scripts/recording/catalog-*` for the tested contract and inputs. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
 npm install

@@ -22,7 +22,7 @@
 
 ![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
 
-[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.2)。验证脚本和输入样本见 `scripts/recording/catalog-*`。
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.6)。验证脚本和输入样本见 `scripts/recording/catalog-*`。
 
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 
