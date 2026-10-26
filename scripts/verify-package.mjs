@@ -70,6 +70,7 @@ try {
       npmCli,
       "install",
       "--ignore-scripts",
+      "--package-lock=true",
       "--no-fund",
       "--no-audit",
       join(directory, packed.filename),

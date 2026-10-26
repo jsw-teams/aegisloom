@@ -14,7 +14,7 @@ test sequence, see [deploy/cloudflare](deploy/cloudflare/README.md). Backend ado
 ## Local execution
 
 ```sh
-npm ci
+npm install
 npm run build
 npm run dev
 ```

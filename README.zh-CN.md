@@ -27,10 +27,10 @@
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 
 ```sh
-npm ci
+npm install
 npm run build
 npm pack --pack-destination artifacts
-# 在 api-shield-convert/ 执行 npm ci 和 npm pack --pack-destination ../artifacts
+# 在 api-shield-convert/ 执行 npm install 和 npm pack --pack-destination ../artifacts
 npm run demo:record
 ```
 
@@ -92,7 +92,7 @@ Cloudflare [独立验证入口](deploy/cloudflare/README.md) 已有 Worker 配�
 ## 本地启动与验收
 
 ```sh
-npm ci
+npm install
 npm run check
 npm run test:converter
 npm run check:edge
@@ -140,3 +140,14 @@ Web `Request` 无法看到平台已经解析掉的报文帧、重复头的原始
 基准只报告本地内存场景的实际数据，不声称云平台零计费或生产误报率。
 
 许可证选择 Apache-2.0，便于跨云集成并提供明确专利授权；依赖和外部规则各自遵守原许可证。
+
+Trusted HTML 403/404 pages: pass `errorPages` to `createShield`; each page contains build-generated
+`html` and `contentSecurityPolicy`. Explicit HTML clients receive the configured page; JSON clients
+retain JSON errors, and the status/HEAD/no-store semantics and decision-cache enforcement remain.
+`@cloud-api-shield/shield/responses` also exports the framework-neutral responder for static adapters.
+Never interpolate incoming URLs, headers, identities or rule evidence into a page.
+
+Dependencies use compatible ranges and no tracked lockfile. Run `npm install`, `npm run check` and
+`npm run audit`. Daily Dependabot PRs advance dependency constraints; the audit resolves a fresh,
+disposable tree outside the checkout and removes it afterwards. Updates are tested before merging;
+normal installation therefore resolves current versions rather than reproducing an immutable tree.

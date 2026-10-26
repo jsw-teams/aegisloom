@@ -25,10 +25,10 @@ Independent SecLang subset import, explicit activation/rollback, changed-source 
 [Full VM recording and machine-checked evidence](https://github.com/jsw-teams/api-shield/releases/tag/v2026.10.2). No custom HTML console or rendered terminal is used. Full CRS and native gRPC remain unsupported. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
-npm ci
+npm install
 npm run build
 npm pack --pack-destination artifacts
-# From api-shield-convert/: npm ci && npm pack --pack-destination ../artifacts
+# From api-shield-convert/: npm install && npm pack --pack-destination ../artifacts
 npm run demo:record
 ```
 
@@ -65,7 +65,7 @@ project is independent of Cloudflare's commercial API Shield product.
 ## Run locally
 
 ```sh
-npm ci
+npm install
 npm run check
 npm run check:edge
 npm run test:converter
@@ -118,3 +118,14 @@ requests. WAF mitigation never substitutes for upstream upgrades or verified pro
 for permissive cross-cloud use with an explicit patent grant. Third-party dependencies retain their
 own licenses; external rule import requires explicit license approval. Source digests are computed
 internally and converter reports must match the actual bytes; configuration has no checksum setting.
+
+Trusted HTML 403/404 pages: pass `errorPages` to `createShield`; each page contains build-generated
+`html` and `contentSecurityPolicy`. Explicit HTML clients receive the configured page; JSON clients
+retain JSON errors, and the status/HEAD/no-store semantics and decision-cache enforcement remain.
+`@cloud-api-shield/shield/responses` also exports the framework-neutral responder for static adapters.
+Never interpolate incoming URLs, headers, identities or rule evidence into a page.
+
+Dependencies use compatible ranges and no tracked lockfile. Run `npm install`, `npm run check` and
+`npm run audit`. Daily Dependabot PRs advance dependency constraints; the audit resolves a fresh,
+disposable tree outside the checkout and removes it afterwards. Updates are tested before merging;
+normal installation therefore resolves current versions rather than reproducing an immutable tree.

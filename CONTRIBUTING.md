@@ -1,6 +1,6 @@
 # Contributing / 贡献
 
-Use Node.js 24 and npm. Run `npm ci`, `npm run check`, `npm run check:edge`, and
+Use Node.js 24 and npm. Run `npm install`, `npm run check`, `npm run check:edge`, and
 `npm run test:converter`. CI runs unit, integration, security, typecheck, lint, build, static-schema,
 edge-bundle and package checks on Windows/Linux and Node 22/24. CI is configured, not claimed to
 have executed remotely before the repository is published.

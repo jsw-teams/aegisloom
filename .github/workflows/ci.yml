@@ -14,9 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
-      - run: npm ci
-      - run: npm --prefix api-shield-convert ci
+      - run: npm install
+      - run: npm --prefix api-shield-convert install
       - name: Static schema validator is current
         run: node scripts/generate-validator.mjs --check
       - name: Calendar version matches the CLI
@@ -35,4 +34,4 @@ jobs:
       - run: npm run cloudflare:dry-run
       - run: npm run verify:package
       - run: npm run smoke:local
-      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm run audit

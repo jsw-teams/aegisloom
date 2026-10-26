@@ -24,6 +24,7 @@ import {
 } from "../protocols/grpc.js";
 import { type MediaProfile, validateMediaProfile } from "../protocols/stream.js";
 import { duration, loadPolicy, type Policy, policyVersion, visit } from "../rule-ir/index.js";
+import { createErrorPages, type ErrorPages } from "./error-pages.js";
 import { createProxy, type ProxyOptions } from "./proxy.js";
 
 export type { SecurityEvent, TrustedContext } from "../core/types.js";
@@ -56,6 +57,8 @@ export interface ShieldOptions {
   storageTimeoutMs?: number;
   storageFailure?: "closed" | "evaluate-rules";
   event?: (event: SecurityEvent) => void;
+  /** Optional trusted static pages; JSON API responses remain the default. */
+  errorPages?: ErrorPages;
   /** Optional explicitly configured subscription; the subscriber enforces three independent consents. */
   community?: { shouldBlock(ip: string, now: number): boolean };
   now?: () => number;
@@ -90,6 +93,7 @@ export async function createShield(input: ShieldOptions) {
       return { rule, match: compileExpression(rule.when) };
     });
   const proxy = createProxy(options.proxy);
+  const errorPages = createErrorPages(options.errorPages ?? {});
   // Trace IDs vary on otherwise identical attacks. Keep them whenever any active rule observes them.
   const observedHeaders = new Set<string>();
   for (const { rule } of rules)
@@ -223,6 +227,7 @@ export async function createShield(input: ShieldOptions) {
     }
   };
   const denied = (
+    request: Request,
     status: number,
     source: SecurityEvent["source"],
     reason: string,
@@ -231,9 +236,12 @@ export async function createShield(input: ShieldOptions) {
   ) => {
     stats.blocked++;
     emit("block", source, reason, ruleId, decisionId);
-    return Response.json(
-      { error: "request_rejected", reason },
-      { status, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } },
+    return (
+      errorPages(request, status) ??
+      Response.json(
+        { error: "request_rejected", reason },
+        { status, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff" } },
+      )
     );
   };
   async function handle(
@@ -244,7 +252,7 @@ export async function createShield(input: ShieldOptions) {
   ): Promise<Response> {
     context = structuredClone(context);
     stats.requests++;
-    if (active >= maxConcurrent) return denied(503, "boundary", "concurrency-capacity");
+    if (active >= maxConcurrent) return denied(request, 503, "boundary", "concurrency-capacity");
     active++;
     let released = false;
     const release = () => {
@@ -286,7 +294,7 @@ export async function createShield(input: ShieldOptions) {
         context.verifiedClientIp &&
         options.community?.shouldBlock(context.verifiedClientIp, now())
       )
-        return denied(403, "community", "opted-in-community-decision");
+        return denied(request, 403, "community", "opted-in-community-decision");
       source = "boundary";
       const body = await readBody(request, limits);
       const contentType = (request.headers.get("content-type") ?? "")
@@ -376,7 +384,7 @@ export async function createShield(input: ShieldOptions) {
       const local = storageAvailable ? l1.get(key, timestamp) : undefined;
       if (local && local.generation === generation && local.policy === version && !local.revoked) {
         stats.l1Hits++;
-        return denied(403, "l1", "cached-attack", local.ruleId, local.id);
+        return denied(request, 403, "l1", "cached-attack", local.ruleId, local.id);
       }
       if (storageAvailable && !negativeL2.get(key, timestamp)) {
         try {
@@ -393,7 +401,7 @@ export async function createShield(input: ShieldOptions) {
           ) {
             l1.set(key, remote, remote.expiresAt);
             stats.l2Hits++;
-            return denied(403, "l2", "distributed-attack", remote.ruleId, remote.id);
+            return denied(request, 403, "l2", "distributed-attack", remote.ruleId, remote.id);
           }
         } catch {
           stats.storageFailures++;
@@ -460,6 +468,7 @@ export async function createShield(input: ShieldOptions) {
           }
         }
         return denied(
+          request,
           rule.then.action === "rate-limit" ? 429 : 403,
           "rule",
           "rule-match",
@@ -478,9 +487,9 @@ export async function createShield(input: ShieldOptions) {
       emit("allow", "proxy", "forwarded");
       return response;
     } catch (error) {
-      if (error instanceof ShieldError) return denied(error.status, source, error.code);
+      if (error instanceof ShieldError) return denied(request, error.status, source, error.code);
       emit("error", source, "internal-error");
-      return denied(500, source, "internal-error");
+      return denied(request, 500, source, "internal-error");
     } finally {
       if (!streaming) release();
     }
