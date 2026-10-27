@@ -1,0 +1,54 @@
+{
+  "project": "OWASP CRS",
+  "repository": "https://github.com/coreruleset/coreruleset",
+  "releaseTag": "v4.30.0",
+  "license": "Apache-2.0",
+  "format": "modsecurity-seclang",
+  "executableByEdgeShield": false,
+  "policyImportStatus": "awaiting-conversion-and-full-regression",
+  "provenance": "official release-tag archive, individual file hashes",
+  "files": [
+    {
+      "name": "REQUEST-913-SCANNER-DETECTION.conf",
+      "bytes": 3609,
+      "sha256": "82a6823265f8e191fa4b3f40369a87df3ffd613fd495fbfe8212487844826eb4",
+      "ruleIds": 9
+    },
+    {
+      "name": "REQUEST-920-PROTOCOL-ENFORCEMENT.conf",
+      "bytes": 69018,
+      "sha256": "4550747b301abbfa7a072644c0db04041e971760e678943c29b7a4daa31a403b",
+      "ruleIds": 68
+    },
+    {
+      "name": "REQUEST-921-PROTOCOL-ATTACK.conf",
+      "bytes": 24003,
+      "sha256": "d07f08d8af15477ef04f7ff9ebdbffeee081afe78d5c9f174a23a1f38adcae67",
+      "ruleIds": 26
+    },
+    {
+      "name": "REQUEST-930-APPLICATION-ATTACK-LFI.conf",
+      "bytes": 9494,
+      "sha256": "9588c356452d15c75e78ace7faefcb9809ed2b9684ecf33069c6ab44f4c2771f",
+      "ruleIds": 14
+    },
+    {
+      "name": "REQUEST-931-APPLICATION-ATTACK-RFI.conf",
+      "bytes": 9696,
+      "sha256": "f0702896585fff0a3d82984d4fcc014136565421170d6a22b766c33324622eb2",
+      "ruleIds": 13
+    },
+    {
+      "name": "REQUEST-941-APPLICATION-ATTACK-XSS.conf",
+      "bytes": 55720,
+      "sha256": "2a33fa32daca6b1d2bf354fbe54dcb5355d84fe3362c8b13ca412cf422caaf50",
+      "ruleIds": 42
+    },
+    {
+      "name": "REQUEST-942-APPLICATION-ATTACK-SQLI.conf",
+      "bytes": 98961,
+      "sha256": "8dadc742af2bb6b7e5b48570cb0201930cd9cfe9e3de94776e736605ea7be228",
+      "ruleIds": 68
+    }
+  ]
+}
