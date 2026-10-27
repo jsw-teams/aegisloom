@@ -15,6 +15,7 @@ on:
       - 'scripts/maintain-rules.mjs'
       - 'scripts/sync-upstream-rules.mjs'
       - 'scripts/check-rule-coverage.mjs'
+      - '.github/workflows/rules-maintenance.yml'
 permissions:
   contents: read
 concurrency:
