@@ -1,0 +1,14 @@
+[
+  {
+    "name": "blocked-marker",
+    "kind": "attack",
+    "url": "https://simulation.test/api?edge_shield_probe=block",
+    "expectedStatus": 403
+  },
+  {
+    "name": "allowed-marker",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?edge_shield_probe=allow",
+    "expectedStatus": 204
+  }
+]

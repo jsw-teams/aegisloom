@@ -1,0 +1,18 @@
+version: '1'
+upstreams: []
+permittedLicenses: [Apache-2.0]
+application:
+  policyFile: active.json
+  baselineFile: baseline.json
+  regressionFile: regression.json
+  service: api
+ruleSources:
+  - id: project-reviewed
+    enabled: true
+    autoApply: true
+    location: curated.json
+    format: shield-ir
+    version: reviewed-v1
+    license: Apache-2.0
+    service: api
+    regressionFile: regression.json

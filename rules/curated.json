@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "id": "test-probe",
+      "name": "Pipeline validation probe only",
+      "service": "api",
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "when": {
+        "field": "query",
+        "key": "edge_shield_probe",
+        "op": "eq",
+        "value": "block"
+      },
+      "then": {
+        "action": "block"
+      }
+    }
+  ]
+}
