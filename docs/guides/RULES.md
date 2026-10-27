@@ -1,6 +1,6 @@
 # Shield IR v1 / 规则手册
 
-Formal source: [schema.json](packages/rule-ir/schema.json). JSON and YAML represent the same IR.
+Formal source: [schema.json](../../packages/rule-ir/schema.json). JSON and YAML represent the same IR.
 Policies require `version: "1"` and a `rules` list. Rules require `id`, `name`, `service`, `when`,
 and `then`. Other defaults are explicit in `loadPolicy`: enabled, priority 100, request-headers,
 runtime-required, caching off, cache TTL 1m, community report off. Unknown keys, duplicate YAML keys,

@@ -4,12 +4,12 @@ Releases use YYYY.M.N (for example v2026.10.1), with a monthly release ordinal. 
 actual VM terminal recordings in the READMEs; recordings do not deploy or verify a cloud account.
 
 Cloud or third-party VPS origins and pinned rule imports can be managed from one YAML/JSON
-inventory. See [source configuration](docs/SOURCE-CONFIG.md) and the runnable
-[VPS configuration](examples/shield-vps.yaml). This is independent of provider-native WAF support.
+inventory. See [source configuration](../SOURCE-CONFIG.md) and the runnable
+[VPS configuration](../../examples/shield-vps.yaml). This is independent of provider-native WAF support.
 
 For the Cloudflare validation Worker, service bindings, secrets and an unchanged-production-route
-test sequence, see [deploy/cloudflare](deploy/cloudflare/README.md). Backend adoption follows
-[BACKEND-STANDARD.md](BACKEND-STANDARD.md); media/WS/gRPC-Web require [protocol profiles](PROTOCOLS.md).
+test sequence, see [deploy/cloudflare](../../deploy/cloudflare/README.md). Backend adoption follows
+[BACKEND-STANDARD.md](BACKEND-STANDARD.md); media/WS/gRPC-Web require [protocol profiles](../architecture/PROTOCOLS.md).
 
 ## Local execution
 
@@ -130,4 +130,4 @@ cloud efficacy, cross-region latency and production false-positive rates are exp
 部署。当前文档不会提供假装通用的一键云发布命令；各账号的触发器、可信客户端信息与源站
 隔离需在授权测试环境验证后才能上线。完整缺口与后续验收见开发状态文档。
 
-See [standalone installation](deploy/standalone/README.md) for Docker, systemd and TLS ingress, and [scheduled rule synchronization](docs/RULE-SYNC.md) for public/private repository polling.
+See [standalone installation](../../deploy/standalone/README.md) for Docker, systemd and TLS ingress, and [scheduled rule synchronization](../RULE-SYNC.md) for public/private repository polling.

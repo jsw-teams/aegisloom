@@ -1,6 +1,6 @@
 # Validation evidence / 验证记录
 
-## ShieldWeave 2026.10.6, 2026-10-26
+## AegisLoom 2026.10.6, 2026-10-26
 
 Windows Node 24.19.0: `npm run check` passed 92 main tests and 3 converter tests,
 including typecheck, lint, schema/build, five runtime sandbox bundles, installed-package
@@ -25,7 +25,7 @@ control/corpus, independent SecLang conversion, activation and rollback. Current
 in both READMEs; release assets include the complete recording and command evidence.
 
 
-## ShieldWeave 2026.10.4, 2026-10-26
+## AegisLoom 2026.10.4, 2026-10-26
 
 Windows Node 24.19.0: npm run check passed 87 main tests, 3 converter tests,
 typecheck/lint/schema freshness/build, all five Web runtime sandbox bundles,
@@ -60,7 +60,7 @@ The previous 0.1.2 custom-console recording has been superseded by the actual VM
 production domain or full CRS conversion.
 
 The same source commit passed Ubuntu/Windows × Node 22/24 in
-[CI run 40188836636](https://github.com/jsw-teams/shieldweave/actions/runs/40188836636).
+[CI run 40188836636](https://github.com/jsw-teams/aegisloom/actions/runs/40188836636).
 The local-process smoke harness subsequently switched from random consecutive port guesses to
 OS-assigned port-zero listeners after reviewing an older Windows bind-conflict failure; that
 startup/control/revocation smoke passed locally on Node 22.23.1 and 24.19.0.

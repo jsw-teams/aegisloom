@@ -1,7 +1,7 @@
 # Architecture / 架构
 
 The six logical responsibilities remain separate. Only implemented modules are present; future
-backend services are tracked in [docs/STATUS.md](docs/STATUS.md).
+backend services are tracked in [docs/STATUS.md](../STATUS.md).
 
 | Responsibility | Code | Execution |
 | --- | --- | --- |
@@ -47,4 +47,4 @@ audited operation. No client-controlled tenant/header selects the authority tena
 
 中文：按在线执行、控制、学习、漏洞、云联动和社区六个职责分块。复杂计算不进入请求路径。
 源站令牌、身份和路径边界不受学习器控制。当前没有自动化的“学习即上线”；候选规则必须
-经过独立样本、Shadow、Canary 及授权门控。详细决策见 [ADR](docs/ADR.md)。
+经过独立样本、Shadow、Canary 及授权门控。详细决策见 [ADR](../ADR.md)。

@@ -1,13 +1,14 @@
 {
   "name": "@jsw-teams/shieldweave",
   "version": "2026.10.6",
-  "description": "Adaptive API protection for local servers, VPS, containers, cloud and edge runtimes",
+  "description": "AegisLoom: adaptive API protection for local servers, VPS, containers, cloud and edge runtimes",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22.13"
   },
   "bin": {
+    "aegisloom": "dist/packages/cli/main.js",
     "shieldweave": "dist/packages/cli/main.js"
   },
   "exports": {
@@ -100,6 +101,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsw-teams/shieldweave.git"
+    "url": "git+https://github.com/jsw-teams/aegisloom.git"
   }
 }

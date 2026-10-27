@@ -1,4 +1,6 @@
-# ShieldWeave
+# AegisLoom
+
+A multi-runtime API security engine, formerly named ShieldWeave. The repository and documentation use AegisLoom. The existing npm package (@jsw-teams/shieldweave) and shieldweave executable remain supported for backwards compatibility; newly built packages will also expose the aegisloom CLI alias after publication. See [repository layout](docs/README.md) and [migration notes](docs/MIGRATION.md).
 
 [Configure local/VPS/cloud deployments and rule sources](docs/SOURCE-CONFIG.md)
 
@@ -22,7 +24,7 @@ Independent SecLang subset import, explicit activation/rollback, changed-source 
 
 ![Actual VM terminal: independent converter and rollback](docs/media/vm-converter.gif)
 
-[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.6). See `scripts/recording/catalog-*` for the tested contract and inputs. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
+[Full VM recording and machine-checked evidence](https://github.com/jsw-teams/aegisloom/releases/tag/v2026.10.6). See `scripts/recording/catalog-*` for the tested contract and inputs. To reproduce with an already provisioned WSL2 recording guest containing Xvfb/Openbox/xterm/xdotool/FFmpeg/Node (the recorder does not install or enable WSL):
 
 ```sh
 npm install
@@ -45,8 +47,8 @@ end to end. Later phases contain working components with the limitations below. 
 | Capability | Implemented and tested | Boundary |
 | --- | --- | --- |
 | Runtime | YAML/JSON + static JSON Schema validation; AND/OR/NOT; fields, RE2 regex, ordered transforms, scoring, local rate windows; safe proxy | Exact configured routes; compressed bodies, multipart, response-phase rules and interactive challenges rejected; WebSocket needs its explicit adapter |
-| Backend standard | [Unified contract](BACKEND-STANDARD.md), origin-key rotation, strict JSON middleware, required auth/authorization/CSRF callbacks, safe output and redacted events; CLI configuration check | Application adoption and production ingress evidence still required; JSON middleware is not a universal wrapper for HTML/media |
-| Protocols | [Media streaming](PROTOCOLS.md), experimental WebSocket handshake IR/cache + bounded message relay, binary gRPC-Web envelope checking | Native gRPC adapter unsupported; protobuf authorization and established-socket revocation require further integration |
+| Backend standard | [Unified contract](docs/guides/BACKEND-STANDARD.md), origin-key rotation, strict JSON middleware, required auth/authorization/CSRF callbacks, safe output and redacted events; CLI configuration check | Application adoption and production ingress evidence still required; JSON middleware is not a universal wrapper for HTML/media |
+| Protocols | [Media streaming](docs/architecture/PROTOCOLS.md), experimental WebSocket handshake IR/cache + bounded message relay, binary gRPC-Web envelope checking | Native gRPC adapter unsupported; protobuf authorization and established-socket revocation require further integration |
 | Decisions | Bounded LRU/TTL; tenant isolation; epochs/CAS; shared reference store; authenticated HTTP store; SQLite WAL authority and audit | Memory store is process-local. SQLite is a single-node authority; HTTP reads are a working cross-process path, not a Redis/KV implementation |
 | Control | Tenant-bound runtime/admin credentials; versioned policies; activation/rollback; decision revocation | Control listener binds loopback; deploy behind TLS/private ingress. Node serve reloads policy-file updates; edge bundles use their deployment pipeline |
 | Local / VPS / containers | Node daemon, persistent SQLite, strict HTTP parser, configurable bind IP; Docker Compose and systemd installation profiles | Node process integration tested; container image and Linux service require operator-side execution |
@@ -63,7 +65,7 @@ Provider-native WAF changes require a separate reviewed plan.
 
 ## Deploy locally, to a VPS, or to the cloud
 
-ShieldWeave runs as a Node.js daemon on Windows/Linux/macOS, in a container, or through a
+AegisLoom runs as a Node.js daemon on Windows/Linux/macOS, in a container, or through a
 provider adapter. Protecting an origin and hosting the Shield are independent choices. There is
 no five-provider limit for local/VPS hosting. See [standalone installation](deploy/standalone/README.md)
 and [scheduled public/private rule synchronization](docs/RULE-SYNC.md).
@@ -109,9 +111,9 @@ npm run test:workerd
 npm run cloudflare:dry-run
 ```
 
-Read [RULES](RULES.md), [DEPLOYMENT](DEPLOYMENT.md), [CLOUD-ADAPTERS](CLOUD-ADAPTERS.md),
-[CVE-AUTOMATION](CVE-AUTOMATION.md), [THREAT-INTELLIGENCE](THREAT-INTELLIGENCE.md),
-[ARCHITECTURE](ARCHITECTURE.md), and [CONTRIBUTING](CONTRIBUTING.md).
+Read [RULES](docs/guides/RULES.md), [DEPLOYMENT](docs/guides/DEPLOYMENT.md), [CLOUD-ADAPTERS](docs/guides/CLOUD-ADAPTERS.md),
+[CVE-AUTOMATION](docs/security/CVE-AUTOMATION.md), [THREAT-INTELLIGENCE](docs/security/THREAT-INTELLIGENCE.md),
+[ARCHITECTURE](docs/architecture/ARCHITECTURE.md), and [CONTRIBUTING](CONTRIBUTING.md).
 
 No telemetry or third-party rules are bundled. Network operations occur only through an explicitly
 started proxy/control client, an explicitly invoked intelligence fetch, or configured cloud

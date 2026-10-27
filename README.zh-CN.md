@@ -1,4 +1,6 @@
-# ShieldWeave
+# AegisLoom
+
+仓库现已更名为 AegisLoom（原 ShieldWeave）。为避免破坏已有用户，npm 包名 @jsw-teams/shieldweave 和 shieldweave 命令继续保留，并在后续发布的构建中新增 aegisloom 命令别名。参见 [目录说明](docs/README.md) 与 [迁移说明](docs/MIGRATION.md)。
 
 [配置本地/VPS/云端部署与规则来源](docs/SOURCE-CONFIG.md)
 
@@ -22,7 +24,7 @@
 
 ![虚拟机终端实录：转换器与策略回退](docs/media/vm-converter.gif)
 
-[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/shieldweave/releases/tag/v2026.10.6)。验证脚本和输入样本见 `scripts/recording/catalog-*`。
+[完整虚拟机录像及机器断言证据](https://github.com/jsw-teams/aegisloom/releases/tag/v2026.10.6)。验证脚本和输入样本见 `scripts/recording/catalog-*`。
 
 复录前使用已有的专用 WSL2 录制环境，具备 Xvfb/Openbox/xterm/xdotool/FFmpeg/Node；不会安装或启用 WSL：
 
@@ -58,10 +60,10 @@ Phase 1 的安全闭环已实现。后续阶段的已实现组件和缺口逐项
   JSON 重复键拒绝、来源头清理、固定源站白名单、源站令牌、TLS、超时、熔断与有界流式响应。
   默认 HTTP 模式拒绝压缩正文、multipart 和协议升级；WebSocket 必须显式启用独立适配器。
   响应阶段规则和交互挑战尚不支持。
-- [后端统一标准](BACKEND-STANDARD.md)：可复用源站验证/轮换、严格 JSON 中间件、必选身份与
+- [后端统一标准](docs/guides/BACKEND-STANDARD.md)：可复用源站验证/轮换、严格 JSON 中间件、必选身份与
   对象授权回调、会话写操作 CSRF、日志脱敏、响应及 Cookie 安全校验。`backend-check` 只验证
   配置，不代表既有业务已接入或现网已通过安全验收。
-- [协议分型](PROTOCOLS.md)：媒体流支持单 Range、MIME 白名单、响应头/空闲分别超时、并发和
+- [协议分型](docs/architecture/PROTOCOLS.md)：媒体流支持单 Range、MIME 白名单、响应头/空闲分别超时、并发和
   传输量限制；WebSocket 支持同一 IR/缓存的握手检查及双向消息大小/频率/队列/会话限制；
   二进制 gRPC-Web 支持受限请求和流式响应包络检查。后两项为 experimental。
   原生 gRPC 需单独协议入口验证，目前适配器为 unsupported；不会冒称能够检查原始 HTTP/2 帧。
@@ -124,9 +126,9 @@ npm run benchmark
 
 ## 部署与安全限制
 
-请先阅读 [部署说明](DEPLOYMENT.md)、[规则手册](RULES.md)、[平台能力](CLOUD-ADAPTERS.md)、
-[CVE 自动化](CVE-AUTOMATION.md)、[社区情报](THREAT-INTELLIGENCE.md)、
-[架构](ARCHITECTURE.md) 和 [安全说明](SECURITY.md)。
+请先阅读 [部署说明](docs/guides/DEPLOYMENT.md)、[规则手册](docs/guides/RULES.md)、[平台能力](docs/guides/CLOUD-ADAPTERS.md)、
+[CVE 自动化](docs/security/CVE-AUTOMATION.md)、[社区情报](docs/security/THREAT-INTELLIGENCE.md)、
+[架构](docs/architecture/ARCHITECTURE.md) 和 [安全说明](SECURITY.md)。
 
 Web `Request` 无法看到平台已经解析掉的报文帧、重复头的原始布局或 H2/H3 流控制。
 源站必须自行校验 Shield 令牌并配置私网/防火墙隔离，不能仅靠隐藏域名。

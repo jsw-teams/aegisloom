@@ -68,7 +68,7 @@ stream/message resource limits and rollback version. Missing evidence means **un
 compliant. Scan no production target and modify no live route as part of this acceptance process.
 
 中文：先在隔离入口完成同一套验收，再分批接入。静态站点不增加业务后端；后端仍由原业务
-维护。流媒体、WebSocket、gRPC-Web 的协议要求参见 [PROTOCOLS.md](PROTOCOLS.md)。
+维护。流媒体、WebSocket、gRPC-Web 的协议要求参见 [PROTOCOLS.md](../architecture/PROTOCOLS.md)。
 
 References: [OWASP REST Security](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html),
 [OWASP Logging](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html).

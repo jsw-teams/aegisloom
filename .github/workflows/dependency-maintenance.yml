@@ -30,16 +30,16 @@ jobs:
       verified: ${{ steps.verify.outcome == 'success' && steps.integrity.outcome == 'success' && steps.plan.outputs.blocked != 'true' }}
       base: ${{ steps.base.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - id: base
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - id: plan
-        uses: jsw-teams/shieldweave/.github/actions/dependency-maintenance@main
+        uses: jsw-teams/aegisloom/.github/actions/dependency-maintenance@main
         with:
           directory: ${{ inputs.directory || '.' }}
           audit-level: ${{ inputs.audit-level || 'moderate' }}
@@ -79,18 +79,18 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
       - uses: actions/download-artifact@v8
         with:
           name: dependency-repair-plan
           path: ${{ runner.temp }}/shieldweave-maintenance/
-      - uses: jsw-teams/shieldweave/.github/actions/dependency-maintenance@main
+      - uses: jsw-teams/aegisloom/.github/actions/dependency-maintenance@main
         with:
           mode: publish
           directory: ${{ inputs.directory || '.' }}

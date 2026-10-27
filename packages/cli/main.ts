@@ -21,25 +21,27 @@ import { evaluateComponent, queryOsv, VulnerabilityDatabase } from "../vulnerabi
 import { readData } from "./config.js";
 import { importConfiguredSource, readSources } from "./sources.js";
 
-const usage = `ShieldWeave
-  shieldweave validate|explain <policy.yaml>
-  shieldweave backend-check <backend-policy.yaml>
-  shieldweave simulate <policy.yaml> <samples.json>
-  shieldweave compatibility <policy.yaml> [maxRules=5]
-  shieldweave serve <shield.yaml>
-  shieldweave sources-check <sources.yaml>
-  shieldweave sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
-  shieldweave sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
-  shieldweave sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
-  shieldweave sources-apply <sources.yaml>
-  shieldweave sources-export <candidates.db> <source-id> <hash> <new-policy.json>
-  shieldweave control <state.db> <tenant> [port=8790]
-  shieldweave assess <inventory.json> <osv-records.json>
-  shieldweave osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
-  shieldweave learn <observations.json> <model.json> <tenant> <source1,source2,source3>
-  shieldweave revoke <state.db> <tenant> <decision-id>
-  shieldweave --help
+const usage = `AegisLoom
+  aegisloom validate|explain <policy.yaml>
+  aegisloom backend-check <backend-policy.yaml>
+  aegisloom simulate <policy.yaml> <samples.json>
+  aegisloom compatibility <policy.yaml> [maxRules=5]
+  aegisloom serve <shield.yaml>
+  aegisloom sources-check <sources.yaml>
+  aegisloom sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
+  aegisloom sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
+  aegisloom sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
+  aegisloom sources-apply <sources.yaml>
+  aegisloom sources-export <candidates.db> <source-id> <hash> <new-policy.json>
+  aegisloom control <state.db> <tenant> [port=8790]
+  aegisloom assess <inventory.json> <osv-records.json>
+  aegisloom osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
+  aegisloom learn <observations.json> <model.json> <tenant> <source1,source2,source3>
+  aegisloom revoke <state.db> <tenant> <decision-id>
+  aegisloom --help
 Cloud publication is available through the typed SDK with exact-plan approval; this CLI never auto-publishes.
+
+  Legacy command alias: shieldweave (retained for existing installs).
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const [command, file, second, third, fourth] = args;

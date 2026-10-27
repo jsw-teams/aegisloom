@@ -14,7 +14,7 @@ provider rollout. No plan feature or endpoint is inferred from another vendor's 
 | Regex | [RE2JS](https://github.com/le0pard/re2js) | Portable non-backtracking matching with bounded compile/input profile |
 | Intelligence | [OSV schema/API](https://ossf.github.io/osv-schema/), [query](https://google.github.io/osv.dev/post-v1-query/) | Unsupported ecosystem/range semantics are unknown, not unaffected |
 
-Provider research and plan restrictions: [CLOUD-ADAPTERS.md](../CLOUD-ADAPTERS.md). Protocol/vendor
+Provider research and plan restrictions: [CLOUD-ADAPTERS.md](guides/CLOUD-ADAPTERS.md). Protocol/vendor
 advisories and observable gaps: [THREAT-MODEL.md](THREAT-MODEL.md). Installed official ESA, EdgeOne
 and Vercel SDK declarations/schemas were additionally checked against implemented request shapes.
 The SDKs are pinned in the lockfile. Tencent's SDK has a vulnerable uuid range; it is used only as a

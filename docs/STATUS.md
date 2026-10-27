@@ -63,9 +63,9 @@ real application auth/CSRF/storage contracts and isolated cloud tests before any
 
 2026.10.1 replaces the previous custom recording console with actual existing WSL2 desktop/xterm captures, removes its standalone demo document, adopts YYYY.M.N versioning, fixes configured CLI Host handling and Linux npm-bin symlink entry execution, and removes the converter’s unnecessary Core dependency. No existing web site files are changed by these recording updates.
 
-## 2026.10.4: ShieldWeave
+## 2026.10.4: AegisLoom
 
-The public project is renamed ShieldWeave. Hosting is independent of origin location:
+The public project is renamed AegisLoom. Hosting is independent of origin location:
 local servers, VPS and containers use the Node entry point; cloud adapters use the same Web runtime.
 Added a multi-stage non-root Docker image, restricted Compose profile, TLS ingress example,
 systemd runtime and hourly rule synchronization timer. A real process test verifies origin auth,

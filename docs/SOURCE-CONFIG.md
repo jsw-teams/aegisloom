@@ -30,7 +30,7 @@ CLI 默认示例监听回环地址；容器可显式监听 0.0.0.0；前置 TLS 
 对端，不能把任意 X-Forwarded-For 当作可信身份。应用级 OAuth/对象授权应由真实认证回调接入。
 
 The same portable engine can protect an HTTPS origin on any hosting provider. Runtime portability
-does not imply native WAF management support: see [platform coverage](../CLOUD-ADAPTERS.md).
+does not imply native WAF management support: see [platform coverage](guides/CLOUD-ADAPTERS.md).
 Deploying the Node listener behind a verified TLS ingress is supported locally; production HA,
 certificate provisioning, network isolation and platform-specific protocols remain operator tasks.
 
