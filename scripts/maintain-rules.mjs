@@ -70,9 +70,7 @@ async function cveReport() {
         paths.length > 20 ||
         paths.some(
           (path) =>
-            typeof path !== "string" ||
-            !/^\/[A-Za-z0-9_./~-]*$/.test(path) ||
-            path.includes(".."),
+            typeof path !== "string" || !/^\/[A-Za-z0-9_./~-]*$/.test(path) || path.includes(".."),
         )
       ) {
         throw new Error(["Invalid emergency path approval for", key].join(" "));
@@ -82,7 +80,9 @@ async function cveReport() {
         advisory: advisory.id,
         component,
         exposure,
-        recommendation: isolation.length ? "feature-isolation-candidate" : "patch-or-exposure-review",
+        recommendation: isolation.length
+          ? "feature-isolation-candidate"
+          : "patch-or-exposure-review",
         preapprovedPaths: isolation,
         maximumTtlSeconds: isolation.length ? 3600 : 0,
         deployed: false,
