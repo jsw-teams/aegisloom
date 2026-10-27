@@ -14,6 +14,7 @@ on:
       - 'rules/emergency-paths.json'
       - 'scripts/maintain-rules.mjs'
       - 'scripts/sync-upstream-rules.mjs'
+      - 'scripts/check-rule-coverage.mjs'
 permissions:
   contents: read
 concurrency:
