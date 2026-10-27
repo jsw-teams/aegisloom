@@ -15,3 +15,13 @@ External upstream rule feeds: configure a vetted HTTPS location in sources.yaml,
 Security: The Action only commits active.json and cve-candidates.json under rules/. It never edits Cloudflare POLICY, routes, origin, Keyless SSL or DNS. Deploy new policies through a separate operator-approved process. OSV risk reports are candidates, not proof of exploitation or a vendor fix. Temporary isolation requires fresh evidence, bounded TTL, approval and rollback.
 
 中文：默认每 6 小时自动更新 GitHub 仓库 /rules 下的已验证生成文件。仅允许事先批准的规则源与测试；云端 Worker 不参与定时同步，不自动发布线上规则。请根据真实上游来源配置 sources.yaml，初始探针不能代替真实防御规则。
+
+## Automatically archived official OWASP CRS upstream / OWASP 原始上游归档
+
+`scripts/sync-upstream-rules.mjs` retrieves the official latest v4.x OWASP CRS release directly from the verified `coreruleset/coreruleset` repository. It archives seven categories of real SecLang rules under `upstream/crs/`, with their Apache-2.0 LICENSE, source tag, per-file SHA-256 digests, and rule counts.
+
+**Important:** These are original ModSecurity/SecLang rules. They are **not** compiled, compatible, or active in the EdgeShield runtime. Do not treat the archive as fully deployed CRS. Automatic conversion would require faithfully preserving transformations, anomaly scoring, phases and audit semantics; unsupported rules must be rejected rather than silently imported.
+
+The executable EdgeShield policy comes from `curated.json` (a focused set of high-confidence protections against sensitive-file scanning and obvious query/header probes) plus explicitly approved and independently regression-tested Shield IR sources. Its narrow query-parameter coverage is not equivalent to generic SQLi/XSS WAF coverage. The CI validates every source and every active rule before committing `active.json`.
+
+The action updates the archive and policy in GitHub only; independent deployment approval is required before production enforcement.

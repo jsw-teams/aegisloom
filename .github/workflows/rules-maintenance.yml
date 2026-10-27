@@ -13,6 +13,7 @@ on:
       - 'rules/inventory.json'
       - 'rules/emergency-paths.json'
       - 'scripts/maintain-rules.mjs'
+      - 'scripts/sync-upstream-rules.mjs'
 permissions:
   contents: read
 concurrency:
@@ -38,6 +39,8 @@ jobs:
       - run: npm --prefix api-shield-convert install --no-audit --no-fund
       - name: Run regression and package checks
         run: npm run check
+      - name: Archive official CRS source as non-executable candidates
+        run: node scripts/sync-upstream-rules.mjs
       - name: Rebuild verified rule files and CVE report
         run: node scripts/maintain-rules.mjs
       - name: Verify generated policy structure
@@ -48,6 +51,7 @@ jobs:
           path: |
             rules/active.json
             rules/cve-candidates.json
+            rules/upstream/crs/**
           if-no-files-found: error
           retention-days: 2
   commit:
@@ -72,7 +76,7 @@ jobs:
           path: rules
       - name: Commit ONLY validated generated rule files
         run: |
-          git add -- rules/active.json rules/cve-candidates.json
+          git add -- rules/active.json rules/cve-candidates.json rules/upstream/crs
           if git diff --cached --quiet; then
             echo 'Rule files unchanged'
             exit 0
