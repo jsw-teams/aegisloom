@@ -48,19 +48,11 @@ results exist. Real Cloudflare account deployment has not been performed by the 
 References: [Routes](https://developers.cloudflare.com/workers/configuration/routing/routes/),
 [service bindings](https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/).
 
-## Scheduled cloud rule sources and CVE response / 云端定时维护
+## GitHub Actions maintenance, not Worker Cron / 使用 GitHub Actions 维护规则
 
-The real Cloudflare Worker receives HTTP/HTTPS traffic using its existing `fetch()` handler. The optional `scheduled()` handler runs every six hours through the checked-in Cron Trigger. It does not need a VPS or OpenResty.
+The Worker contains **only** the `fetch()` request handler. No Worker `scheduled()` handler, Cron Trigger, or KV maintenance binding is required.
+`.github/workflows/rules-maintenance.yml` runs by default every six hours and when reviewed `rules/` inputs change. After source, license, scope, and attack/legitimate regressions pass, GitHub Actions commits `rules/active.json` and `rules/cve-candidates.json` to the repository. The Action does not update the deployed Worker POLICY, cloud routing or credentials. See [rules/README.md](../../rules/README.md).
 
-Bind a **private** Cloudflare KV namespace as `SECURITY_KV` and set the following operator-managed bindings in your own Wrangler configuration:
+Cloudflare terminates TLS and gives the Worker an already decrypted HTTP `Request` under its trust boundary. If the zone uses Keyless SSL, Cloudflare performs the remote-key operation at its TLS layer; no private keys or arbitrary TLS decryption switches belong inside the Worker. Eligibility and TLS version support must be verified with Cloudflare.
 
-- `RULE_SOURCE_URL`: HTTPS URL of a previously authorized Shield IR rule source, at most 128 KiB (no redirects).
-- `RULE_REGRESSIONS`: JSON array of real, independently reviewed attack and legitimate simulation samples; every enabled source rule must be exercised before staging.
-- `CVE_INVENTORY`: JSON CycloneDX, SPDX, npm lockfile, or explicit component inventory for up to 25 packages. This is operator-owned; a Worker cannot safely infer the software versions running on a private origin.
-- `CVE_EMERGENCY_PATHS`: optional JSON object mapping exact component identities to *preapproved* isolation paths, for example `{"npm:widget":["/api/widget"]}`.
-
-The scheduled task saves `candidates/rules/latest` and `candidates/cve/latest` in the private KV namespace with seven-day expiration. **These are reports, not active enforcement policies.** CVE candidates expire after one hour and may only propose feature isolation—not a guessed exploit signature or a virtual patch. They require independent regression, explicit operational approval, review and a separate deployment/rollback process before they can reach production. Existing runtime rules remain pinned in `POLICY`.
-
-Workers receive already decrypted `Request` objects after Cloudflare performs the TLS handshake. For eligible zones, **Cloudflare Keyless SSL** is set up at the provider/TLS layer with a separately operated key server; no private key, packet-decryption logic or Keyless credential should be added to this Worker. Keyless SSL does not currently support TLS 1.3 and is an Enterprise add-on. Normal managed HTTPS is supported without Keyless SSL.
-
-Validation manifest intentionally has no live routes or account identifiers. Nothing is deployed automatically to your Cloudflare account by a GitHub push.
+Production rule updates require a separate operator-approved rollout and rollback. The scheduled OSV report may recommend bounded feature isolation, but it never publishes CVE block rules automatically.

@@ -1,5 +1,7 @@
 # Scheduled rule synchronization / 公共与私有库定时同步
 
+**Default for this GitHub repository:** `.github/workflows/rules-maintenance.yml` runs every six hours and on changes to approved rule inputs. It writes validated generated files in `/rules` and a CVE candidate report, **not** production Worker policy. Read [`rules/README.md`](../rules/README.md) for source configuration and restrictions. Cloudflare Workers no longer have `scheduled()` or Cron maintenance. VPS systemd polling below is optional for independent deployments.
+
 This background pipeline fetches configured source bytes, validates license/scope/IR or converter
 provenance, runs the real runtime against local attack/legitimate samples, and archives candidates
 in SQLite. Sources are candidates by default. Explicit automatic-application configuration enables
