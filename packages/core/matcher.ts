@@ -32,6 +32,10 @@ function values(m: Match, i: MatchInput): unknown[] {
       return i.request.headers.has(m.key ?? "") ? [i.request.headers.get(m.key ?? "")] : [];
     case "query":
       return i.url.searchParams.getAll(m.key ?? "");
+    case "query.all":
+      return [...i.url.searchParams.values()];
+    case "header.all":
+      return [...i.request.headers.values()];
     case "body": {
       const v = m.key ? pointer(i.json, m.key) : i.bodyText;
       return v === undefined ? [] : [v];

@@ -1,7 +1,7 @@
 import { digest, type Fetch, type TrustedContext } from "../../packages/core/types.js";
 import { HttpDecisionStore } from "../../packages/decision-cache/http.js";
 import { loadPolicy } from "../../packages/rule-ir/index.js";
-import { createShield, type Route } from "../../packages/runtime/index.js";
+import { type AllowlistEntry, createShield, type Route } from "../../packages/runtime/index.js";
 import { createCloudflareWebSocketGateway } from "./websocket.js";
 
 interface FetchBinding {
@@ -16,6 +16,8 @@ export interface WorkerEnvironment {
   CONTROL_ORIGIN: string;
   CONTROL_RUNTIME_TOKEN: string;
   POLICY: string;
+  /** Optional operator-managed JSON whitelist; deployment owner decides all scopes. */
+  ALLOWLIST?: string;
   ROUTES: Route[];
   /** Optional service-to-service bearer identity; not a replacement for an application's sessions. */
   CLIENT_TOKEN?: string;
@@ -58,6 +60,7 @@ export async function createCloudflareRuntime(
     publicHosts: [env.PUBLIC_HOST],
     routes: env.ROUTES,
     policy: loadPolicy(env.POLICY),
+    ...(env.ALLOWLIST ? { allowlist: JSON.parse(env.ALLOWLIST) as AllowlistEntry[] } : {}),
     decisions: new HttpDecisionStore(
       env.CONTROL_ORIGIN,
       env.CONTROL_RUNTIME_TOKEN,

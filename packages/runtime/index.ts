@@ -24,10 +24,12 @@ import {
 } from "../protocols/grpc.js";
 import { type MediaProfile, validateMediaProfile } from "../protocols/stream.js";
 import { duration, loadPolicy, type Policy, policyVersion, visit } from "../rule-ir/index.js";
+import { type AllowlistEntry, createAllowlist } from "./allowlist.js";
 import { createErrorPages, type ErrorPages } from "./error-pages.js";
 import { createProxy, type ProxyOptions } from "./proxy.js";
 
 export type { SecurityEvent, TrustedContext } from "../core/types.js";
+export type { AllowlistEntry } from "./allowlist.js";
 export { createHeaderPolicy, validateHeaderPolicy } from "./header-policy.js";
 export type { ProxyOptions } from "./proxy.js";
 
@@ -47,6 +49,8 @@ export interface ShieldOptions {
   publicHosts: string[];
   routes: Route[];
   policy: Policy;
+  /** Fully operator-defined rule and community exemptions, including optional global bypass. */
+  allowlist?: AllowlistEntry[];
   proxy: ProxyOptions;
   decisions: DecisionStore;
   limits?: Partial<BoundaryLimits>;
@@ -71,6 +75,7 @@ export async function createShield(input: ShieldOptions) {
     ...input,
     routes: structuredClone(input.routes),
     publicHosts: [...input.publicHosts],
+    allowlist: structuredClone(input.allowlist ?? []),
   };
   if (
     !/^[A-Za-z0-9_-]{1,64}$/.test(options.tenant) ||
@@ -245,6 +250,8 @@ export async function createShield(input: ShieldOptions) {
       )
     );
   };
+  const isAllowlisted = createAllowlist(options.allowlist);
+
   async function handle(
     request: Request,
     context: TrustedContext,
@@ -293,7 +300,8 @@ export async function createShield(input: ShieldOptions) {
         throw new ShieldError("authentication-required", 401);
       if (
         context.verifiedClientIp &&
-        options.community?.shouldBlock(context.verifiedClientIp, now())
+        options.community?.shouldBlock(context.verifiedClientIp, now()) &&
+        !isAllowlisted(path, request.method, context, null, "community", now())
       )
         return denied(request, 403, "community", "opted-in-community-decision");
       source = "boundary";
@@ -383,7 +391,13 @@ export async function createShield(input: ShieldOptions) {
           throw new ShieldError("decision-store-unavailable", 503);
       }
       const local = storageAvailable ? l1.get(key, timestamp) : undefined;
-      if (local && local.generation === generation && local.policy === version && !local.revoked) {
+      if (
+        local &&
+        local.generation === generation &&
+        local.policy === version &&
+        !local.revoked &&
+        !isAllowlisted(path, request.method, context, local.ruleId, "rules", timestamp)
+      ) {
         stats.l1Hits++;
         return denied(request, 403, "l1", "cached-attack", local.ruleId, local.id);
       }
@@ -398,7 +412,8 @@ export async function createShield(input: ShieldOptions) {
             remote.generation === generation &&
             remote.policy === version &&
             !remote.revoked &&
-            remote.expiresAt > timestamp
+            remote.expiresAt > timestamp &&
+            !isAllowlisted(path, request.method, context, remote.ruleId, "rules", timestamp)
           ) {
             l1.set(key, remote, remote.expiresAt);
             stats.l2Hits++;
@@ -413,6 +428,10 @@ export async function createShield(input: ShieldOptions) {
       }
       source = "rule";
       for (const { rule, match } of rules) {
+        if (isAllowlisted(path, request.method, context, rule.id, "rules", timestamp)) {
+          emit("allow", "rule", "operator-allowlist", rule.id);
+          continue;
+        }
         if (rule.expiresAt && Date.parse(rule.expiresAt) <= timestamp) continue;
         stats.ruleEvaluations++;
         if (!match(matchInput)) continue;

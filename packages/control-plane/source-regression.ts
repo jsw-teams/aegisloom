@@ -93,7 +93,10 @@ export async function verifySourcePolicy(
       },
     );
     await response.body?.cancel();
-    if (response.status !== sample.expectedStatus) throw new Error("Source regression failed");
+    if (response.status !== sample.expectedStatus)
+      throw new Error(
+        `Source regression failed: ${sample.name} (status ${response.status}, expected ${sample.expectedStatus})`,
+      );
     if (sample.kind === "attack" && !matched.includes("rule"))
       throw new Error("Attack regression must exercise the imported policy");
   }

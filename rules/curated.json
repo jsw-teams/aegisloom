@@ -236,61 +236,11 @@
       "phase": "request-headers",
       "placement": "runtime-required",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "union\\s+(?:all\\s+)?select\\s+",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -304,61 +254,11 @@
       "phase": "request-headers",
       "placement": "runtime-required",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "(?:sleep|benchmark)\\s*\\(",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -372,61 +272,11 @@
       "phase": "request-headers",
       "placement": "runtime-required",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "<script(?:[\\s>/])",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -440,13 +290,12 @@
       "phase": "request-headers",
       "placement": "runtime-required",
       "when": {
-        "field": "header",
+        "field": "header.all",
         "op": "contains",
         "value": "${jndi:",
         "transforms": [
           "lowercase"
-        ],
-        "key": "user-agent"
+        ]
       },
       "then": {
         "action": "block"

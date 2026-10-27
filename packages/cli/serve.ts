@@ -60,6 +60,13 @@ export async function serve(configPath: string): Promise<void> {
       publicHosts: config.publicHosts,
       routes: config.routes,
       policy: loadPolicy(await readData(config.policyFile)),
+      ...(config.allowlistFile
+        ? {
+            allowlist: (await readData(
+              config.allowlistFile,
+            )) as import("../runtime/allowlist.js").AllowlistEntry[],
+          }
+        : {}),
       decisions: store,
       proxy: {
         origin: upstream?.origin ?? config.origin!,

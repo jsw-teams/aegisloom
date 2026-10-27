@@ -3,6 +3,8 @@ export type Field =
   | "method"
   | "header"
   | "query"
+  | "query.all"
+  | "header.all"
   | "body"
   | "identity"
   | "client.ip"

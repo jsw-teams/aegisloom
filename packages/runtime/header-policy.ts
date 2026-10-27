@@ -18,7 +18,7 @@ export function validateHeaderPolicy(input: Policy, service: string): Policy {
         "Automatic application requires stateless request-header block rules in the configured service",
       );
     visit(rule.when, (term) => {
-      if (!["path", "method", "header", "query"].includes(term.field))
+      if (!["path", "method", "header", "query", "query.all", "header.all"].includes(term.field))
         throw new Error("Header policy requires observable path/method/header/query fields");
     });
   }

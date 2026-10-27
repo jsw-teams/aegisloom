@@ -19,8 +19,8 @@ for (const rule of active) {
 }
 if (
   (fields.get("path") ?? 0) < 8 ||
-  (fields.get("query") ?? 0) < 2 ||
-  (fields.get("header") ?? 0) < 1
+  (fields.get("query") ?? 0) + (fields.get("query.all") ?? 0) < 2 ||
+  (fields.get("header") ?? 0) + (fields.get("header.all") ?? 0) < 1
 ) {
   throw new Error("Active policy lost its minimum path/query/header coverage");
 }
@@ -28,8 +28,8 @@ console.log(
   JSON.stringify({
     executableRules: active.length,
     path: fields.get("path") ?? 0,
-    query: fields.get("query") ?? 0,
-    header: fields.get("header") ?? 0,
+    query: (fields.get("query") ?? 0) + (fields.get("query.all") ?? 0),
+    header: (fields.get("header") ?? 0) + (fields.get("header.all") ?? 0),
     upstreamSecLangExecutable: false,
   }),
 );

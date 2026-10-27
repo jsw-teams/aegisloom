@@ -9,6 +9,7 @@ export interface RunConfig {
   publicHosts: string[];
   routes: Route[];
   policyFile: string;
+  allowlistFile?: string;
   origin?: string;
   allowedOrigins?: string[];
   originTokenEnv?: string;
@@ -41,6 +42,7 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     "publicHosts",
     "routes",
     "policyFile",
+    "allowlistFile",
     "origin",
     "allowedOrigins",
     "originTokenEnv",
@@ -94,6 +96,11 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
       "CLI requires one exact canonical public Host; listener address is configured separately",
     );
   raw.policyFile = resolve(dirname(resolve(path)), raw.policyFile);
+  if (raw.allowlistFile !== undefined) {
+    if (typeof raw.allowlistFile !== "string" || !raw.allowlistFile)
+      throw new Error("Invalid allowlistFile");
+    raw.allowlistFile = resolve(dirname(resolve(path)), raw.allowlistFile);
+  }
   if (raw.upstream) raw.upstream.file = resolve(dirname(resolve(path)), raw.upstream.file);
   if (raw.decisions.kind === "sqlite")
     raw.decisions.path = resolve(dirname(resolve(path)), raw.decisions.path);

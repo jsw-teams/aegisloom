@@ -17,21 +17,20 @@
       "name": "Log4Shell JNDI marker in user-agent",
       "service": "api",
       "when": {
-        "field": "header",
+        "field": "header.all",
         "op": "contains",
         "value": "${jndi:",
         "transforms": [
           "lowercase"
-        ],
-        "key": "user-agent"
+        ]
       },
       "then": {
         "action": "block"
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -52,61 +51,11 @@
       "name": "Literal script-tag query probe",
       "service": "api",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "<script(?:[\\s>/])",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "<script(?:[\\s>/])",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -114,8 +63,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -136,61 +85,11 @@
       "name": "Time-delay SQL probing",
       "service": "api",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "(?:sleep|benchmark)\\s*\\(",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "(?:sleep|benchmark)\\s*\\(",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -198,8 +97,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -220,61 +119,11 @@
       "name": "High confidence SQL UNION query probe",
       "service": "api",
       "when": {
-        "any": [
-          {
-            "field": "query",
-            "key": "q",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "search",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "id",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "filter",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "redirect",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          },
-          {
-            "field": "query",
-            "key": "url",
-            "op": "regex",
-            "value": "union\\s+(?:all\\s+)?select\\s+",
-            "transforms": [
-              "lowercase"
-            ]
-          }
+        "field": "query.all",
+        "op": "regex",
+        "value": "union\\s+(?:all\\s+)?select\\s+",
+        "transforms": [
+          "lowercase"
         ]
       },
       "then": {
@@ -282,8 +131,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -316,8 +165,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -350,8 +199,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -384,8 +233,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -418,8 +267,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -452,8 +301,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -486,8 +335,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -520,8 +369,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -554,8 +403,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -588,8 +437,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -622,8 +471,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -656,8 +505,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
@@ -690,8 +539,8 @@
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v2",
-        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "version": "reviewed-v3",
+        "sha256": "5d0d3303908006e95eb261f31e330e9a422bc8b61e682a019b1183505e8cd55d",
         "license": "Apache-2.0",
         "limitations": []
       }
