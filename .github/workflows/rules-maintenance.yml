@@ -45,6 +45,8 @@ jobs:
         run: node scripts/maintain-rules.mjs
       - name: Verify generated policy structure
         run: node dist/packages/cli/main.js validate rules/active.json
+      - name: Reject placeholder-only rule sets
+        run: node scripts/check-rule-coverage.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: tested-rule-output
