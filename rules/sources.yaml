@@ -12,7 +12,7 @@ ruleSources:
     autoApply: true
     location: curated.json
     format: shield-ir
-    version: reviewed-v1
+    version: reviewed-v2
     license: Apache-2.0
     service: api
     regressionFile: regression.json
