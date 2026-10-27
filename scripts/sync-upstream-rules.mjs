@@ -23,8 +23,11 @@ async function download(url, maxSize = limit) {
     signal: AbortSignal.timeout(15000),
     headers: { accept: "text/plain, application/json", "accept-encoding": "identity" },
   });
-  if (response.status !== 200 || !response.body ||
-      ![null, "identity"].includes(response.headers.get("content-encoding"))) {
+  if (
+    response.status !== 200 ||
+    !response.body ||
+    ![null, "identity"].includes(response.headers.get("content-encoding"))
+  ) {
     throw new Error("Unexpected upstream response");
   }
   const reader = response.body.getReader();
@@ -69,9 +72,11 @@ async function save(name, content) {
   }
   return true;
 }
-const info = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(
-  await download("https://api.github.com/repos/coreruleset/coreruleset/releases/latest", 65536),
-));
+const info = JSON.parse(
+  new TextDecoder("utf-8", { fatal: true }).decode(
+    await download("https://api.github.com/repos/coreruleset/coreruleset/releases/latest", 65536),
+  ),
+);
 if (!/^v4\.[0-9]{1,3}\.[0-9]{1,3}$/.test(info.tag_name)) {
   throw new Error("Unexpected OWASP CRS release tag: manual review required");
 }
@@ -81,7 +86,7 @@ let count = 0;
 const candidate = new Map();
 for (const name of files) {
   const url = new URL(
-    ["https://raw.githubusercontent.com/coreruleset/coreruleset",tag,"rules",name].join("/"),
+    ["https://raw.githubusercontent.com/coreruleset/coreruleset", tag, "rules", name].join("/"),
   );
   const bytes = await download(url.toString());
   const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -94,7 +99,7 @@ for (const name of files) {
 }
 if (count < 100) throw new Error("Too few official CRS rules were downloaded");
 const license = await download(
-  ["https://raw.githubusercontent.com/coreruleset/coreruleset",tag,"LICENSE"].join("/"),
+  ["https://raw.githubusercontent.com/coreruleset/coreruleset", tag, "LICENSE"].join("/"),
   65536,
 );
 if (!new TextDecoder().decode(license).includes("Apache License")) {
@@ -115,5 +120,12 @@ const manifest = {
 await mkdir(destination, { recursive: true });
 for (const [name, bytes] of candidate) await save(name, bytes);
 await save("manifest.json", JSON.stringify(manifest, null, 2).concat("\n"));
-console.log(JSON.stringify({ upstream: tag, archivedFiles: filesRead.length, ruleIds: count,
-  deployed: false, verifiedBy: "source-format-and-integrity-only" }));
+console.log(
+  JSON.stringify({
+    upstream: tag,
+    archivedFiles: filesRead.length,
+    ruleIds: count,
+    deployed: false,
+    verifiedBy: "source-format-and-integrity-only",
+  }),
+);
