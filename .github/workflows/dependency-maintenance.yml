@@ -39,7 +39,7 @@ jobs:
       - id: base
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - id: plan
-        uses: jsw-teams/aegisloom/.github/actions/dependency-maintenance@main
+        uses: ./.github/actions/dependency-maintenance
         with:
           directory: ${{ inputs.directory || '.' }}
           audit-level: ${{ inputs.audit-level || 'moderate' }}
@@ -90,7 +90,7 @@ jobs:
         with:
           name: dependency-repair-plan
           path: ${{ runner.temp }}/shieldweave-maintenance/
-      - uses: jsw-teams/aegisloom/.github/actions/dependency-maintenance@main
+      - uses: ./.github/actions/dependency-maintenance
         with:
           mode: publish
           directory: ${{ inputs.directory || '.' }}

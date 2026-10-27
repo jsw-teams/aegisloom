@@ -1,6 +1,6 @@
 # Local servers, VPS and containers / 独立部署
 
-AegisLoom is a normal Node.js service, independent of cloud functions. The same rule engine,
+EdgeShield is a normal Node.js service, independent of cloud functions. The same rule engine,
 origin authentication, bounded streams and decision cache run on Windows, Linux and macOS.
 Cloud-provider adapters add deployment bindings and optional native WAF management.
 

@@ -1,6 +1,6 @@
-# AegisLoom
+# EdgeShield · 边缘盾
 
-A multi-runtime API security engine, formerly named ShieldWeave. The repository and documentation use AegisLoom. The existing npm package (@jsw-teams/shieldweave) and shieldweave executable remain supported for backwards compatibility; newly built packages will also expose the aegisloom CLI alias after publication. See [repository layout](docs/README.md) and [migration notes](docs/MIGRATION.md).
+EdgeShield (边缘盾) is an API security runtime for Workers, edge functions and VPS. The source project was formerly AegisLoom (originally ShieldWeave). **The next npm release will be `@jsw-teams/edgeshield` with CLI `edgeshield`**, plus compatibility CLI aliases. npm publication and GitHub repository rename are separate steps; existing installs are not migrated automatically. See [repository layout](docs/README.md), [rules coverage](rules/README.md) and [migration notes](docs/MIGRATION.md).
 
 [Configure local/VPS/cloud deployments and rule sources](docs/SOURCE-CONFIG.md)
 

@@ -1,6 +1,6 @@
 # Validation evidence / 验证记录
 
-## AegisLoom 2026.10.6, 2026-10-26
+## EdgeShield 2026.10.6, 2026-10-26
 
 Windows Node 24.19.0: `npm run check` passed 92 main tests and 3 converter tests,
 including typecheck, lint, schema/build, five runtime sandbox bundles, installed-package
@@ -25,7 +25,7 @@ control/corpus, independent SecLang conversion, activation and rollback. Current
 in both READMEs; release assets include the complete recording and command evidence.
 
 
-## AegisLoom 2026.10.4, 2026-10-26
+## EdgeShield 2026.10.4, 2026-10-26
 
 Windows Node 24.19.0: npm run check passed 87 main tests, 3 converter tests,
 typecheck/lint/schema freshness/build, all five Web runtime sandbox bundles,

@@ -1,4 +1,4 @@
-# AegisLoom
+# EdgeShield · 边缘盾
 
 仓库现已更名为 AegisLoom（原 ShieldWeave）。为避免破坏已有用户，npm 包名 @jsw-teams/shieldweave 和 shieldweave 命令继续保留，并在后续发布的构建中新增 aegisloom 命令别名。参见 [目录说明](docs/README.md) 与 [迁移说明](docs/MIGRATION.md)。
 

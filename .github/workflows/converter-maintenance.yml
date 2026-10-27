@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: jsw-teams/aegisloom/.github/workflows/dependency-maintenance.yml@main
+    uses: ./.github/workflows/dependency-maintenance.yml
     with:
       directory: api-shield-convert
       audit-level: moderate

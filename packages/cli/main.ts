@@ -21,27 +21,27 @@ import { evaluateComponent, queryOsv, VulnerabilityDatabase } from "../vulnerabi
 import { readData } from "./config.js";
 import { importConfiguredSource, readSources } from "./sources.js";
 
-const usage = `AegisLoom
-  aegisloom validate|explain <policy.yaml>
-  aegisloom backend-check <backend-policy.yaml>
-  aegisloom simulate <policy.yaml> <samples.json>
-  aegisloom compatibility <policy.yaml> [maxRules=5]
-  aegisloom serve <shield.yaml>
-  aegisloom sources-check <sources.yaml>
-  aegisloom sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
-  aegisloom sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
-  aegisloom sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
-  aegisloom sources-apply <sources.yaml>
-  aegisloom sources-export <candidates.db> <source-id> <hash> <new-policy.json>
-  aegisloom control <state.db> <tenant> [port=8790]
-  aegisloom assess <inventory.json> <osv-records.json>
-  aegisloom osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
-  aegisloom learn <observations.json> <model.json> <tenant> <source1,source2,source3>
-  aegisloom revoke <state.db> <tenant> <decision-id>
-  aegisloom --help
+const usage = `EdgeShield · 边缘盾
+  edgeshield validate|explain <policy.yaml>
+  edgeshield backend-check <backend-policy.yaml>
+  edgeshield simulate <policy.yaml> <samples.json>
+  edgeshield compatibility <policy.yaml> [maxRules=5]
+  edgeshield serve <shield.yaml>
+  edgeshield sources-check <sources.yaml>
+  edgeshield sources-import <sources.yaml> <source-id> <output.json> [conversion-report.json]
+  edgeshield sources-sync <sources.yaml> <candidates.db> [interval-seconds=3600]
+  edgeshield sources-watch <sources.yaml> <candidates.db> [interval-seconds=3600]
+  edgeshield sources-apply <sources.yaml>
+  edgeshield sources-export <candidates.db> <source-id> <hash> <new-policy.json>
+  edgeshield control <state.db> <tenant> [port=8790]
+  edgeshield assess <inventory.json> <osv-records.json>
+  edgeshield osv-query <inventory.json> <output.json>   (explicit outbound package metadata)
+  edgeshield learn <observations.json> <model.json> <tenant> <source1,source2,source3>
+  edgeshield revoke <state.db> <tenant> <decision-id>
+  edgeshield --help
 Cloud publication is available through the typed SDK with exact-plan approval; this CLI never auto-publishes.
 
-  Legacy command alias: shieldweave (retained for existing installs).
+  Compatibility aliases: aegisloom and shieldweave (existing scripts may keep using them).
 `;
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const [command, file, second, third, fourth] = args;

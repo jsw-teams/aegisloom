@@ -20,7 +20,7 @@
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "@jsw-teams/shieldweave": "file:..",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "@jsw-teams/edgeshield": "file:.."
   }
 }

@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { loadPolicy, policyVersion } from "@jsw-teams/shieldweave/rules";
+import { loadPolicy, policyVersion } from "@jsw-teams/edgeshield/rules";
 import { parse, stringify } from "yaml";
 
 const file = process.argv[2];

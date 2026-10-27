@@ -1,13 +1,14 @@
 {
-  "name": "@jsw-teams/shieldweave",
-  "version": "2026.10.6",
-  "description": "AegisLoom: adaptive API protection for local servers, VPS, containers, cloud and edge runtimes",
+  "name": "@jsw-teams/edgeshield",
+  "version": "2026.10.7",
+  "description": "EdgeShield (边缘盾): adaptive API security and tested upstream intelligence for cloud and VPS",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22.13"
   },
   "bin": {
+    "edgeshield": "dist/packages/cli/main.js",
     "aegisloom": "dist/packages/cli/main.js",
     "shieldweave": "dist/packages/cli/main.js"
   },
@@ -41,7 +42,9 @@
     "*.md",
     "LICENSE",
     "NOTICE",
-    "docs/**/*.md"
+    "docs/**/*.md",
+    "rules/active.json",
+    "rules/README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -101,6 +104,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsw-teams/aegisloom.git"
+    "url": "git+https://github.com/jsw-teams/edgeshield.git"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -82,7 +82,7 @@ try {
     [
       "--input-type=module",
       "-e",
-      "const r=await import('@jsw-teams/shieldweave/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@jsw-teams/shieldweave'); const b=await import('@jsw-teams/shieldweave/http-boundary'); const s=await import('@jsw-teams/shieldweave/sources'); s.validateSources({version:'1',upstreams:[],ruleSources:[],permittedLicenses:['Apache-2.0']}); if(p.version!=='1'||typeof e.createShield!=='function'||typeof b.checkBoundary!=='function'||typeof b.parseStrictJson!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
+      "const r=await import('@jsw-teams/edgeshield/rules'); const p=r.loadPolicy({version:'1',rules:[]}); const e=await import('@jsw-teams/edgeshield'); const b=await import('@jsw-teams/edgeshield/http-boundary'); const s=await import('@jsw-teams/edgeshield/sources'); s.validateSources({version:'1',upstreams:[],ruleSources:[],permittedLicenses:['Apache-2.0']}); if(p.version!=='1'||typeof e.createShield!=='function'||typeof b.checkBoundary!=='function'||typeof b.parseStrictJson!=='function')throw Error('bad exports'); console.log('isolated tarball ESM imports passed');",
     ],
     { cwd: directory, encoding: "utf8" },
   );
@@ -93,8 +93,8 @@ try {
   console.log(consumer.trim());
   const executable =
     process.platform === "win32"
-      ? join(directory, "node_modules/@jsw-teams/shieldweave/dist/packages/cli/main.js")
-      : join(directory, "node_modules/.bin/shieldweave");
+      ? join(directory, "node_modules/@jsw-teams/edgeshield/dist/packages/cli/main.js")
+      : join(directory, "node_modules/.bin/edgeshield");
   const cliVersion = execFileSync(process.execPath, [executable, "--version"], {
     cwd: directory,
     encoding: "utf8",
