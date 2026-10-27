@@ -1,0 +1,37 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "test-probe",
+      "name": "Pipeline validation probe only",
+      "service": "api",
+      "when": {
+        "field": "query",
+        "key": "edge_shield_probe",
+        "op": "eq",
+        "value": "block"
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v1",
+        "sha256": "a1ac70c530a9ab893f0e4a7fb3e4ecdbc7fd67b76046c3d8caac42a66c72df3e",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    }
+  ]
+}
