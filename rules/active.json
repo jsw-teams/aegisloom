@@ -13,22 +13,685 @@
       "community": {
         "report": false
       },
-      "id": "test-probe",
-      "name": "Pipeline validation probe only",
+      "id": "header-jndi-probe",
+      "name": "Log4Shell JNDI marker in user-agent",
       "service": "api",
       "when": {
-        "field": "query",
-        "key": "edge_shield_probe",
-        "op": "eq",
-        "value": "block"
+        "field": "header",
+        "op": "contains",
+        "value": "${jndi:",
+        "transforms": [
+          "lowercase"
+        ],
+        "key": "user-agent"
       },
       "then": {
         "action": "block"
       },
       "provenance": {
         "source": "curated.json",
-        "version": "reviewed-v1",
-        "sha256": "a1ac70c530a9ab893f0e4a7fb3e4ecdbc7fd67b76046c3d8caac42a66c72df3e",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "query-script-tag",
+      "name": "Literal script-tag query probe",
+      "service": "api",
+      "when": {
+        "any": [
+          {
+            "field": "query",
+            "key": "q",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "search",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "id",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "filter",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "redirect",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "url",
+            "op": "regex",
+            "value": "<script(?:[\\s>/])",
+            "transforms": [
+              "lowercase"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "query-sleep-probe",
+      "name": "Time-delay SQL probing",
+      "service": "api",
+      "when": {
+        "any": [
+          {
+            "field": "query",
+            "key": "q",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "search",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "id",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "filter",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "redirect",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "url",
+            "op": "regex",
+            "value": "(?:sleep|benchmark)\\s*\\(",
+            "transforms": [
+              "lowercase"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "query-union-select",
+      "name": "High confidence SQL UNION query probe",
+      "service": "api",
+      "when": {
+        "any": [
+          {
+            "field": "query",
+            "key": "q",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "search",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "id",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "filter",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "redirect",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          },
+          {
+            "field": "query",
+            "key": "url",
+            "op": "regex",
+            "value": "union\\s+(?:all\\s+)?select\\s+",
+            "transforms": [
+              "lowercase"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-actuator-secrets",
+      "name": "Block sensitive actuator introspection endpoints",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "^/actuator/(?:env|heapdump|configprops|logfile)(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-aws-keys",
+      "name": "Block AWS shared credentials downloads",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.aws/credentials(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-debug-pprof",
+      "name": "Block public pprof debug endpoints",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "^/debug/pprof(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-docker-config",
+      "name": "Block Docker auth config downloads",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.docker/config\\.json(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-ds-store",
+      "name": "Prevent macOS metadata file exposure",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.ds_store(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-env",
+      "name": "Prevent exposure of dotenv files",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.env(?:[./]|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-git",
+      "name": "Prevent exposure of git internals",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.git(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-hg",
+      "name": "Prevent exposure of hg internals",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.hg(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-phpunit-eval",
+      "name": "Block known PHPUnit eval-stdin probing",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)vendor/phpunit/phpunit/src/util/php/eval-stdin\\.php$",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-server-status",
+      "name": "Block public server-status endpoint",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "^/server-status(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-svn",
+      "name": "Prevent exposure of svn internals",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)\\.svn(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
+        "license": "Apache-2.0",
+        "limitations": []
+      }
+    },
+    {
+      "enabled": true,
+      "priority": 100,
+      "phase": "request-headers",
+      "placement": "runtime-required",
+      "cache": {
+        "enabled": false,
+        "ttl": "1m"
+      },
+      "community": {
+        "report": false
+      },
+      "id": "scan-wp-config",
+      "name": "Block WordPress config file downloads",
+      "service": "api",
+      "when": {
+        "field": "path",
+        "op": "regex",
+        "value": "(?:^|/)wp-config\\.php(?:/|$)",
+        "transforms": [
+          "lowercase"
+        ]
+      },
+      "then": {
+        "action": "block"
+      },
+      "provenance": {
+        "source": "curated.json",
+        "version": "reviewed-v2",
+        "sha256": "6c779f1d405fbacff439aaa5ecd998584e33ddb3bd9956c7ae3d6fe88b66bd67",
         "license": "Apache-2.0",
         "limitations": []
       }
