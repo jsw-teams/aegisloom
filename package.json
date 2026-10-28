@@ -23,7 +23,10 @@
     "./seclang/syntax": "./tools/.build/scr/seclang/syntax.js",
     "./seclang/node": "./tools/.build/scr/seclang/node.js",
     "./seclang/pcre2.wasm": "./tools/.build/scr/seclang/vendor/pcre2.wasm",
-    "./seclang/libinjection.wasm": "./tools/.build/scr/seclang/vendor/libinjection.wasm"
+    "./seclang/libinjection.wasm": "./tools/.build/scr/seclang/vendor/libinjection.wasm",
+    "./deployment": "./tools/.build/scr/cli/deployment.js",
+    "./config": "./tools/.build/scr/config.js",
+    "./responses": "./tools/.build/scr/runtime/error-pages.js"
   },
   "files": [
     "tools/.build/scr",
