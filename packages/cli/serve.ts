@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import type { Server } from "node:http";
 import { type Credential, createControlHandler } from "../control-plane/handler.js";
 import { SqliteAuthority } from "../control-plane/sqlite.js";
@@ -59,7 +60,9 @@ export async function serve(configPath: string): Promise<void> {
       service: config.service,
       publicHosts: config.publicHosts,
       routes: config.routes,
-      policy: loadPolicy(await readData(config.policyFile)),
+      ...(config.secLangFile
+        ? { secLang: await readFile(config.secLangFile, "utf8") }
+        : { policy: loadPolicy(await readData(config.policyFile!)) }),
       ...(config.allowlistFile
         ? {
             allowlist: (await readData(

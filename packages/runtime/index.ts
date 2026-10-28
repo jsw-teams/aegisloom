@@ -24,6 +24,7 @@ import {
 } from "../protocols/grpc.js";
 import { type MediaProfile, validateMediaProfile } from "../protocols/stream.js";
 import { duration, loadPolicy, type Policy, policyVersion, visit } from "../rule-ir/index.js";
+import { compileSecLang, executeSecLang } from "../seclang/index.js";
 import { type AllowlistEntry, createAllowlist } from "./allowlist.js";
 import { createErrorPages, type ErrorPages } from "./error-pages.js";
 import { createProxy, type ProxyOptions } from "./proxy.js";
@@ -48,7 +49,10 @@ export interface ShieldOptions {
   service: string;
   publicHosts: string[];
   routes: Route[];
-  policy: Policy;
+  /** Legacy JSON/YAML Shield IR rules; mutually exclusive with secLang. */
+  policy?: Policy;
+  /** Native SecLang rules, compiled and evaluated by EdgeShield itself (no conversion). */
+  secLang?: string;
   /** Fully operator-defined rule and community exemptions, including optional global bypass. */
   allowlist?: AllowlistEntry[];
   proxy: ProxyOptions;
@@ -82,8 +86,15 @@ export async function createShield(input: ShieldOptions) {
     !/^[A-Za-z0-9_-]{1,64}$/.test(options.service)
   )
     throw new Error("Invalid tenant/service");
-  const policy = loadPolicy(input.policy);
-  const version = await policyVersion(policy);
+  if (Boolean(input.secLang) === Boolean(input.policy))
+    throw new Error("Exactly one native secLang or legacy policy input is required");
+  if (input.secLang && new TextEncoder().encode(input.secLang).length > 2_000_000)
+    throw new Error("SecLang policy exceeds 2 MB");
+  const nativeProgram = input.secLang ? compileSecLang(input.secLang, { strict: true }) : undefined;
+  if (nativeProgram && !nativeProgram.supportedRules)
+    throw new Error("SecLang ruleset is empty or unsupported");
+  const policy = loadPolicy(input.policy ?? { version: "1", rules: [] });
+  const version = input.secLang ? await digest(input.secLang) : await policyVersion(policy);
   const rules = policy.rules
     .filter((r) => r.enabled && r.service === options.service)
     .map((rule) => {
@@ -169,6 +180,8 @@ export async function createShield(input: ShieldOptions) {
       )
         throw new Error("Media routes require GET/HEAD without a request body");
     }
+    if (nativeProgram && (route.grpcWeb || route.body === "grpc-web" || route.media))
+      throw new Error("SecLang requires an HTTP text/JSON request profile");
     if (route.grpcWeb || route.body === "grpc-web") {
       if (
         !route.grpcWeb ||
@@ -327,7 +340,8 @@ export async function createShield(input: ShieldOptions) {
       }
       if ((route.body ?? "none") === "none" && body.length)
         throw new ShieldError("body-not-allowed");
-      const requiresBody = rules.some(({ rule }) => rule.phase === "request-body");
+      const requiresBody =
+        Boolean(nativeProgram) || rules.some(({ rule }) => rule.phase === "request-body");
       let bodyText = "";
       if (body.length && (requiresBody || route.body === "json" || route.body === "text")) {
         try {
@@ -352,6 +366,36 @@ export async function createShield(input: ShieldOptions) {
             throw new ShieldError("json-pointer-on-non-json-route", 415);
         });
       const matchInput: MatchInput = { request, url, path, bodyText, context, json };
+      if (nativeProgram) {
+        // Native SecLang runs AFTER route/auth/body limits and BEFORE origin and legacy caches.
+        // Rejections are final; unsupported directives have already failed at configuration load.
+        const native = (executeSecLang as any)(
+          nativeProgram,
+          {
+            url: url.href,
+            method: request.method,
+            headers: request.headers,
+            bodyText,
+          },
+          {
+            shouldSkip: (id: string) =>
+              isAllowlisted(path, request.method, context, id, "rules", now()) ||
+              isAllowlisted(path, request.method, context, `sec-${id}`, "rules", now()),
+          },
+        );
+        stats.ruleEvaluations += nativeProgram.supportedRules;
+        if (native.blocked) {
+          return denied(
+            request,
+            native.status,
+            "rule",
+            "seclang-native-rule-match",
+            native.matched.at(-1) ? `sec-${native.matched.at(-1)}` : undefined,
+          );
+        }
+        if (native.matched.length)
+          emit("detect", "rule", "seclang-native-observed", `sec-${native.matched.at(-1)}`);
+      }
       const key = await digest(
         stableJson([
           options.tenant,

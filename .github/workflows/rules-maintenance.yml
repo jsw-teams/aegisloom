@@ -6,15 +6,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'rules/curated.json'
-      - 'rules/baseline.json'
-      - 'rules/regression.json'
-      - 'rules/sources.yaml'
+      - 'rules/native.conf'
       - 'rules/inventory.json'
       - 'rules/emergency-paths.json'
       - 'scripts/maintain-rules.mjs'
       - 'scripts/sync-upstream-rules.mjs'
-      - 'scripts/check-rule-coverage.mjs'
+      - 'scripts/verify-native-rules.mjs'
       - '.github/workflows/rules-maintenance.yml'
 permissions:
   contents: read
@@ -43,17 +40,15 @@ jobs:
         run: npm run check
       - name: Archive official CRS source as non-executable candidates
         run: node scripts/sync-upstream-rules.mjs
-      - name: Rebuild verified rule files and CVE report
+      - name: Scan CVE candidates without converting rules
         run: node scripts/maintain-rules.mjs
-      - name: Verify generated policy structure
-        run: node dist/packages/cli/main.js validate rules/active.json
-      - name: Reject placeholder-only rule sets
-        run: node scripts/check-rule-coverage.mjs
+      - name: Verify native SecLang baseline
+        run: node scripts/verify-native-rules.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: tested-rule-output
           path: |
-            rules/active.json
+            rules/native.conf
             rules/cve-candidates.json
             rules/upstream/crs/**
           if-no-files-found: error
@@ -80,7 +75,7 @@ jobs:
           path: rules
       - name: Commit ONLY validated generated rule files
         run: |
-          git add -- rules/active.json rules/cve-candidates.json rules/upstream/crs
+          git add -- rules/native.conf rules/cve-candidates.json rules/upstream/crs
           if git diff --cached --quiet; then
             echo 'Rule files unchanged'
             exit 0

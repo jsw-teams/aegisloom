@@ -15,7 +15,8 @@ export interface WorkerEnvironment {
   ORIGIN_TOKEN: string;
   CONTROL_ORIGIN: string;
   CONTROL_RUNTIME_TOKEN: string;
-  POLICY: string;
+  POLICY?: string;
+  SECLANG?: string;
   /** Optional operator-managed JSON whitelist; deployment owner decides all scopes. */
   ALLOWLIST?: string;
   ROUTES: Route[];
@@ -54,12 +55,14 @@ export async function createCloudflareRuntime(
     }
     return verified;
   };
+  if (Boolean(env.SECLANG) === Boolean(env.POLICY))
+    throw new Error("Set exactly one SECLANG or legacy POLICY binding");
   const engine = await createShield({
     tenant: env.TENANT,
     service: env.SERVICE,
     publicHosts: [env.PUBLIC_HOST],
     routes: env.ROUTES,
-    policy: loadPolicy(env.POLICY),
+    ...(env.SECLANG ? { secLang: env.SECLANG } : { policy: loadPolicy(env.POLICY!) }),
     ...(env.ALLOWLIST ? { allowlist: JSON.parse(env.ALLOWLIST) as AllowlistEntry[] } : {}),
     decisions: new HttpDecisionStore(
       env.CONTROL_ORIGIN,

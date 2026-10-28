@@ -8,7 +8,8 @@ export interface RunConfig {
   service: string;
   publicHosts: string[];
   routes: Route[];
-  policyFile: string;
+  policyFile?: string;
+  secLangFile?: string;
   allowlistFile?: string;
   origin?: string;
   allowedOrigins?: string[];
@@ -42,6 +43,7 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     "publicHosts",
     "routes",
     "policyFile",
+    "secLangFile",
     "allowlistFile",
     "origin",
     "allowedOrigins",
@@ -62,7 +64,9 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     !Array.isArray(raw.publicHosts) ||
     raw.publicHosts.length !== 1 ||
     typeof raw.publicHosts[0] !== "string" ||
-    typeof raw.policyFile !== "string" ||
+    Boolean(raw.policyFile) === Boolean(raw.secLangFile) ||
+    (raw.policyFile !== undefined && typeof raw.policyFile !== "string") ||
+    (raw.secLangFile !== undefined && typeof raw.secLangFile !== "string") ||
     (raw.upstream
       ? !raw.upstream.file ||
         !raw.upstream.id ||
@@ -95,7 +99,8 @@ export async function readRunConfig(path: string): Promise<RunConfig> {
     throw new Error(
       "CLI requires one exact canonical public Host; listener address is configured separately",
     );
-  raw.policyFile = resolve(dirname(resolve(path)), raw.policyFile);
+  if (raw.policyFile) raw.policyFile = resolve(dirname(resolve(path)), raw.policyFile);
+  if (raw.secLangFile) raw.secLangFile = resolve(dirname(resolve(path)), raw.secLangFile);
   if (raw.allowlistFile !== undefined) {
     if (typeof raw.allowlistFile !== "string" || !raw.allowlistFile)
       throw new Error("Invalid allowlistFile");

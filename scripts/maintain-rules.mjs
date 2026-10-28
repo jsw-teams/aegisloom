@@ -4,7 +4,6 @@ import { readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { importInventory } from "../dist/integrations/sbom/index.js";
-import { applySources } from "../dist/packages/control-plane/source-apply.js";
 import { evaluateComponent, queryOsv } from "../dist/packages/vulnerability/osv.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -102,14 +101,10 @@ async function cveReport() {
   };
 }
 
-const policy = await applySources(rules("sources.yaml"));
 const cveChanged = await saveIfChanged(rules("cve-candidates.json"), await cveReport());
 console.log(
   JSON.stringify({
-    rulesUpdated: policy.applied,
-    policyVersion: policy.version,
-    testsPassed: policy.tests,
-    sourceTests: policy.sources,
+    nativeRuleSource: "rules/native.conf",
     cveUpdated: cveChanged,
     productionUpdated: false,
   }),

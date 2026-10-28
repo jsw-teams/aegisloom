@@ -32,7 +32,8 @@
     "./sbom": "./dist/integrations/sbom/index.js",
     "./schema": "./packages/rule-ir/schema.json",
     "./responses": "./dist/packages/runtime/error-pages.js",
-    "./source-sync": "./dist/packages/control-plane/source-sync.js"
+    "./source-sync": "./dist/packages/control-plane/source-sync.js",
+    "./seclang": "./dist/packages/seclang/index.js"
   },
   "files": [
     "dist/packages",
