@@ -62,6 +62,21 @@ test("phrase capture uses matched input text and resolves all listed phrase file
   assert.equal(send(program, "an ATTACK").tx["0"], "ATTACK");
 });
 
+test("compiled phrase matching preserves file order, original capture case and non-ASCII bytes", () => {
+  const program = compileSecLang(
+    'SecRule ARGS "@pmFromFile signatures.data" "id:41005,deny,capture"',
+    { strict: true, phraseFiles: { "signatures.data": ["SCANNER", "ATTACK", "À"] } },
+  );
+  try {
+    assert.equal(send(program, "attack then ScAnNeR").tx["0"], "ScAnNeR");
+    assert.equal(send(program, "prefix\0À").blocked, true);
+    assert.equal(send(program, "prefix\0à").blocked, false);
+    assert.equal(send(program, "ordinary traffic").blocked, false);
+  } finally {
+    program.dispose();
+  }
+});
+
 test("IP CIDR operator handles IPv4 and IPv6 and rejects a different network", () => {
   const program = compileSecLang(
     'SecRule ARGS "@ipMatch 192.0.2.0/24,2001:db8::/32" "id:41004,deny"',

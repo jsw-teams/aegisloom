@@ -1,6 +1,9 @@
 /** Internal SecLang strings represent octets, including NUL and invalid UTF-8. */
+const encoder = new TextEncoder();
 export function utf8Bytes(value: string): string {
-  return fromOctets(new TextEncoder().encode(value));
+  // ASCII already has exactly the required octets, including embedded NUL.
+  if (!/[^\x00-\x7f]/.test(value)) return value;
+  return fromOctets(encoder.encode(value));
 }
 export function fromOctets(bytes: Uint8Array): string {
   let result = "";

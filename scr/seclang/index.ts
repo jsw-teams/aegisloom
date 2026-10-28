@@ -276,7 +276,7 @@ function compileOperator(text, phraseFiles, regexBackend, detectors, fileName) {
     operand: utf8Bytes(operand),
     negated,
     regex,
-    phrases: phrases?.map(utf8Bytes),
+    phrases: phrases?.map((phrase) => asciiLower(utf8Bytes(phrase))),
     dynamic,
     detectors,
     ranges,
@@ -1050,8 +1050,10 @@ function compares(value, condition, tx, context) {
     case "rx":
       return regex.matcher(value).find();
     case "pm":
-    case "pmfromfile":
-      return phrases.some((phrase) => asciiLower(value).includes(asciiLower(phrase)));
+    case "pmfromfile": {
+      const lower = asciiLower(value);
+      return phrases.some((phrase) => lower.includes(phrase));
+    }
     case "eq":
       return integer(value) === integer(operand);
     case "lt":
@@ -1105,10 +1107,10 @@ function match(step, request, tx, phase, context) {
           capture = detected.fingerprint;
         } else if (["pm", "pmfromfile"].includes(step.operator.op)) {
           const lower = asciiLower(value);
-          const phrase = step.operator.phrases.find((p) => lower.includes(asciiLower(p)));
+          const phrase = step.operator.phrases.find((p) => lower.includes(p));
           result = phrase !== undefined;
           if (result) {
-            const at = lower.indexOf(asciiLower(phrase));
+            const at = lower.indexOf(phrase);
             capture = value.slice(at, at + phrase.length);
           }
         } else result = compares(value, condition, tx, context);
