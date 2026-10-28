@@ -37,6 +37,7 @@ for (const spec of registry.sources) {
   if (
     !/^[a-z0-9-]{1,64}$/.test(spec.id) ||
     ids.has(spec.id) ||
+    !/^[a-f0-9]{40}$/.test(spec.commit) ||
     !/^[\w.-]+\/[\w.-]+$/.test(spec.repository) ||
     ![spec.rulesDirectory, spec.setup, spec.license].every(
       (path) =>
@@ -49,8 +50,11 @@ for (const spec of registry.sources) {
     ? (await github(`repos/${spec.repository}/releases/latest`)).tag_name
     : spec.ref;
   if (typeof ref !== "string" || ref.length > 128) throw new Error("Invalid upstream ref");
-  const commit = (await github(`repos/${spec.repository}/commits/${encodeURIComponent(ref)}`)).sha;
+  const revision = update ? ref : spec.commit;
+  const commit = (await github(`repos/${spec.repository}/commits/${encodeURIComponent(revision)}`))
+    .sha;
   if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error("Invalid upstream commit");
+  if (!update && commit !== spec.commit) throw new Error("Upstream commit differs from its pin");
   const tree = await github(
     `repos/${spec.repository}/git/trees/${commit}?recursive=1`,
     8 * 1024 * 1024,
@@ -86,6 +90,7 @@ for (const spec of registry.sources) {
   source += `Include ${spec.id}/setup.conf\nInclude ${spec.id}/${spec.rulesDirectory}/*.conf\n`;
   upstreams.push({ id: spec.id, repository: spec.repository, ref, commit, files: manifest });
   spec.ref = ref;
+  spec.commit = commit;
 }
 const bundle = { version: 1, format: "seclang-source-bundle", source, files, upstreams };
 const validation = await verifyFullCrs(bundle);

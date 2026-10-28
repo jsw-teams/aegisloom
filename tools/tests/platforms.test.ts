@@ -31,6 +31,7 @@ test("all five built entry points execute the complete CRS and only their own bu
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), "shield-platforms-"));
   try {
+    await writeFile(join(directory, "package.json"), '{"type":"module"}');
     await mkdir(join(directory, "secret"));
     await mkdir(join(directory, "respond"));
     await writeFile(
@@ -86,7 +87,7 @@ test("all five built entry points execute the complete CRS and only their own bu
         join(directory, "origin", platform, "shop", "index.js"),
         `export default{fetch(){return new Response('shop_${platform}',{headers:{'content-type':'text/html'}})}}`,
       );
-      const built = await buildPlatform(platform, configFile);
+      const built = await buildPlatform(platform, configFile, join(directory, "build", platform));
       assert.ok(
         built.inputs.some((path: string) =>
           path.replaceAll("\\", "/").includes(`/origin/${platform}/app/index.js`),
@@ -189,7 +190,10 @@ test("all five built entry points execute the complete CRS and only their own bu
       join(directory, "origin/vercel/app/index.js"),
       "export{default}from '../../netlify/app/index.js'",
     );
-    await assert.rejects(buildPlatform("vercel", configFile), /Cross-platform/);
+    await assert.rejects(
+      buildPlatform("vercel", configFile, join(directory, "build", "vercel")),
+      /Cross-platform/,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

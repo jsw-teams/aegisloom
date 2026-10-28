@@ -9,7 +9,11 @@ import { compileSecLang } from "../scr/seclang/index.ts";
 import { loadSecLangDeployment } from "../scr/seclang/node.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-export async function buildPlatform(platform, configFile = resolve(root, "config.yml")) {
+export async function buildPlatform(
+  platform,
+  configFile = resolve(root, "config.yml"),
+  outputDirectory = resolve(root, "tools/.cache/platforms", platform),
+) {
   if (!["cloudflare", "vercel", "netlify", "esa", "edgeone"].includes(platform))
     throw new Error("Unknown deployment platform");
   const { config, businesses, originRoot, platformRoot } = await readDeployment(
@@ -31,7 +35,7 @@ export async function buildPlatform(platform, configFile = resolve(root, "config
       : {},
   };
   // Only the selected platform's business is bundled.
-  const directory = resolve(root, "tools/.cache/platforms", platform);
+  const directory = resolve(outputDirectory);
   await mkdir(directory, { recursive: true });
   const rel = (path) => JSON.stringify(path.replaceAll("\\", "/"));
   const imports = [],
