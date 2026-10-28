@@ -23,7 +23,7 @@ export function octets(value: string): Uint8Array {
 }
 
 export const asciiLower = (value: string): string =>
-  value.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  value.replace(/[A-Z]+/g, (part) => part.toLowerCase());
 
 export function formEntries(value: string, binary = false): [string, string][] {
   if (!value) return [];

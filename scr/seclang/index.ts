@@ -208,7 +208,14 @@ function compileSelector(text, regexBackend) {
       if (!regexBackend) throw new Error("Regex selectors require the PCRE2 backend");
       keyRegex = regexBackend.compile(`(?i)${key.slice(1, -1)}`);
     }
-    selectors.push({ negative, count, name, key, keyRegex });
+    selectors.push({
+      negative,
+      count,
+      name,
+      key,
+      keyRegex,
+      foldedKey: key === undefined ? undefined : asciiLower(utf8Bytes(key)),
+    });
   }
   if (!selectors.length || selectors.every((x) => x.negative))
     throw new Error("No positive variable selector");
@@ -971,12 +978,10 @@ function values(selector, request, tx, phase, context = {}) {
   return entries;
 }
 function selectorKeyMatches(selector, key) {
-  return (
-    selector.key === undefined ||
-    (selector.keyRegex
-      ? selector.keyRegex.matcher(key).find()
-      : asciiLower(key) === asciiLower(utf8Bytes(selector.key)))
-  );
+  if (selector.key === undefined) return true;
+  if (selector.keyRegex) return selector.keyRegex.matcher(key).find();
+  selector.foldedKey ??= asciiLower(utf8Bytes(selector.key));
+  return asciiLower(key) === selector.foldedKey;
 }
 function getValues(selectors, request, tx, phase, context) {
   selectors = [...selectors, ...(context.excludedTargets ?? [])];
