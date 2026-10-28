@@ -27,7 +27,7 @@ PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调
 
 ```sh
 npm install
-npm run serve
+npm run start:local
 ```
 
 安装会把依赖放到 `tools/node_modules/`、编译到 `tools/.build/`，并仅在密钥文件不存在时创建随机凭据。已有密钥不会被覆盖。
@@ -36,7 +36,7 @@ npm 包提供独立 CLI：
 
 ```sh
 npx @jsw-teams/edgeshield init .
-npx @jsw-teams/edgeshield serve config.yml
+npx @jsw-teams/edgeshield start local config.yml
 ```
 
 修改 config.yml 的 platform、域名、路由和监听地址。Node/VPS 读取选定平台的 `origin/<平台>/<业务>/config.yml`；没有单独的 Node 业务目录。默认监听回环地址，公网由自己的 TLS 入口承接。容器需要挂载自己的 secret，并按容器网络配置监听地址。
@@ -95,18 +95,22 @@ authenticationKeyFile: ../../../secret/relay/authentication.key
 
 协议使用 ECDH、HKDF、双向 AES-GCM、HMAC、请求绑定和时间窗口，VPS 用 SQLite 持久化防重放。保留二进制正文和多个 Set-Cookie，并限制实际字节数和读取时间。Node 中继默认监听回环地址，需放在 HTTPS 入口后；云函数可通过 `/relay` 的 `createRelayServer` 接入自己的原子性持久化 ReplayStore。
 
-## 五个平台构建
+## 按平台构建、启动和部署
 
 ```sh
-npm run platform:build -- cloudflare
-npm run platform:build -- vercel
-npm run platform:build -- netlify
-npm run platform:build -- esa
-npm run platform:build -- edgeone
-npm run cloudflare:dry-run
+npm run build:cloudflare
+npm run start:cloudflare
+npm run deploy:cloudflare
+# 平台名同样支持 vercel、netlify、esa、edgeone、local。
+# 先构建并查看部署命令，不执行云端操作：
+node tools/.build/scr/cli/main.js deploy vercel config.yml --plan
 ```
 
-私有产物在 `tools/.cache/platforms/<平台>/`。Cloudflare 使用静态 WASM；其他入口加载相同 WASM 字节。Vercel 使用 Node Functions，Netlify 使用 Fetch 函数，ESA 使用 Fetch 入口，EdgeOne 使用 onRequest 入口。平台自己的载荷、CPU 和内存限制仍然适用。
+独立安装的 npm CLI 使用 `edgeshield build <平台> config.yml`、`edgeshield start <平台> config.yml`、`edgeshield deploy <平台> config.yml`。本地 build 严格验证完整规则与配置，start/deploy 启动同一个 Node 服务。
+
+云平台命令先构建当前平台，再调用项目已安装的官方 CLI：Cloudflare 为 wrangler，Vercel 为 vercel，Netlify 为 netlify-cli，ESA 为 esa-cli，EdgeOne 为 edgeone。先在自己的部署项目安装对应工具并完成登录及项目关联；启动、部署使用工具自身的权限，不增加引擎环境变量。
+
+私有产物在部署项目的 `tools/.build/<平台>/`，其中 `deploy/` 只包含该平台需要的部署文件。Vercel 的私有代码放在 api/index.mjs，Netlify 的静态 public 目录保持为空。不要把整个私有构建目录发布为静态资源。Cloudflare 使用静态 WASM；其他入口加载相同 WASM 字节。Vercel 使用 Node Functions，Netlify 使用 Fetch 函数，ESA 使用 Fetch 入口，EdgeOne 使用 onRequest 入口。平台自己的载荷、CPU 和内存限制仍然适用。
 
 CRS 的 REQUEST_PROTOCOL、REQUEST_LINE 和 REMOTE_ADDR 需要真实传输信息。Cloudflare 读取平台信息，Node 读取连接元数据。其他 Fetch 入口要求由可信入口用 `secret/credentials.yml` 的 ingressKey 签名传递原始协议/IP；缺失或伪造返回 503，不会编造 HTTP/1.1 或跳过相关规则。
 

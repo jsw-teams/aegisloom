@@ -2,17 +2,17 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
-import { readCredentials, readData } from "../scr/cli/config.ts";
-import { readDeployment } from "../scr/cli/deployment.ts";
-import { readResponsePages } from "../scr/cli/responses.ts";
-import { compileSecLang } from "../scr/seclang/index.ts";
-import { loadSecLangDeployment } from "../scr/seclang/node.ts";
+import { readCredentials, readData } from "./.build/scr/cli/config.js";
+import { readDeployment } from "./.build/scr/cli/deployment.js";
+import { readResponsePages } from "./.build/scr/cli/responses.js";
+import { compileSecLang } from "./.build/scr/seclang/index.js";
+import { loadSecLangDeployment } from "./.build/scr/seclang/node.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export async function buildPlatform(
   platform,
-  configFile = resolve(root, "config.yml"),
-  outputDirectory = resolve(root, "tools/.cache/platforms", platform),
+  configFile = resolve("config.yml"),
+  outputDirectory = resolve(dirname(configFile), "tools/.build", platform),
 ) {
   if (!["cloudflare", "vercel", "netlify", "esa", "edgeone"].includes(platform))
     throw new Error("Unknown deployment platform");
@@ -51,7 +51,7 @@ export async function buildPlatform(
       transports.push(`${JSON.stringify(name)}:(input,init)=>fetch(input,init)`);
     else {
       imports.push(
-        `import {createRelayTransport as createRelay${id}}from ${rel(resolve(root, "scr/origin/relay.ts"))};const transport${id}=createRelay${id}(${JSON.stringify({ endpoint: settings.endpoint, serverPublicKey: await readData(settings.publicKeyFile, 16384), authenticationKey: await readData(settings.authenticationKeyFile, 4096), maxBytes: config.limits?.maxBodyBytes ?? 8388608 })});`,
+        `import {createRelayTransport as createRelay${id}}from ${rel(resolve(root, "tools/.build/scr/origin/relay.js"))};const transport${id}=createRelay${id}(${JSON.stringify({ endpoint: settings.endpoint, serverPublicKey: await readData(settings.publicKeyFile, 16384), authenticationKey: await readData(settings.authenticationKeyFile, 4096), maxBytes: config.limits?.maxBodyBytes ?? 8388608 })});`,
       );
       transports.push(
         `${JSON.stringify(name)}:async(input,init)=>(await transport${id})(input,init)`,
@@ -61,14 +61,14 @@ export async function buildPlatform(
   const origin = `${imports.join("\n")}\nexport default {${transports.join(",")}};`;
   const wasm = [];
   for (const name of ["pcre2", "libinjection"])
-    wasm.push(await readFile(resolve(root, "scr/seclang/vendor", `${name}.wasm`)));
+    wasm.push(await readFile(resolve(root, "tools/.build/scr/seclang/vendor", `${name}.wasm`)));
   const wasmSource =
     platform === "cloudflare"
       ? `import PCRE2 from './pcre2.wasm';import INJECTION from './libinjection.wasm';export{PCRE2,INJECTION};`
       : `const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));export const PCRE2=decode('${wasm[0].toString("base64")}'),INJECTION=decode('${wasm[1].toString("base64")}');`;
   const allowed = platformRoot;
   const result = await build({
-    entryPoints: [resolve(root, `scr/adapters/${platform}/worker.ts`)],
+    entryPoints: [resolve(root, `tools/.build/scr/adapters/${platform}/worker.js`)],
     bundle: true,
     write: false,
     metafile: true,
@@ -118,8 +118,69 @@ export async function buildPlatform(
       await writeFile(join(directory, `${i ? "libinjection" : "pcre2"}.wasm`), wasm[i]);
   if (Object.keys(result.metafile.inputs).some((path) => /secret\/relay\/private/.test(path)))
     throw new Error("Relay private key must not enter a cloud build");
+  const deployDirectory = join(directory, "deploy");
+  await mkdir(deployDirectory, { recursive: true });
+  const code = result.outputFiles.find((file) => file.path.endsWith("worker.js")).contents;
+  const name = `edgeshield-${config.tenant}-${config.service}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .slice(0, 63);
+  const put = async (path, content) => {
+    const file = join(deployDirectory, path);
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(file, content, { mode: 0o600 });
+  };
+  await put(
+    "package.json",
+    JSON.stringify({ private: true, type: "module", engines: { node: "24.x" } }),
+  );
+  if (platform === "cloudflare") {
+    await put("worker.js", code);
+    await put(
+      "wrangler.json",
+      JSON.stringify(
+        {
+          name,
+          main: "worker.js",
+          compatibility_date: "2026-10-01",
+          workers_dev: false,
+          preview_urls: false,
+          routes: [],
+          send_metrics: false,
+          no_bundle: true,
+          rules: [{ type: "CompiledWasm", globs: ["**/*.wasm"], fallthrough: false }],
+        },
+        null,
+        2,
+      ),
+    );
+    for (let i = 0; i < wasm.length; i++)
+      await put(`${i ? "libinjection" : "pcre2"}.wasm`, wasm[i]);
+  } else if (platform === "vercel") {
+    await put("api/index.mjs", code);
+    await put(
+      "vercel.json",
+      JSON.stringify(
+        { version: 2, rewrites: [{ source: "/:path*", destination: "/api/index" }] },
+        null,
+        2,
+      ),
+    );
+  } else if (platform === "netlify") {
+    await put("edge-functions/edgeshield.js", code);
+    await mkdir(join(deployDirectory, "public"), { recursive: true });
+    await put("netlify.toml", '[build]\npublish = "public"\nedge_functions = "edge-functions"\n');
+  } else if (platform === "esa") {
+    await put("worker.js", code);
+    await put("esa.jsonc", JSON.stringify({ name, entry: "./worker.js" }, null, 2));
+  } else
+    await put(
+      "edge-functions/[[default]].js",
+      `${new TextDecoder().decode(code)}\nexport default onRequest;\n`,
+    );
   return {
     directory,
+    deployDirectory,
     entry: join(directory, "worker.js"),
     inputs: Object.keys(result.metafile.inputs),
     bytes: result.outputFiles.reduce((n, file) => n + file.contents.length, 0),

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SHIELD_VERSION } from "../core/version.js";
 /** Materialize operator files outside node_modules; existing files are never overwritten. */
 export async function initProject(target: string) {
   let root = dirname(fileURLToPath(import.meta.url));
@@ -49,7 +50,14 @@ export async function initProject(target: string) {
     "secret/credentials.yml",
     `originToken: ${randomBytes(32).toString("base64url")}\ningressKey: ${randomBytes(32).toString("base64url")}\n`,
   );
-  await put("package.json", `${JSON.stringify({ private: true, type: "module" }, null, 2)}\n`);
+  const scripts: Record<string, string> = {};
+  for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone", "local"])
+    for (const command of ["build", "start", "deploy"])
+      scripts[`${command}:${platform}`] = `edgeshield ${command} ${platform}`;
+  await put(
+    "package.json",
+    `${JSON.stringify({ private: true, type: "module", scripts, dependencies: { "@jsw-teams/edgeshield": `https://github.com/jsw-teams/edgeshield/releases/download/v${SHIELD_VERSION}/jsw-teams-edgeshield-${SHIELD_VERSION}.tgz` } }, null, 2)}\n`,
+  );
   await put(".gitignore", "secret/*\n!secret/credentials.example.yml\ntools/.state/\n");
   console.log(`Initialized operator files in ${directory}`);
 }

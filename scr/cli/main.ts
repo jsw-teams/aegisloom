@@ -11,12 +11,61 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!command || command === "--help") {
     console.log(
-      "edgeshield init [directory]\nedgeshield serve [config.yml]\nedgeshield serve-relay <secret/relay-server.yml>\nedgeshield check <SecLang file or source bundle>\nedgeshield sync [--registry path] [--output path] [--latest]\nedgeshield --version",
+      "edgeshield init [directory]\nedgeshield build <cloudflare|vercel|netlify|esa|edgeone|local> [config.yml]\nedgeshield start <platform|local> [config.yml] [--plan]\nedgeshield deploy <platform|local> [config.yml] [--plan]\nedgeshield serve [config.yml]\nedgeshield serve-relay <secret/relay-server.yml>\nedgeshield check <SecLang file or source bundle>\nedgeshield sync [--registry path] [--output path] [--latest]\nedgeshield --version",
     );
     return;
   }
   if (command === "init") {
     await (await import("./init.js")).initProject(file ?? ".");
+    return;
+  }
+  if (["build", "start", "deploy"].includes(command!) && file) {
+    if (file === "local") {
+      const rest = args.slice(2).filter((value) => value !== "--plan");
+      if (rest.length > 1) throw new Error("Unexpected command arguments");
+      const configFile = rest[0] ?? "config.yml";
+      if (args.includes("--plan")) {
+        console.log(
+          JSON.stringify({
+            platform: "local",
+            tool: "node",
+            args: ["edgeshield", "start", "local", configFile],
+          }),
+        );
+        return;
+      }
+      if (command !== "build") {
+        await (await import("./serve.js")).serve(configFile);
+        return;
+      }
+      const { config } = await (await import("./deployment.js")).readDeployment(configFile);
+      await (await import("./config.js")).readCredentials(config.secretFile);
+      const native = await (await import("../seclang/node.js")).loadSecLangDeployment(
+        config.secLangFile,
+        config.localRulesFile,
+      );
+      const program = (await import("../seclang/index.js")).compileSecLang(native.secLang, {
+        ...native.secLangOptions,
+        strict: true,
+      });
+      try {
+        console.log(
+          JSON.stringify({
+            platform: "local",
+            sourceRules: program.sourceRules,
+            unsupported: program.unsupported.length,
+          }),
+        );
+      } finally {
+        program.dispose();
+      }
+      return;
+    }
+    execFileSync(
+      process.execPath,
+      [fileURLToPath(new URL("../../../platform-command.mjs", import.meta.url)), ...args],
+      { stdio: "inherit", windowsHide: true },
+    );
     return;
   }
   if (command === "sync") {

@@ -34,7 +34,7 @@ function secretStrings(value) {
 }
 for (const file of paths) {
   if (
-    /^tools\/(?!\.build\/|sync-native-seclang\.mjs$|verify-full-crs\.mjs$)|node_modules\/|\.db$|^secret\/(?!(?:credentials|relay-server)\.example\.yml$)/.test(
+    /^tools\/(?!\.build\/|sync-native-seclang\.mjs$|verify-full-crs\.mjs$|build-platform\.mjs$|platform-command\.mjs$)|node_modules\/|\.db$|^secret\/(?!(?:credentials|relay-server)\.example\.yml$)/.test(
       file,
     )
   )
@@ -94,10 +94,32 @@ try {
   execFileSync(process.execPath, [cli, "init", operator], { cwd: directory, stdio: "pipe" });
   if (!first.equals(await readFile(join(operator, "secret/credentials.yml"))))
     throw new Error("Initialization overwrote operator secrets");
+  for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone"]) {
+    const built = JSON.parse(
+      execFileSync(process.execPath, [cli, "build", platform, join(operator, "config.yml")], {
+        cwd: operator,
+        encoding: "utf8",
+      }),
+    );
+    await access(join(built.deployDirectory, "package.json"));
+    const plan = JSON.parse(
+      execFileSync(
+        process.execPath,
+        [cli, "deploy", platform, join(operator, "config.yml"), "--plan"],
+        { cwd: operator, encoding: "utf8" },
+      ),
+    );
+    if (plan.platform !== platform || !plan.args?.length)
+      throw Error("Installed platform command failed");
+  }
+  execFileSync(process.execPath, [cli, "build", "local", join(operator, "config.yml")], {
+    cwd: operator,
+    stdio: "pipe",
+  });
   const config = parseConfigText(await readFile(join(operator, "config.yml"), "utf8"));
   config.listen.port = 0;
   await writeFile(join(operator, "config.yml"), JSON.stringify(config));
-  const child = spawn(process.execPath, [cli, "serve", join(operator, "config.yml")], {
+  const child = spawn(process.execPath, [cli, "start", "local", join(operator, "config.yml")], {
     cwd: operator,
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],

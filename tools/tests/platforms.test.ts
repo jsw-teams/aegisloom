@@ -88,6 +88,27 @@ test("all five built entry points execute the complete CRS and only their own bu
         `export default{fetch(){return new Response('shop_${platform}',{headers:{'content-type':'text/html'}})}}`,
       );
       const built = await buildPlatform(platform, configFile, join(directory, "build", platform));
+      const deployment = built.deployDirectory;
+      assert.equal(
+        JSON.parse(await readFile(join(deployment, "package.json"), "utf8")).private,
+        true,
+      );
+      if (platform === "vercel") {
+        const routing = JSON.parse(await readFile(join(deployment, "vercel.json"), "utf8"));
+        assert.ok(routing.rewrites.length > 0);
+        assert.match(await readFile(join(deployment, "api/index.mjs"), "utf8"), /business_vercel/);
+        await assert.rejects(readFile(join(deployment, "worker.js")), /ENOENT/);
+      }
+      if (platform === "netlify") {
+        assert.match(await readFile(join(deployment, "netlify.toml"), "utf8"), /edge-functions/);
+        await assert.rejects(readFile(join(deployment, "public/worker.js")), /ENOENT/);
+      }
+      if (platform === "edgeone") {
+        const entry = await import(
+          pathToFileURL(join(deployment, "edge-functions/[[default]].js")).href
+        );
+        assert.equal(typeof entry.default, "function");
+      }
       assert.ok(
         built.inputs.some((path: string) =>
           path.replaceAll("\\", "/").includes(`/origin/${platform}/app/index.js`),

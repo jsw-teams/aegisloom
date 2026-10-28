@@ -1,6 +1,6 @@
 {
   "name": "@jsw-teams/edgeshield",
-  "version": "2026.10.8",
+  "version": "2026.10.9",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -43,7 +43,9 @@
     "origin",
     "respond",
     "tools/sync-native-seclang.mjs",
-    "tools/verify-full-crs.mjs"
+    "tools/verify-full-crs.mjs",
+    "tools/build-platform.mjs",
+    "tools/platform-command.mjs"
   ],
   "scripts": {
     "build": "node tools/clean-build.mjs && node tools/run.mjs tsc -p tsconfig.build.json && node tools/copy-seclang-assets.mjs",
@@ -62,26 +64,43 @@
     "check": "npm run version:check && npm run typecheck && npm run lint && npm test && npm run build && npm run check:edge && npm run verify:package",
     "check:edge": "node --experimental-vm-modules tools/check-edge.mjs",
     "test:workerd": "node --import ./tools/node_modules/tsx/dist/loader.mjs --test tools/tests/seclang-workerd.test.ts",
-    "platform:build": "node --import ./tools/node_modules/tsx/dist/loader.mjs tools/build-platform.mjs",
-    "cloudflare:dry-run": "node --import ./tools/node_modules/tsx/dist/loader.mjs tools/cloudflare-dry-run.mjs",
+    "cloudflare:dry-run": "node tools/cloudflare-dry-run.mjs",
     "version": "node tools/sync-version.mjs",
     "version:check": "node tools/sync-version.mjs --check",
     "prepare": "node tools/bootstrap.mjs && node tools/init-secret.mjs && npm run build",
     "audit": "node tools/audit-dependencies.mjs moderate",
-    "deps:repair": "node .github/actions/dependency-maintenance/repair.mjs"
+    "deps:repair": "node .github/actions/dependency-maintenance/repair.mjs",
+    "build:cloudflare": "node tools/.build/scr/cli/main.js build cloudflare",
+    "start:cloudflare": "node tools/.build/scr/cli/main.js start cloudflare",
+    "deploy:cloudflare": "node tools/.build/scr/cli/main.js deploy cloudflare",
+    "build:vercel": "node tools/.build/scr/cli/main.js build vercel",
+    "start:vercel": "node tools/.build/scr/cli/main.js start vercel",
+    "deploy:vercel": "node tools/.build/scr/cli/main.js deploy vercel",
+    "build:netlify": "node tools/.build/scr/cli/main.js build netlify",
+    "start:netlify": "node tools/.build/scr/cli/main.js start netlify",
+    "deploy:netlify": "node tools/.build/scr/cli/main.js deploy netlify",
+    "build:esa": "node tools/.build/scr/cli/main.js build esa",
+    "start:esa": "node tools/.build/scr/cli/main.js start esa",
+    "deploy:esa": "node tools/.build/scr/cli/main.js deploy esa",
+    "build:edgeone": "node tools/.build/scr/cli/main.js build edgeone",
+    "start:edgeone": "node tools/.build/scr/cli/main.js start edgeone",
+    "deploy:edgeone": "node tools/.build/scr/cli/main.js deploy edgeone",
+    "build:local": "node tools/.build/scr/cli/main.js build local",
+    "start:local": "node tools/.build/scr/cli/main.js start local",
+    "deploy:local": "node tools/.build/scr/cli/main.js deploy local"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",
     "@xmldom/xmldom": "^0.9.12",
     "ipaddr.js": "^2.5.0",
     "xpath": "^0.0.35",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "esbuild": "^0.28.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.3",
     "@types/node": "^26.6.5",
     "acorn": "^8.19.0",
-    "esbuild": "^0.28.2",
     "miniflare": "5.20261019.2-beta",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
