@@ -59,7 +59,13 @@ test("all five built entry points execute the complete CRS and only their own bu
             authenticated: false,
             body: "text",
           },
-          { business: "shop", path: "/shop", methods: ["GET"], authenticated: false },
+          {
+            business: "shop",
+            path: "/shop",
+            methods: ["GET"],
+            authenticated: false,
+            browserCache: { maxAgeSeconds: 120 },
+          },
         ],
         listen: { host: "127.0.0.1", port: 0 },
         responses: { directory: "respond", contentSecurityPolicy: "default-src 'none'" },
@@ -85,7 +91,7 @@ test("all five built entry points execute the complete CRS and only their own bu
       );
       await writeFile(
         join(directory, "origin", platform, "shop", "index.js"),
-        `export default{fetch(){return new Response('shop_${platform}',{headers:{'content-type':'text/html'}})}}`,
+        `export default{fetch(){return new Response('shop_${platform}',{headers:{'content-type':'text/html','cache-control':'public, max-age=60'}})}}`,
       );
       const built = await buildPlatform(platform, configFile, join(directory, "build", platform));
       const deployment = built.deployDirectory;
@@ -185,6 +191,7 @@ test("all five built entry points execute the complete CRS and only their own bu
         assert.equal(await normal.text(), `business_${platform}`);
         const shop = await send("", false, "/shop");
         assert.equal(shop.status, 200);
+        assert.equal(shop.headers.get("cache-control"), "private, max-age=60, must-revalidate");
         assert.equal(await shop.text(), `shop_${platform}`);
         for (const attack of [
           "1 UNION SELECT password FROM users",
@@ -197,6 +204,7 @@ test("all five built entry points execute the complete CRS and only their own bu
           assert.deepEqual(await response.json(), { error: "operator_custom_denial" });
           const shopAttack = await send(`?q=${encodeURIComponent(attack)}`, false, "/shop");
           assert.equal(shopAttack.status, 403, `${platform}: shop attack`);
+          assert.equal(shopAttack.headers.get("cache-control"), "no-store");
           await shopAttack.text();
         }
         const leak = await send("?leak=yes", true);

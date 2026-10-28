@@ -16,11 +16,13 @@ import {
 import { parseStrictJson } from "../http-boundary/json.js";
 import { type CompileSecLangOptions, compileSecLang, executeSecLang } from "../seclang/index.js";
 import { type AllowlistEntry, createAllowlist } from "./allowlist.js";
+import { type BrowserCachePolicy, validateBrowserCache } from "./browser-cache.js";
 import { createErrorPages, type ErrorPages } from "./error-pages.js";
 import { createProxy, type ProxyOptions } from "./proxy.js";
 
 export type { SecurityEvent, TrustedContext } from "../core/types.js";
 export type { AllowlistEntry } from "./allowlist.js";
+export type { BrowserCachePolicy } from "./browser-cache.js";
 export type { ProxyOptions } from "./proxy.js";
 
 export interface Route {
@@ -31,6 +33,8 @@ export interface Route {
   body?: "json" | "text" | "none";
   /** Inspect the HTTP handshake; upgraded frames remain opaque to SecLang. */
   websocket?: boolean;
+  /** Opt-in client freshness for public origin responses, after full SecLang inspection. */
+  browserCache?: BrowserCachePolicy;
 }
 export interface ShieldOptions {
   tenant: string;
@@ -99,6 +103,9 @@ export async function createShield(input: ShieldOptions) {
   };
   const routes = new Map<string, Route>();
   for (const route of options.routes) {
+    validateBrowserCache(route.browserCache);
+    if (route.browserCache && (route.authenticated || route.websocket))
+      throw new Error("Browser caching requires an anonymous HTTP route");
     if (
       typeof route.authenticated !== "boolean" ||
       !proxies.has(route.business) ||
@@ -314,6 +321,7 @@ export async function createShield(input: ShieldOptions) {
         body,
         inspectResponse ? () => {} : release,
         upgrade,
+        context.identity ? undefined : route.browserCache,
       );
       if (response.status === 101) pendingUpgrade = response;
       if (nativeProgram && inspectResponse && nativeTransaction) {

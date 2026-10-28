@@ -1,4 +1,5 @@
 import { type Fetch, requireInteger, ShieldError } from "../core/types.js";
+import { applyBrowserCache, type BrowserCachePolicy } from "./browser-cache.js";
 import { protectStream } from "./stream.js";
 
 export interface ProxyOptions {
@@ -60,6 +61,7 @@ export function createProxy(options: ProxyOptions) {
     body: Uint8Array,
     onComplete: () => void = () => {},
     websocket = false,
+    browserCache?: BrowserCachePolicy,
   ): Promise<Response> => {
     if (Date.now() < openUntil) throw new ShieldError("origin-circuit-open", 503);
     const target = new URL(origin);
@@ -163,7 +165,7 @@ export function createProxy(options: ProxyOptions) {
           name.startsWith("x-shield-")
         )
           responseHeaders.delete(name);
-      responseHeaders.set("cache-control", "no-store");
+      applyBrowserCache(incoming, upstream, responseHeaders, browserCache);
       if (
         !upstream.body ||
         incoming.method === "HEAD" ||

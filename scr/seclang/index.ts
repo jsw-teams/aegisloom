@@ -739,14 +739,8 @@ function values(selector, request, tx, phase, context = {}) {
   }
   const body = phase >= 2 && context.requestBodyAccess !== false ? context.body : undefined;
   const postArgs = body?.args ?? [];
-  const qs = [...getArgs, ...postArgs];
-  const cookies = (headers.get("cookie") || "")
-    .split(/;\s*/)
-    .filter(Boolean)
-    .map((part) => {
-      const at = part.indexOf("=");
-      return [at < 0 ? part.trim() : part.slice(0, at).trim(), at < 0 ? "" : part.slice(at + 1)];
-    });
+  // Immutable request collections are materialized only when selected. Never cache TX,
+  // ctl-dependent body collections or matched variables: actions can change them mid-chain.
   switch (selector.name) {
     case "REQUEST_METHOD":
       entries = [["REQUEST_METHOD", request.method]];
@@ -871,10 +865,12 @@ function values(selector, request, tx, phase, context = {}) {
       entries = [["QUERY_STRING", query]];
       break;
     case "REQUEST_HEADERS":
-      entries = [...headers.entries()];
+      context.headerEntries ??= [...headers.entries()];
+      entries = context.headerEntries;
       break;
     case "REQUEST_HEADERS_NAMES":
-      entries = [...headers.keys()].map((v) => [v, v]);
+      context.headerNames ??= [...headers.keys()].map((v) => [v, v]);
+      entries = context.headerNames;
       break;
     case "REQUEST_BODY":
       entries =
@@ -892,7 +888,7 @@ function values(selector, request, tx, phase, context = {}) {
           : [];
       break;
     case "ARGS":
-      entries = qs;
+      entries = [...getArgs, ...postArgs];
       break;
     case "ARGS_GET":
       entries = getArgs;
@@ -908,7 +904,10 @@ function values(selector, request, tx, phase, context = {}) {
       break;
     case "ARGS_COMBINED_SIZE":
       entries = [
-        ["ARGS_COMBINED_SIZE", String(qs.reduce((n, [k, v]) => n + k.length + v.length, 0))],
+        [
+          "ARGS_COMBINED_SIZE",
+          String([...getArgs, ...postArgs].reduce((n, [k, v]) => n + k.length + v.length, 0)),
+        ],
       ];
       break;
     case "REQUEST_BODY_LENGTH":
@@ -933,16 +932,32 @@ function values(selector, request, tx, phase, context = {}) {
         context.matchedName === undefined ? [] : [["MATCHED_VAR_NAME", context.matchedName]];
       break;
     case "ARGS_NAMES":
-      entries = qs.map(([k]) => [k, k]);
+      entries = [...getArgs, ...postArgs].map(([k]) => [k, k]);
       break;
     case "REQUEST_COOKIES":
-      entries = cookies;
-      break;
     case "REQUEST_COOKIES_NAMES":
-      entries = cookies.map(([k]) => [k, k]);
+      context.cookieEntries ??= (headers.get("cookie") || "")
+        .split(/;\s*/)
+        .filter(Boolean)
+        .map((part) => {
+          const at = part.indexOf("=");
+          return [
+            at < 0 ? part.trim() : part.slice(0, at).trim(),
+            at < 0 ? "" : part.slice(at + 1),
+          ];
+        });
+      entries =
+        selector.name === "REQUEST_COOKIES"
+          ? context.cookieEntries
+          : context.cookieEntries.map(([k]) => [k, k]);
       break;
     case "TX":
-      entries = [...tx].map(([k, v]) => [k, String(v)]);
+      if (selector.key !== undefined && !selector.keyRegex) {
+        selector.foldedKey ??= asciiLower(utf8Bytes(selector.key));
+        entries = tx.has(selector.foldedKey)
+          ? [[selector.foldedKey, String(tx.get(selector.foldedKey))]]
+          : [];
+      } else entries = [...tx].map(([k, v]) => [k, String(v)]);
       break;
   }
   if (selector.key !== undefined)

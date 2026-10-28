@@ -116,6 +116,26 @@ CRS 的 REQUEST_PROTOCOL、REQUEST_LINE 和 REMOTE_ADDR 需要真实传输信息
 
 `@jsw-teams/edgeshield/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
 
+## 请求次数与缓存成本
+
+静态 HTML、指纹 CSS/JS 和图片应交给平台静态资源服务，动态业务才进入函数。Cloudflare 的 assets 默认先匹配静态文件，`run_worker_first` 只列需要引擎处理的动态路径；不要设为全站 `true`。资产服务返回的文件不会执行 SecLang，不应存放需鉴权或请求检查的业务数据。其他平台应使用各自静态托管目录，私有构建目录不能公开。
+
+动态业务可以显式启用浏览器缓存，适用于不因用户身份变化的公开内容：
+
+```yaml
+routes:
+  - path: /catalog
+    business: shop
+    methods: [GET, HEAD]
+    authenticated: false
+    browserCache:
+      maxAgeSeconds: 120
+```
+
+源站还必须明确返回 `Cache-Control: public, max-age=N`；引擎取源站与配置中较短的期限，输出 `private, max-age=N, must-revalidate`。浏览器在有效期内直接复用正文，从而减少网络请求和函数调用。保留 Date、Age、ETag 与 Vary，并加入 Cookie/Authorization 的 Vary；认证、Cookie、Set-Cookie、强制刷新、错误回应、私有源站回应及 WebSocket 均不启用。默认仍为 no-store；TTL 可配置为 1–86400 秒。内容更新在 TTL 到期或客户端刷新后可见，应按业务的新鲜度要求设置。
+
+每个实际到达引擎的请求仍执行完整规则，缓存不复用防火墙决策。引擎没有服务端响应缓存，也不会用 304 冒充免调用。Cloudflare 的 `caches.default` 命中仍先执行 Worker；新版 Workers Cache 能减少执行 CPU，但其缓存命中仍按 Worker 请求计费，而且会绕开该次规则执行，因此本项目不自动启用。参见 [静态资源计费](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) 和 [Workers 请求计费](https://developers.cloudflare.com/workers/platform/pricing/)。实时流、写入和鉴权请求保持动态执行；调用次数不能仅靠降低 CPU 或延长服务端缓存变成零。
+
 ## 本地防火墙指令
 
 `rules/local.conf` 完全由用户控制，通过 config.yml 的 localRulesFile 加载，上游同步不会改写。可直接使用 SecLang 的 IP/GLOBAL 集合和 expirevar、deprecatevar 表达计数、滑动衰减及临时拒绝。例如：
