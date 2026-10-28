@@ -1,6 +1,6 @@
 {
   "name": "@jsw-teams/edgeshield",
-  "version": "2026.10.7",
+  "version": "2026.10.8",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -38,7 +38,9 @@
     "secret/credentials.example.yml",
     "secret/relay-server.example.yml",
     "origin",
-    "respond"
+    "respond",
+    "tools/sync-native-seclang.mjs",
+    "tools/verify-full-crs.mjs"
   ],
   "scripts": {
     "build": "node tools/clean-build.mjs && node tools/run.mjs tsc -p tsconfig.build.json && node tools/copy-seclang-assets.mjs",

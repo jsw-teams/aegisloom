@@ -59,6 +59,7 @@ export function createProxy(options: ProxyOptions) {
     path: string,
     body: Uint8Array,
     onComplete: () => void = () => {},
+    websocket = false,
   ): Promise<Response> => {
     if (Date.now() < openUntil) throw new ShieldError("origin-circuit-open", 503);
     const target = new URL(origin);
@@ -82,6 +83,7 @@ export function createProxy(options: ProxyOptions) {
     }
     headers.set("x-shield-origin-auth", originToken);
     headers.set("accept-encoding", "identity");
+    if (websocket) headers.set("upgrade", "websocket");
     const abort = new AbortController();
     let completed = false;
     const timer = setTimeout(() => {
@@ -115,6 +117,34 @@ export function createProxy(options: ProxyOptions) {
         consecutiveFailures++;
         if (consecutiveFailures >= 5) openUntil = Date.now() + 5000;
       } else consecutiveFailures = 0;
+      if (upstream.status === 101) {
+        const socket = (upstream as Response & { webSocket?: { close(code: number): void } })
+          .webSocket;
+        cleanup();
+        if (!websocket || !socket) {
+          try {
+            socket?.close(1008);
+          } catch {
+            /* Already closed. */
+          }
+          throw new ShieldError("unexpected-origin-upgrade", 502);
+        }
+        const output = new Headers(upstream.headers);
+        for (const name of [...output.keys()])
+          if (
+            ["server", "x-powered-by"].includes(name) ||
+            name.startsWith("x-shield-") ||
+            name.startsWith("x-edgeshield-")
+          )
+            output.delete(name);
+        output.set("cache-control", "no-store");
+        // Preserve the native socket. SecLang inspects this response before ownership is transferred.
+        return new Response(null, {
+          status: 101,
+          headers: output,
+          webSocket: socket,
+        } as ResponseInit);
+      }
       // Avoid fetch implementations disagreeing about automatic decompression.
       if (
         upstream.headers.has("content-encoding") &&

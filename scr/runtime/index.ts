@@ -29,6 +29,8 @@ export interface Route {
   methods: string[];
   authenticated: boolean;
   body?: "json" | "text" | "none";
+  /** Inspect the HTTP handshake; upgraded frames remain opaque to SecLang. */
+  websocket?: boolean;
 }
 export interface ShieldOptions {
   tenant: string;
@@ -100,6 +102,7 @@ export async function createShield(input: ShieldOptions) {
     if (
       typeof route.authenticated !== "boolean" ||
       !proxies.has(route.business) ||
+      (route.websocket !== undefined && typeof route.websocket !== "boolean") ||
       !Array.isArray(route.methods) ||
       ![undefined, "none", "json", "text"].includes(route.body)
     )
@@ -191,6 +194,7 @@ export async function createShield(input: ShieldOptions) {
       }
     };
     let streaming = false;
+    let pendingUpgrade: Response | undefined;
     let source: SecurityEvent["source"] = "boundary";
     try {
       if (context.tenant !== options.tenant) throw new ShieldError("tenant-mismatch", 403);
@@ -204,11 +208,19 @@ export async function createShield(input: ShieldOptions) {
         (context.verifiedClientIp.length > 64 || !/^[0-9a-fA-F:.]+$/.test(context.verifiedClientIp))
       )
         throw new ShieldError("invalid-verified-ip", 403);
-      const { url, path } = checkBoundary(request, limits, options.publicHosts, rawTarget);
+      const upgrade = request.headers.has("upgrade");
+      const { url, path } = checkBoundary(
+        request,
+        limits,
+        options.publicHosts,
+        rawTarget,
+        upgrade ? "websocket" : "http",
+      );
       source = "route";
       const route = routes.get(path);
       if (!route) throw new ShieldError("unknown-route", 404);
       if (!route.methods.includes(request.method)) throw new ShieldError("method-not-allowed", 405);
+      if (upgrade && !route.websocket) throw new ShieldError("websocket-route-required", 426);
       source = "identity";
       if (route.authenticated && !context.identity)
         throw new ShieldError("authentication-required", 401);
@@ -301,7 +313,9 @@ export async function createShield(input: ShieldOptions) {
         path,
         body,
         inspectResponse ? () => {} : release,
+        upgrade,
       );
+      if (response.status === 101) pendingUpgrade = response;
       if (nativeProgram && inspectResponse && nativeTransaction) {
         const responseInput = {
           ...nativeInput,
@@ -314,6 +328,7 @@ export async function createShield(input: ShieldOptions) {
           shouldSkip: skipNativeRule,
         });
         if (headersResult.blocked) {
+          closeUpgrade(response);
           await response.body?.cancel();
           executeSecLang(nativeProgram, responseInput, {
             phases: [5],
@@ -331,6 +346,30 @@ export async function createShield(input: ShieldOptions) {
         const inspectBody = nativeProgram.instructions.some(
           (rule) => "actions" in rule && rule.actions.phase === 4,
         );
+        if (response.status === 101) {
+          const result = executeSecLang(
+            nativeProgram,
+            { ...responseInput, responseBodyBytes: new Uint8Array() },
+            {
+              phases: [4, 5],
+              transaction: nativeTransaction,
+              shouldSkip: skipNativeRule,
+            },
+          );
+          if (result.blocked) {
+            closeUpgrade(response);
+            return denied(
+              request,
+              result.status,
+              "rule",
+              "seclang-response-rule-match",
+              `sec-${result.matched.at(-1)}`,
+            );
+          }
+          emit("allow", "proxy", "websocket-handshake-forwarded");
+          pendingUpgrade = undefined;
+          return response;
+        }
         const bytes =
           inspectBody && response.body ? new Uint8Array(await response.arrayBuffer()) : undefined;
         const bodyResult = executeSecLang(
@@ -409,12 +448,14 @@ export async function createShield(input: ShieldOptions) {
       }
       streaming = response.body !== null;
       emit("allow", "proxy", "forwarded");
+      pendingUpgrade = undefined;
       return response;
     } catch (error) {
       if (error instanceof ShieldError) return denied(request, error.status, source, error.code);
       emit("error", source, "internal-error");
       return denied(request, 500, source, "internal-error");
     } finally {
+      if (pendingUpgrade) closeUpgrade(pendingUpgrade);
       if (!streaming) release();
     }
   }
@@ -432,4 +473,15 @@ export async function createShield(input: ShieldOptions) {
     },
     stats,
   };
+}
+
+function closeUpgrade(response: Response) {
+  const socket = (
+    response as Response & { webSocket?: { close(code: number, reason: string): void } }
+  ).webSocket;
+  try {
+    socket?.close(1008, "Handshake rejected");
+  } catch {
+    /* Already closed. */
+  }
 }

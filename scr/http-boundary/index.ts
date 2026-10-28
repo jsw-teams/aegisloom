@@ -77,6 +77,7 @@ export function checkBoundary(
   limits: BoundaryLimits,
   publicHosts: readonly string[],
   rawTarget?: string,
+  mode: "http" | "websocket" = "http",
 ): { url: URL; path: string } {
   if (new TextEncoder().encode(request.url).length > limits.maxUrlBytes)
     throw new ShieldError("url-too-large", 414);
@@ -119,10 +120,33 @@ export function checkBoundary(
     throw new ShieldError("invalid-content-length");
   if (cl !== null && Number(cl) > limits.maxBodyBytes) throw new ShieldError("body-too-large", 413);
   const connection = request.headers.get("connection");
-  if (connection?.split(",").some((s) => !["close", "keep-alive"].includes(s.trim().toLowerCase())))
+  if (
+    connection
+      ?.split(",")
+      .some(
+        (s) =>
+          !["close", "keep-alive", ...(mode === "websocket" ? ["upgrade"] : [])].includes(
+            s.trim().toLowerCase(),
+          ),
+      )
+  )
     throw new ShieldError("unsafe-connection-header");
-  if (request.headers.has("upgrade") || request.method === "CONNECT" || request.method === "TRACE")
+  if (
+    (request.headers.has("upgrade") && mode !== "websocket") ||
+    request.method === "CONNECT" ||
+    request.method === "TRACE"
+  )
     throw new ShieldError("unsupported-protocol", 405);
+  if (
+    mode === "websocket" &&
+    (request.method !== "GET" ||
+      request.headers.get("upgrade")?.toLowerCase() !== "websocket" ||
+      request.headers.get("sec-websocket-version") !== "13" ||
+      !/^[A-Za-z0-9+/]{22}==$/.test(request.headers.get("sec-websocket-key") ?? "") ||
+      te !== null ||
+      Number(cl ?? "0") !== 0)
+  )
+    throw new ShieldError("invalid-websocket-handshake", 400);
   if (
     request.headers.has("content-encoding") &&
     request.headers.get("content-encoding") !== "identity"

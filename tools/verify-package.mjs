@@ -34,7 +34,7 @@ function secretStrings(value) {
 }
 for (const file of paths) {
   if (
-    /^tools\/(?!\.build\/)|node_modules\/|\.db$|^secret\/(?!(?:credentials|relay-server)\.example\.yml$)/.test(
+    /^tools\/(?!\.build\/|sync-native-seclang\.mjs$|verify-full-crs\.mjs$)|node_modules\/|\.db$|^secret\/(?!(?:credentials|relay-server)\.example\.yml$)/.test(
       file,
     )
   )

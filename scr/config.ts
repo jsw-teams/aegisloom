@@ -59,7 +59,8 @@ export function validateDeploymentConfig(value: unknown): DeploymentConfig {
     !["cloudflare", "vercel", "netlify", "esa", "edgeone"].includes(config.platform) ||
     !Array.isArray(config.routes) ||
     !Array.isArray(config.publicHosts) ||
-    config.publicHosts.length !== 1 ||
+    config.publicHosts.length < 1 ||
+    config.publicHosts.length > 16 ||
     !["tenant", "service", "secLangFile", "secretFile", "originDirectory"].every(
       (k) => typeof (config as any)[k] === "string" && (config as any)[k].length,
     ) ||
@@ -81,16 +82,18 @@ export function validateDeploymentConfig(value: unknown): DeploymentConfig {
     )
       throw new Error("Every route must select a configured business");
   }
-  const publicUrl = new URL(`https://${config.publicHosts[0]}`);
-  if (
-    publicUrl.host !== config.publicHosts[0] ||
-    publicUrl.pathname !== "/" ||
-    publicUrl.username ||
-    publicUrl.password ||
-    publicUrl.search ||
-    publicUrl.hash
-  )
-    throw new Error("An exact public host is required");
+  for (const host of config.publicHosts) {
+    const publicUrl = new URL(`https://${host}`);
+    if (
+      publicUrl.host !== host ||
+      publicUrl.pathname !== "/" ||
+      publicUrl.username ||
+      publicUrl.password ||
+      publicUrl.search ||
+      publicUrl.hash
+    )
+      throw new Error("An exact public host is required");
+  }
   if (
     config.responses &&
     (typeof config.responses.directory !== "string" ||

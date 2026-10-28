@@ -149,11 +149,13 @@ SecRule &IP:blocked "@eq 0" "id:10004,phase:5,pass,nolog,chain"
 
 配置读取的 8 MB 上限与 HTTP 上传无关。limits.maxBodyBytes 控制实际上传字节，项目默认 8 MiB，最高可配置 16 MiB，不相信 Content-Length。完整 CRS 下验证大于 2 MiB 的 multipart 文件保真回源，普通恶意字段仍被检查。
 
-单个转换值上限 2 MiB；PCRE2 的步数、深度、内存以及状态集合有资源边界。超限中止并拒绝，不能当作不匹配放行。压缩请求正文及原始 gRPC/WebSocket 帧未提供入口。
+单个转换值上限 2 MiB；PCRE2 的步数、深度、内存以及状态集合有资源边界。超限中止并拒绝，不能当作不匹配放行。压缩请求正文及原始 gRPC 帧未提供入口。显式 websocket 路由检查真实握手及 101 响应头，保持平台原生二进制消息；升级后的不透明消息不交给 SecLang 检查。
 
 ```sh
 npm run test:crs
 node tools/sync-native-seclang.mjs --latest
+# npm CLI 也提供相同的严格同步器
+edgeshield sync --registry rules/seclang-upstreams.json --output rules/seclang-bundle.json
 npm run check
 npm run cloudflare:dry-run
 npm run audit

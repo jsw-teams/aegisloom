@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { SHIELD_VERSION } from "../core/version.js";
 export async function main(args = process.argv.slice(2)) {
   const [command, file] = args;
@@ -10,12 +11,23 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!command || command === "--help") {
     console.log(
-      "edgeshield init [directory]\nedgeshield serve [config.yml]\nedgeshield serve-relay <secret/relay-server.yml>\nedgeshield check <SecLang file or source bundle>\nedgeshield --version",
+      "edgeshield init [directory]\nedgeshield serve [config.yml]\nedgeshield serve-relay <secret/relay-server.yml>\nedgeshield check <SecLang file or source bundle>\nedgeshield sync [--registry path] [--output path] [--latest]\nedgeshield --version",
     );
     return;
   }
   if (command === "init") {
     await (await import("./init.js")).initProject(file ?? ".");
+    return;
+  }
+  if (command === "sync") {
+    execFileSync(
+      process.execPath,
+      [
+        fileURLToPath(new URL("../../../sync-native-seclang.mjs", import.meta.url)),
+        ...args.slice(1),
+      ],
+      { stdio: "inherit" },
+    );
     return;
   }
   if (command === "serve") {

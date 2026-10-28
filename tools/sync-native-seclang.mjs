@@ -1,8 +1,20 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { verifyFullCrs } from "./verify-full-crs.mjs";
 
-const registryUrl = new URL("../rules/seclang-upstreams.json", import.meta.url);
+function option(name, fallback) {
+  const index = process.argv.indexOf(name);
+  if (index < 0) return fallback;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith("--")) throw new Error(`Missing ${name} path`);
+  return pathToFileURL(resolve(value));
+}
+const registryUrl = option(
+  "--registry",
+  new URL("../rules/seclang-upstreams.json", import.meta.url),
+);
 const registry = JSON.parse(await readFile(registryUrl, "utf8"));
 if (registry.version !== 1 || !Array.isArray(registry.sources) || !registry.sources.length)
   throw new Error("Invalid SecLang upstream registry");
@@ -31,6 +43,24 @@ async function github(path, limit = 2 * 1024 * 1024) {
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks));
+}
+async function rawBlob(repository, commit, path) {
+  const response = await fetch(
+    `https://raw.githubusercontent.com/${repository}/${commit}/${path.split("/").map(encodeURIComponent).join("/")}`,
+    {
+      redirect: "error",
+      signal: AbortSignal.timeout(30000),
+    },
+  );
+  if (!response.ok) throw new Error(`GitHub source file request failed: HTTP ${response.status}`);
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of response.body) {
+    size += chunk.length;
+    if (size > 2 * 1024 * 1024) throw new Error("Upstream file exceeds limit");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 const ids = new Set();
 for (const spec of registry.sources) {
@@ -74,10 +104,13 @@ for (const spec of registry.sources) {
     throw new Error("Missing upstream setup/license");
   const manifest = [];
   for (const item of entries) {
-    const blob = await github(`repos/${spec.repository}/git/blobs/${item.sha}`, 4 * 1024 * 1024);
-    if (blob.encoding !== "base64" || blob.sha !== item.sha)
-      throw new Error("Unexpected upstream blob");
-    const bytes = Buffer.from(blob.content, "base64");
+    let bytes;
+    if (process.env.GH_TOKEN || process.env.GITHUB_TOKEN) {
+      const blob = await github(`repos/${spec.repository}/git/blobs/${item.sha}`, 4 * 1024 * 1024);
+      if (blob.encoding !== "base64" || blob.sha !== item.sha)
+        throw new Error("Unexpected upstream blob");
+      bytes = Buffer.from(blob.content, "base64");
+    } else bytes = await rawBlob(spec.repository, commit, item.path);
     total += bytes.length;
     if (total > 16 * 1024 * 1024 || bytes.length > 2 * 1024 * 1024)
       throw new Error("SecLang source bundle exceeds limit");
@@ -94,9 +127,9 @@ for (const spec of registry.sources) {
 }
 const bundle = { version: 1, format: "seclang-source-bundle", source, files, upstreams };
 const validation = await verifyFullCrs(bundle);
-const destination = new URL("../rules/seclang-bundle.json", import.meta.url);
-await mkdir(new URL("../rules/", import.meta.url), { recursive: true });
-const temporary = new URL("../rules/seclang-bundle.json.tmp", import.meta.url);
+const destination = option("--output", new URL("../rules/seclang-bundle.json", import.meta.url));
+await mkdir(new URL("./", destination), { recursive: true });
+const temporary = new URL(`${destination.href}.tmp`);
 await writeFile(temporary, `${JSON.stringify(bundle, null, 2)}\n`);
 await rename(temporary, destination);
 if (update) await writeFile(registryUrl, `${JSON.stringify(registry, null, 2)}\n`);
