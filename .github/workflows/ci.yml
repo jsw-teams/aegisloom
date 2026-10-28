@@ -15,23 +15,14 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm install
-      - run: npm --prefix api-shield-convert install
-      - name: Static schema validator is current
-        run: node scripts/generate-validator.mjs --check
       - name: Calendar version matches the CLI
         run: npm run version:check
       - run: npm run typecheck
       - run: npm run lint
-      - name: Unit tests
-        run: npm run test:unit
-      - name: Integration tests
-        run: npm run test:integration
-      - name: Security regressions
-        run: npm run test:security
-      - run: npm run test:converter
+      - name: Full engine, five platform builds, uploads, relay and security tests
+        run: npm test
       - run: npm run build
       - run: npm run check:edge
       - run: npm run cloudflare:dry-run
       - run: npm run verify:package
-      - run: npm run smoke:local
       - run: npm run audit

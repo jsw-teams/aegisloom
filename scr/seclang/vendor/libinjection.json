@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/libinjection/libinjection",
+  "commit": "5e3f345d4e4793ee5587a9bffe3d7bda95c1611b",
+  "compiler": "Zig 0.15.2",
+  "bytes": 429161,
+  "sha256": "dc324cae50b3c12dd2c59dd0920a659726fbaa3a16209e04fddb973fdb45bf25"
+}

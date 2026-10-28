@@ -56,7 +56,7 @@ jobs:
         working-directory: ${{ inputs.directory || '.' }}
         run: |
           npm install --no-audit --no-fund
-          ${{ inputs.verify || 'npm --prefix api-shield-convert install && npm run check' }}
+          ${{ inputs.verify || 'npm run check' }}
       - name: Confirm the tested manifest matches the archived plan
         id: integrity
         if: steps.verify.outcome == 'success'

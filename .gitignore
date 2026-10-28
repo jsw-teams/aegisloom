@@ -1,5 +1,8 @@
 node_modules/
-dist/
+.build/
+.cache/
+artifacts/
+tools/.build/
 coverage/
 *.db
 *.db-wal
@@ -8,12 +11,18 @@ coverage/
 .env.*
 !.env.example
 *.tgz
-artifacts/
+tools/.cache/
+tools/.state/
+secret/*
+!secret/credentials.example.yml
+!secret/relay-server.example.yml
+tools/.build/
+tools/.cache/
 .wrangler/
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
-deploy/cloudflare/wrangler.operator.jsonc
+scr/adapters/cloudflare/wrangler.operator.jsonc
 
 package-lock.json
 artifacts-dependency-*.log

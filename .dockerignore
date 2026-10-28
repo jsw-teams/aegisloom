@@ -4,6 +4,13 @@
 !.npmrc
 !tsconfig.json
 !tsconfig.build.json
-!packages/**
-!adapters/**
-!integrations/**
+!scr/**
+scr/node_modules
+!tools/bootstrap.mjs
+!tools/run.mjs
+!tools/clean-build.mjs
+!tools/copy-seclang-assets.mjs
+!rules/**
+!origin/**
+!respond/**
+!config.yml

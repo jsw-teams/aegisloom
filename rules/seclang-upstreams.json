@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "owasp-crs",
+      "repository": "coreruleset/coreruleset",
+      "ref": "v4.30.0",
+      "rulesDirectory": "rules",
+      "setup": "crs-setup.conf.example",
+      "license": "LICENSE"
+    }
+  ]
+}

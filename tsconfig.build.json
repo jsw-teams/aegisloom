@@ -1,5 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["packages/**/*.ts", "adapters/**/*.ts", "integrations/**/*.ts"],
-  "exclude": ["tests", "benchmarks", "examples"]
+  "include": ["scr/**/*.ts", "scr/adapters/**/*.ts"],
+  "exclude": [
+    "tools",
+    "scr/adapters/*/worker.ts",
+    "scr/adapters/handler.ts"
+  ]
 }

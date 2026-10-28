@@ -1,6 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
-  "files": { "ignoreUnknown": true, "includes": ["**", "!**/validator.ts"] },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!**/node_modules", "!**/.build", "!**/.cache"]
+  },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": {
     "enabled": true,

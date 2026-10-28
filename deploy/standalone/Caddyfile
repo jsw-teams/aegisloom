@@ -1,8 +1,0 @@
-api.example.com {
-    reverse_proxy 127.0.0.1:8787 {
-        header_up Host api.example.com
-        header_up -Forwarded
-        header_up -X-Forwarded-For
-        header_up -X-Real-IP
-    }
-}

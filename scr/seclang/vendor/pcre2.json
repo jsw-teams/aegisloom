@@ -1,0 +1,7 @@
+{
+  "package": "pcre2-wasm",
+  "version": "10.49.2",
+  "repository": "https://github.com/gudoshnikovn/pcre2-wasm",
+  "sha256": "ec313ff52d494e4f8708782c9601dc42ce6b276dbaf3730e4b2d8fcd86d8839b",
+  "bytes": 453510
+}

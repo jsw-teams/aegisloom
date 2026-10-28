@@ -17,23 +17,6 @@ updates:
         applies-to: version-updates
         update-types: [minor, patch]
         patterns: ["*"]
-  - package-ecosystem: npm
-    directory: /api-shield-convert
-    schedule:
-      interval: weekly
-      day: monday
-      time: "03:00"
-      timezone: Asia/Taipei
-    open-pull-requests-limit: 10
-    versioning-strategy: increase
-    groups:
-      security:
-        applies-to: security-updates
-        patterns: ["*"]
-      compatible:
-        applies-to: version-updates
-        update-types: [minor, patch]
-        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

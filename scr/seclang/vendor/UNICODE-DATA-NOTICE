@@ -1,0 +1,6 @@
+The US-ASCII best-fit character mapping data is derived from unicode.mapping,
+owasp-modsecurity/ModSecurity, Git blob 2654c4a619bd585de547d0e4eeecec5753d56eeb.
+Source: https://github.com/owasp-modsecurity/ModSecurity/blob/v3/master/unicode.mapping
+The upstream project distributes this file under the Apache License, Version 2.0.
+See the root LICENSE. Only the character mapping data is used; no ModSecurity
+rule execution engine or runtime code is linked or executed.

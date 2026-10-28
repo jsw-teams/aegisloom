@@ -1,0 +1,59 @@
+name: Native SecLang CRS
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '35 2 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: native-seclang-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  full-crs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npm run build
+      - name: Load every source rule and run actual inbound/outbound CRS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/sync-native-seclang.mjs
+      - run: node --import ./tools/node_modules/tsx/dist/loader.mjs --test tools/tests/seclang-*.test.ts
+  update:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    needs: full-crs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run build
+      - name: Validate current releases before replacing the bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/sync-native-seclang.mjs --latest
+      - run: npm run check
+      - run: npm run cloudflare:dry-run
+      - run: npm run audit
+      - name: Commit verified source updates
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rules/seclang-upstreams.json rules/seclang-bundle.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(seclang): sync verified upstream source rules'
+            git push origin HEAD:main
+          fi
