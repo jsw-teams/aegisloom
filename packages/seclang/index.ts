@@ -136,7 +136,6 @@ function compileSelector(text) {
     const name = (colon < 0 ? field : field.slice(0, colon)).toUpperCase();
     if (!VARIABLES.has(name)) throw new Error(`Unsupported variable collection: ${name}`);
     if (key?.includes("%{")) throw new Error("Dynamic selector macros are not supported");
-    if (negative) throw new Error("Negative selectors are not yet supported");
     selectors.push({ negative, count, name, key });
   }
   if (!selectors.length || selectors.every((x) => x.negative))
@@ -231,8 +230,6 @@ export function compileSecLang(source, { phraseFiles = {}, strict = false } = {}
       const selectors = compileSelector(selectorsText);
       const operator = compileOperator(operatorText, phraseFiles);
       const actions = compileActionSet(parseActions(actionText));
-      if (selectors.some((selector) => selector.negative))
-        throw new Error("Negative selectors are not yet supported");
       const step = { type: "rule", selectors, operator, actions, line: stmt.line };
       if (prior?.actions.chain) {
         step.actions.phase ??= prior.actions.phase;
@@ -363,19 +360,25 @@ function values(selector, request, tx) {
   }
   if (selector.key !== undefined)
     entries = entries.filter(([k]) => k.toLowerCase() === selector.key.toLowerCase());
-  return selector.count ? [String(entries.length)] : entries.map(([, v]) => String(v));
+  return selector.count ? [["count", String(entries.length)]] : entries;
 }
 function getValues(selectors, request, tx) {
   const selected = [];
   for (const item of selectors) {
     if (item.negative) continue;
-    for (const v of values(item, request, tx)) selected.push(v);
+    for (const [key, value] of values(item, request, tx)) {
+      const excluded = selectors.some(
+        (negative) =>
+          negative.negative &&
+          negative.name === item.name &&
+          (negative.key === undefined || negative.key.toLowerCase() === key.toLowerCase()),
+      );
+      if (!excluded) selected.push(String(value));
+    }
   }
-  // Exact keyed exclusions cannot be reconstructed after flattening collections.
-  if (selectors.some((s) => s.negative))
-    throw new Error("Negative selectors are not yet executable");
   return selected;
 }
+
 function compares(value, condition) {
   const { op, operand, regex, phrases } = condition;
   switch (op) {
