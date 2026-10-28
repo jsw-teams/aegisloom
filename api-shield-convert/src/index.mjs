@@ -1,3 +1,4 @@
+export { compileSecLang, executeSecLang, splitActions } from "./seclang-vm.mjs";
 import { createHash } from "node:crypto";
 import { parseSecLang } from "./seclang.mjs";
 import { parseCrowdSec } from "./crowdsec.mjs";
