@@ -39,7 +39,7 @@ jobs:
       - id: base
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - id: plan
-        uses: ./.github/actions/dependency-maintenance
+        uses: jsw-teams/edgeaegis/.github/actions/dependency-maintenance@main
         with:
           directory: ${{ inputs.directory || '.' }}
           audit-level: ${{ inputs.audit-level || 'moderate' }}
@@ -90,7 +90,7 @@ jobs:
         with:
           name: dependency-repair-plan
           path: ${{ runner.temp }}/edgeaegis-maintenance/
-      - uses: ./.github/actions/dependency-maintenance
+      - uses: jsw-teams/edgeaegis/.github/actions/dependency-maintenance@main
         with:
           mode: publish
           directory: ${{ inputs.directory || '.' }}
