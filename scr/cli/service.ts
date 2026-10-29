@@ -12,7 +12,8 @@ export function serviceUnit(node: string, entry: string, config: string) {
     const escaped = value.replaceAll("\\", "\\\\").replaceAll('"', '\\"').replaceAll("%", "%%");
     return `"${command ? escaped.replaceAll("$", () => "$$") : escaped}"`;
   };
-  return `[Unit]\nDescription=EdgeAegis native SecLang firewall\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory=${quote(dirname(config))}\nExecStart=${quote(node, true)} ${quote(entry, true)} serve ${quote(config, true)}\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\nUMask=0077\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=default.target\n`;
+  // WorkingDirectory takes a path value, not ExecStart's quoted argument syntax.
+  return `[Unit]\nDescription=EdgeAegis native SecLang firewall\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory=${dirname(config).replaceAll("%", "%%")}\nExecStart=${quote(node, true)} ${quote(entry, true)} serve ${quote(config, true)}\nRestart=on-failure\nRestartSec=3\nNoNewPrivileges=true\nPrivateTmp=true\nUMask=0077\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=default.target\n`;
 }
 
 /** Production SSH lifecycle. No daemon is started during package installation. */
