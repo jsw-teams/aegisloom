@@ -1,4 +1,4 @@
-name: Publish npm and GitHub Release
+name: Publish npm
 on:
   push:
     branches: [main]
@@ -9,18 +9,14 @@ on:
         description: Publish the verified archive (disable for the initial account bootstrap)
         type: boolean
         default: true
-      tag_version:
-        description: Restore latest to an existing verified GitHub release (leave empty to publish)
-        type: string
-        default: ''
 permissions:
   contents: read
 concurrency:
-  group: ${{ inputs.tag_version != '' && 'edgeshield-npm-tags' || 'edgeshield-npm-release' }}
+  group: edgeshield-npm-release
   cancel-in-progress: false
 jobs:
   verify:
-    if: github.repository == 'jsw-teams/edgeshield' && github.ref == 'refs/heads/main' && inputs.tag_version == ''
+    if: github.repository == 'jsw-teams/edgeshield' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
@@ -70,7 +66,7 @@ jobs:
           retention-days: 7
   publish:
     needs: verify
-    if: (github.event_name == 'push' || inputs.publish) && inputs.tag_version == ''
+    if: github.event_name == 'push' || inputs.publish
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
@@ -103,8 +99,8 @@ jobs:
       - name: Publish using the configured npm trusted publisher
         env:
           PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
-        run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --access public --provenance --ignore-scripts --loglevel=verbose
-      - name: Wait for the tested version to become installable
+        run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --tag latest --access public --provenance --ignore-scripts
+      - name: Wait for the tested version and latest tag to become available
         env:
           PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
           PACKAGE_INTEGRITY: ${{ needs.verify.outputs.integrity }}
@@ -113,79 +109,19 @@ jobs:
           const endpoint='https://registry.npmjs.org/@toewpq%2Fedgeshield/'+encodeURIComponent(process.env.PACKAGE_VERSION);
           const deadline=Date.now()+20*60*1000;
           while(Date.now()<deadline){
-            const response=await fetch(endpoint,{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)});
-            if(response.ok){
+            const response=await fetch(endpoint+'?verified='+Date.now(),{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)}).catch(()=>null);
+            if(response?.ok){
               const pkg=await response.json();
               if(pkg.dist?.integrity!==process.env.PACKAGE_INTEGRITY)throw Error('Registry archive differs from the tested archive');
-              console.log('The tested version is available from npm with the expected integrity');
-              process.exit(0);
+              const tags=await fetch('https://registry.npmjs.org/-/package/@toewpq%2Fedgeshield/dist-tags?verified='+Date.now(),{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)}).catch(()=>null);
+              if(tags?.ok&&(await tags.json()).latest===process.env.PACKAGE_VERSION){
+                console.log('The tested archive is installable and latest points to this version');
+                process.exit(0);
+              }
             }
-            if(response.status!==404)throw Error('npm registry verification returned HTTP '+response.status);
+            if(response&&!response.ok&&![404,429,500,502,503,504].includes(response.status))throw Error('npm registry verification returned HTTP '+response.status);
             console.log('Waiting for npm publication checks');
             await new Promise(resolve=>setTimeout(resolve,15000));
           }
           throw Error('npm has not made this version available; inspect the publisher notifications before retrying');
           NODE
-      - name: Advance latest using OIDC and verify the public tag
-        env:
-          PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
-        run: |
-          npm dist-tag add "@toewpq/edgeshield@$PACKAGE_VERSION" latest
-          test "$(npm view @toewpq/edgeshield dist-tags.latest)" = "$PACKAGE_VERSION"
-  tag:
-    if: github.repository == 'jsw-teams/edgeshield' && github.ref == 'refs/heads/main' && inputs.tag_version != ''
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          package-manager-cache: false
-      - run: npm install --global 'npm@^11.15.0' --ignore-scripts --no-audit --no-fund
-      - name: Verify the existing version against its checked release archive
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PACKAGE_VERSION: ${{ inputs.tag_version }}
-        run: |
-          node --input-type=module -e "if(!/^\d{4}\.\d{1,2}\.\d+$/.test(process.env.PACKAGE_VERSION))throw Error('Invalid exact release version')"
-          gh release download "v$PACKAGE_VERSION" --pattern publication.json --dir "$RUNNER_TEMP/release-info"
-          node --input-type=module <<'NODE'
-          import{readFile}from'node:fs/promises';import{join}from'node:path';
-          const info=JSON.parse(await readFile(join(process.env.RUNNER_TEMP,'release-info/publication.json'),'utf8'));
-          const response=await fetch('https://registry.npmjs.org/@toewpq%2Fedgeshield/'+encodeURIComponent(process.env.PACKAGE_VERSION),{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)});
-          if(!response.ok)throw Error('The requested release is not installable from npm');
-          const pkg=await response.json();
-          if(info.name!=='@toewpq/edgeshield'||info.version!==process.env.PACKAGE_VERSION||pkg.name!==info.name||pkg.version!==info.version||pkg.dist?.integrity!==info.integrity)throw Error('Published archive does not match the checked release');
-          NODE
-      - name: Advance latest using OIDC and verify the public tag
-        env:
-          PACKAGE_VERSION: ${{ inputs.tag_version }}
-        run: |
-          npm dist-tag add "@toewpq/edgeshield@$PACKAGE_VERSION" latest --loglevel=verbose
-          test "$(npm view @toewpq/edgeshield dist-tags.latest)" = "$PACKAGE_VERSION"
-  release:
-    needs: [verify, publish]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@v4
-        with:
-          name: edgeshield-verified-package
-          path: ${{ runner.temp }}/verified-package
-      - name: Release the same archive after npm publication
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
-          PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
-        run: gh release create "v$PACKAGE_VERSION" "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" "$RUNNER_TEMP/verified-package/publication.json" --target "$GITHUB_SHA" --title "EdgeShield $PACKAGE_VERSION" --generate-notes
