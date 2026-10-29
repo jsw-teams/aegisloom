@@ -86,3 +86,59 @@ test("IP CIDR operator handles IPv4 and IPv6 and rejects a different network", (
   assert.equal(send(program, "2001:db8::5").blocked, true);
   assert.equal(send(program, "192.0.3.2").blocked, false);
 });
+
+test("native ipMatchFromFile loads every source-relative IPv4/IPv6 file and fails on missing or malformed data", () => {
+  const source = "Include first/deny.conf\nInclude second/deny.conf";
+  const files = {
+    "first/deny.conf":
+      'SecRule REMOTE_ADDR "@ipMatchFromFile networks.txt extra.ipset" "id:41006,phase:1,deny"',
+    "first/networks.txt":
+      "# test fixtures, not live threat intelligence\n192.0.2.0/24\n2001:db8::/32\n",
+    "first/extra.ipset": "198.51.100.7\n",
+    "second/deny.conf":
+      'SecRule REMOTE_ADDR "@ipMatchFromFile networks.txt" "id:41007,phase:1,deny"',
+    "second/networks.txt": "203.0.113.0/24\n",
+  };
+  const program = compileSecLang(source, { strict: true, files });
+  try {
+    for (const [remoteAddr, id] of [
+      ["192.0.2.8", "41006"],
+      ["2001:db8::8", "41006"],
+      ["198.51.100.7", "41006"],
+      ["203.0.113.8", "41007"],
+    ]) {
+      const result = executeSecLang(program, { url: "https://test/", method: "GET", remoteAddr });
+      assert.equal(result.blocked, true);
+      assert.deepEqual(result.matched, [id]);
+    }
+    assert.equal(
+      executeSecLang(program, { url: "https://test/", method: "GET", remoteAddr: "198.51.100.8" })
+        .blocked,
+      false,
+    );
+  } finally {
+    program.dispose();
+  }
+  for (const invalid of [undefined, "not-an-ip\n", "192.0.2.0/33\n"]) {
+    const candidate = { ...files };
+    if (invalid === undefined) delete (candidate as Record<string, string>)["first/networks.txt"];
+    else candidate["first/networks.txt"] = invalid;
+    assert.throws(() => compileSecLang(source, { strict: true, files: candidate }));
+  }
+});
+
+test("native phrase files accept txt extensions with unchanged data and resolve nested rule scope", () => {
+  const program = compileSecLang("Include feed/deny.conf", {
+    strict: true,
+    files: {
+      "feed/deny.conf": 'SecRule ARGS "@pmFromFile signatures.txt" "id:41008,deny,capture"',
+      "feed/signatures.txt": "# operator-selected feed\nExample.invalid\n",
+    },
+  });
+  try {
+    assert.equal(send(program, "https://EXAMPLE.INVALID/path").tx["0"], "EXAMPLE.INVALID");
+    assert.equal(send(program, "https://normal.test/path").blocked, false);
+  } finally {
+    program.dispose();
+  }
+});

@@ -19,7 +19,11 @@ export async function serve(path: string): Promise<void> {
   async function candidate() {
     const { config, businesses } = await readDeployment(path);
     const credentials = await readCredentials(config.secretFile),
-      native = await loadSecLangDeployment(config.secLangFile, config.localRulesFile);
+      native = await loadSecLangDeployment(
+        config.secLangFile,
+        config.localRulesFile,
+        config.setupRulesFile,
+      );
     const allowlist = config.allowlistFile
       ? ((await readData(config.allowlistFile)) as AllowlistEntry[])
       : [];

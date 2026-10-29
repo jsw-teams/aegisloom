@@ -33,6 +33,7 @@ export function parseSecLangSyntax(input: string): SecLangStatement[] {
       started = false;
     for (const ch of raw) {
       if (escaped) {
+        if (ch === quote) part = part.slice(0, -1);
         part += ch;
         escaped = false;
         continue;

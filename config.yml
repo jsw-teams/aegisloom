@@ -5,6 +5,7 @@ platform: cloudflare
 publicHosts: [api.example]
 secLangFile: rules/seclang-bundle.json
 localRulesFile: rules/local.conf
+setupRulesFile: rules/setup.conf
 allowlistFile: rules/allowlist.yml
 originDirectory: origin
 secretFile: secret/credentials.yml

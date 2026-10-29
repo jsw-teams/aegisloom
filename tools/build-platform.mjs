@@ -21,7 +21,11 @@ export async function buildPlatform(
     platform,
   );
   const credentials = await readCredentials(config.secretFile),
-    native = await loadSecLangDeployment(config.secLangFile, config.localRulesFile);
+    native = await loadSecLangDeployment(
+      config.secLangFile,
+      config.localRulesFile,
+      config.setupRulesFile,
+    );
   const program = compileSecLang(native.secLang, { ...native.secLangOptions, strict: true });
   program.dispose();
   const data = {

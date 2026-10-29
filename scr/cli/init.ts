@@ -27,6 +27,8 @@ export async function initProject(target: string) {
     "rules/seclang-upstreams.json",
     "rules/allowlist.yml",
     "rules/local.conf",
+    "rules/setup.conf",
+    "rules/emergency.conf",
     "secret/credentials.example.yml",
     "respond/403.html",
     "respond/403.json",

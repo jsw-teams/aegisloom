@@ -93,7 +93,8 @@ for (const spec of registry.sources) {
   const entries = tree.tree.filter(
     (item) =>
       item.type === "blob" &&
-      ((item.path.startsWith(`${spec.rulesDirectory}/`) && /\.(conf|data)$/.test(item.path)) ||
+      ((item.path.startsWith(`${spec.rulesDirectory}/`) &&
+        /\.(conf|data|txt|ipset|list)$/.test(item.path)) ||
         item.path === spec.setup ||
         item.path === spec.license),
   );
@@ -103,22 +104,35 @@ for (const spec of registry.sources) {
   )
     throw new Error("Missing upstream setup/license");
   const manifest = [];
-  for (const item of entries) {
-    let bytes;
-    if (process.env.GH_TOKEN || process.env.GITHUB_TOKEN) {
-      const blob = await github(`repos/${spec.repository}/git/blobs/${item.sha}`, 4 * 1024 * 1024);
-      if (blob.encoding !== "base64" || blob.sha !== item.sha)
-        throw new Error("Unexpected upstream blob");
-      bytes = Buffer.from(blob.content, "base64");
-    } else bytes = await rawBlob(spec.repository, commit, item.path);
-    total += bytes.length;
-    if (total > 16 * 1024 * 1024 || bytes.length > 2 * 1024 * 1024)
-      throw new Error("SecLang source bundle exceeds limit");
-    const gitHash = createHash("sha1").update(`blob ${bytes.length}\0`).update(bytes).digest("hex");
-    if (gitHash !== item.sha) throw new Error("Upstream Git blob hash mismatch");
-    const path = `${spec.id}/${item.path === spec.setup ? "setup.conf" : item.path}`;
-    files[path] = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
-    manifest.push({ path, bytes: bytes.length, sha256: digest(bytes), gitBlob: item.sha });
+  // Bound network concurrency while preserving deterministic upstream file order.
+  for (let offset = 0; offset < entries.length; offset += 8) {
+    const batch = await Promise.all(
+      entries.slice(offset, offset + 8).map(async (item) => {
+        if (process.env.GH_TOKEN || process.env.GITHUB_TOKEN) {
+          const blob = await github(
+            `repos/${spec.repository}/git/blobs/${item.sha}`,
+            4 * 1024 * 1024,
+          );
+          if (blob.encoding !== "base64" || blob.sha !== item.sha)
+            throw new Error("Unexpected upstream blob");
+          return { item, bytes: Buffer.from(blob.content, "base64") };
+        }
+        return { item, bytes: await rawBlob(spec.repository, commit, item.path) };
+      }),
+    );
+    for (const { item, bytes } of batch) {
+      total += bytes.length;
+      if (total > 16 * 1024 * 1024 || bytes.length > 2 * 1024 * 1024)
+        throw new Error("SecLang source bundle exceeds limit");
+      const gitHash = createHash("sha1")
+        .update(`blob ${bytes.length}\0`)
+        .update(bytes)
+        .digest("hex");
+      if (gitHash !== item.sha) throw new Error("Upstream Git blob hash mismatch");
+      const path = `${spec.id}/${item.path === spec.setup ? "setup.conf" : item.path}`;
+      files[path] = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+      manifest.push({ path, bytes: bytes.length, sha256: digest(bytes), gitBlob: item.sha });
+    }
   }
   source += `Include ${spec.id}/setup.conf\nInclude ${spec.id}/${spec.rulesDirectory}/*.conf\n`;
   upstreams.push({ id: spec.id, repository: spec.repository, ref, commit, files: manifest });

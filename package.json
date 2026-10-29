@@ -1,6 +1,6 @@
 {
   "name": "@jsw-teams/edgeshield",
-  "version": "2026.10.13",
+  "version": "2026.10.14",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -38,6 +38,8 @@
     "rules/seclang-upstreams.json",
     "rules/allowlist.yml",
     "rules/local.conf",
+    "rules/setup.conf",
+    "rules/emergency.conf",
     "secret/credentials.example.yml",
     "secret/relay-server.example.yml",
     "origin",

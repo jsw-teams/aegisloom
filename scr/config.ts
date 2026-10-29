@@ -10,6 +10,7 @@ export interface DeploymentConfig {
   routes: Route[];
   secLangFile: string;
   localRulesFile?: string;
+  setupRulesFile?: string;
   allowlistFile?: string;
   secretFile: string;
   originDirectory: string;
@@ -42,6 +43,7 @@ export function validateDeploymentConfig(value: unknown): DeploymentConfig {
     "routes",
     "secLangFile",
     "localRulesFile",
+    "setupRulesFile",
     "allowlistFile",
     "secretFile",
     "originDirectory",

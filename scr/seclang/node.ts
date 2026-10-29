@@ -6,20 +6,35 @@ import { createInjectionDetectors } from "./libinjection.js";
 import { createPCRE2Backend } from "./pcre2.js";
 
 let backends: Promise<Pick<CompileSecLangOptions, "regexBackend" | "detectors">> | undefined;
-export async function loadSecLangDeployment(entry: string, localRulesFile?: string) {
+export async function loadSecLangDeployment(
+  entry: string,
+  localRulesFile?: string,
+  setupRulesFile?: string,
+) {
   const native = await loadSecLangFile(entry);
-  if (!localRulesFile) return native;
-  if (resolve(entry) === resolve(localRulesFile))
-    throw new Error("Local rules must be separate from the upstream entry");
-  const local = await loadSecLangFile(localRulesFile);
   const files = { ...native.secLangOptions.files };
-  for (const [path, source] of Object.entries(local.secLangOptions.files ?? {})) {
-    if (files[path] !== undefined)
-      throw new Error(`Local rule file collides with upstream file: ${path}`);
-    files[path] = source;
+  const sources = [native.secLang];
+  const paths = new Set([resolve(entry)]);
+  for (const [path, prefix] of [
+    [setupRulesFile, true],
+    [localRulesFile, false],
+  ] as const) {
+    if (!path) continue;
+    if (paths.has(resolve(path))) throw new Error("Operator rules must have separate entry files");
+    paths.add(resolve(path));
+    const operator = await loadSecLangFile(path);
+    for (const [name, text] of Object.entries(operator.secLangOptions.files ?? {})) {
+      if (files[name] !== undefined && files[name] !== text)
+        throw new Error(`Local rule file collides with upstream file: ${name}`);
+      files[name] = text;
+    }
+    // An explicit Include preserves the source-relative scope of nested Includes/data.
+    const source = `Include ${basename(path)}`;
+    if (prefix) sources.unshift(source);
+    else sources.push(source);
   }
   return {
-    secLang: `${native.secLang}\n${local.secLang}`,
+    secLang: sources.join("\n"),
     secLangOptions: { ...native.secLangOptions, files },
   };
 }
@@ -84,7 +99,7 @@ export async function loadSecLangFile(
       if (item.isDirectory()) await scan(path, depth + 1);
       else if (
         item.isFile() &&
-        (/\.(conf|data|example|mapping|map)$/.test(item.name) || path === absolute)
+        (/\.(conf|data|txt|ipset|list|example|mapping|map)$/.test(item.name) || path === absolute)
       ) {
         if (++count > 4096) throw new Error("SecLang source file count exceeded");
         const bytes = await readFile(path);

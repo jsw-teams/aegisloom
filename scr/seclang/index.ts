@@ -106,6 +106,7 @@ const OPERATOR_NAMES = new Set([
   "detectsqli",
   "detectxss",
   "ipmatch",
+  "ipmatchfromfile",
   "unconditionalmatch",
   "validatebyterange",
   "validateurlencoding",
@@ -231,7 +232,7 @@ function compileOperator(text, phraseFiles, regexBackend, detectors, fileName) {
   if (!OPERATOR_NAMES.has(op)) throw new Error(`Unsupported operator ${op}`);
   const dynamic = operand.includes("%{");
   if (dynamic) {
-    if (["pm", "pmfromfile", "ipmatch", "validatebyterange"].includes(op))
+    if (["pm", "pmfromfile", "ipmatch", "ipmatchfromfile", "validatebyterange"].includes(op))
       throw new Error("Unsupported operator macro");
     validateMacros(operand);
   }
@@ -245,13 +246,13 @@ function compileOperator(text, phraseFiles, regexBackend, detectors, fileName) {
     }
   }
   let phrases: string[] | undefined;
-  if (op === "pmfromfile") {
+  if (["pmfromfile", "ipmatchfromfile"].includes(op)) {
     phrases = [];
     for (const file of operand.split(/\s+/).filter(Boolean)) {
       const path = sourcePath(fileName ?? "main.conf", file);
       const entries = phraseFiles?.[path] ?? phraseFiles?.[file];
       if (!Array.isArray(entries) || !entries.every((v) => typeof v === "string"))
-        throw new Error(`Missing explicit phrase file: ${file}`);
+        throw new Error(`Missing explicit operator data file: ${file}`);
       phrases.push(...entries);
     }
   } else if (op === "pm") phrases = operand.split(/\s+/).filter(Boolean);
@@ -269,8 +270,8 @@ function compileOperator(text, phraseFiles, regexBackend, detectors, fileName) {
     });
   }
   let networks = [];
-  if (op === "ipmatch")
-    networks = operand
+  if (["ipmatch", "ipmatchfromfile"].includes(op))
+    networks = (op === "ipmatchfromfile" ? phrases.join("\n") : operand)
       .split(/[\s,]+/)
       .filter(Boolean)
       .map((value) =>
@@ -441,7 +442,7 @@ export function compileSecLang(
   phraseFiles = {
     ...Object.fromEntries(
       Object.entries(files ?? {})
-        .filter(([name]) => name.endsWith(".data"))
+        .filter(([name]) => /\.(data|txt|ipset|list)$/.test(name))
         .map(([name, text]) => [
           name,
           text.split(/\r?\n/).filter((line) => line.trim() && !line.trimStart().startsWith("#")),
@@ -1069,6 +1070,7 @@ function compares(value, condition, tx, context) {
         return true;
       }
     }
+    case "ipmatchfromfile":
     case "ipmatch": {
       try {
         const address = ipaddr.parse(value);

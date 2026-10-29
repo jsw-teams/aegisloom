@@ -13,3 +13,10 @@ test("only an odd number of trailing backslashes continues a line", () => {
   assert.equal(statements.length, 2);
   assert.equal(statements[1]?.line, 2);
 });
+
+test("escaped delimiters are literal quotes while regex escapes are preserved", () => {
+  const [rule] = parseSecLangSyntax(String.raw`SecRule ARGS "@contains \"quoted\"" "id:1,deny"`);
+  assert.equal(rule?.args[1], '@contains "quoted"');
+  const [regex] = parseSecLangSyntax(String.raw`SecRule ARGS "@rx \d+\s+\"test\"" "id:2,deny"`);
+  assert.equal(regex?.args[1], String.raw`@rx \d+\s+"test"`);
+});

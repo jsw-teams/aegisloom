@@ -138,22 +138,27 @@ routes:
 
 每个实际到达引擎的请求仍执行完整规则，缓存不复用防火墙决策。引擎没有服务端响应缓存，也不会用 304 冒充免调用。Cloudflare 的 `caches.default` 命中仍先执行 Worker；新版 Workers Cache 能减少执行 CPU，但其缓存命中仍按 Worker 请求计费，而且会绕开该次规则执行，因此本项目不自动启用。参见 [静态资源计费](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) 和 [Workers 请求计费](https://developers.cloudflare.com/workers/platform/pricing/)。实时流、写入和鉴权请求保持动态执行；调用次数不能仅靠降低 CPU 或延长服务端缓存变成零。
 
-## 本地防火墙指令
+## 原生规则与临时防护
 
-`rules/local.conf` 完全由用户控制，通过 config.yml 的 localRulesFile 加载，上游同步不会改写。可直接使用 SecLang 的 IP/GLOBAL 集合和 expirevar、deprecatevar 表达计数、滑动衰减及临时拒绝。例如：
+规则入口按 setupRulesFile、secLangFile、localRulesFile 的顺序加载，分别用于前置策略、完整上游规则和用户后置规则。缺失 Include、数据文件、重复 ID 或不支持的语义都会阻止加载；引擎不写规则转换器，不将其他规则语言转换为 SecLang 或旧 IR。
+
+默认 rules/setup.conf 已启用实际行为防护：同一 IP 瞬时超过 120 次请求（每秒恢复 20 次额度），或 60 秒内出现 3 次达到实际 CRS 拦截阈值的攻击，临时拒绝 300 秒。封禁期间的访问不会续期，到期恢复；普通低频访问不累计成永久封禁。阈值、窗口、TTL 和用户白名单都可修改，更新工具不会覆盖用户策略。
+
+rules/emergency.conf 包含直接执行的原生 SecLang 虚拟补丁，目前针对 CVE-2025-29927 拒绝外部携带的 x-middleware-subrequest 头，包括空值；依据 [Next.js 官方应急措施](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw)。该文件由维护者更新并运行回归测试，不把 CVE 目录条目自动宣称为已防护。重复命中此补丁也参与临时封禁。
+
+原生 SecLang 规则可直接引用原始数据文件，无需生成规则代码。例如下面的规则会实际阻止列表中 IP/CIDR 发起的请求：
 
 ```apache
-SecAction "id:10001,phase:1,pass,nolog,initcol:ip=%{REMOTE_ADDR}"
-SecRule IP:blocked "@eq 1" "id:10002,phase:1,deny,status:429"
-SecRule RESPONSE_STATUS "@eq 403" "id:10003,phase:5,pass,nolog,chain"
-    SecRule TX:blocking_inbound_anomaly_score "@ge 5" "setvar:ip.hits=+1,expirevar:ip.hits=60"
-SecRule &IP:blocked "@eq 0" "id:10004,phase:5,pass,nolog,chain"
-    SecRule IP:hits "@ge 3" "setvar:ip.blocked=1,expirevar:ip.blocked=300"
+# threat-networks.txt 必须是用户选定、校验过的 IP/CIDR 列表；此处不默认启用任何第三方黑名单。
+SecRule REMOTE_ADDR "@ipMatchFromFile threat-networks.txt" "id:1000400,phase:1,deny,status:403,log"
+SecRule ARGS "@pmFromFile threat-phrases.txt" "id:1000401,phase:2,deny,status:403,log"
 ```
 
-以上示例按实际 CRS 403 和分数累计；expirevar 在再次执行时重设期限，deprecatevar 按完整时间间隔递减且不低于零。集合有容量和过期边界，不能无限增长。默认 local.conf 不激活额外封禁。
+文件路径相对规则源文件解析。支持多个文件、IPv4/IPv6 与 CIDR，保留短语匹配和 capture 语义；无效网络或缺失文件使严格编译失败。文件可以使用 .data、.txt、.ipset、.list 扩展名。HTTP 参数中的域名短语匹配不等于 DNS 或出站流量防火墙。
 
-纯 Worker 的集合属于当前引擎实例，不能提供跨实例、跨区域或重启后的全局计数。到期在访问时核验，不依赖实例存活到某个定时器；不会在平台上遗留需要额外清理的远程封禁规则。
+[OWASP CRS](https://coreruleset.org/) 是当前完整验证的原生规则源；[Atomicorp](https://docs.atomicorp.com/gotrootModsec/) 也发布原生 SecLang 规则，但需要相应授权和私有规则文件，尚未在本项目验证整套兼容性，不会复制进公有仓库。多个原生来源通过 rules/seclang-upstreams.json 配置，直接加载原文；发现缺失语义时补齐引擎并测试，不能删规则制造通过率。
+
+纯 Worker 的集合属于当前引擎实例，不能提供跨实例、跨区域或重启后的全局计数。到期在访问时核验，不依赖实例存活到某个定时器；不会在平台上遗留需要额外清理的远程封禁规则。未知载荷的突发行为同样执行上述封禁，不依赖载荷恰好命中某个 CVE 签名。
 
 ## 白名单与拦截回应
 
@@ -187,6 +192,6 @@ npm run cloudflare:dry-run
 npm run audit
 ```
 
-rules/seclang-upstreams.json 支持多个来源。同步核对不可变 Git blob 和 SHA-256，严格加载全部源码，核对每条规则的执行指令，再运行正常/攻击/响应及性能回归，全部通过后原子替换源码包。GitHub Actions 每周验证并更新 main，用户规则、白名单和凭据不参与同步。
+rules/seclang-upstreams.json 支持多个来源。同步核对不可变 Git blob 和 SHA-256，严格加载全部源码，核对每条规则的执行指令，再运行正常/攻击/响应及性能回归，全部通过后原子替换源码包。GitHub Actions 每 6 小时验证并更新 main，用户规则、白名单和凭据不参与同步。
 
 CI 覆盖 Linux/Windows、Node 22/24；包括完整 CRS PL1–4、五平台构建入口、真实 workerd、capture/chain/TX/ctl、误杀、SQLi/XSS/LFI/RCE、官方 WebShell 响应签名、上传、回源、防重放、TTL 指令、npm 独立安装和性能。没有用忽略规则或模拟匹配代替执行。本地验证不等于已在五家云账户部署。

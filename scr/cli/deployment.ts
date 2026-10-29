@@ -101,6 +101,7 @@ export async function readDeployment(path: string, platform?: PlatformName) {
   const config = validateDeploymentConfig({ ...input, platform, origins });
   config.secLangFile = resolve(directory, config.secLangFile);
   if (config.localRulesFile) config.localRulesFile = resolve(directory, config.localRulesFile);
+  if (config.setupRulesFile) config.setupRulesFile = resolve(directory, config.setupRulesFile);
   config.secretFile = resolve(directory, config.secretFile);
   if (config.allowlistFile) config.allowlistFile = resolve(directory, config.allowlistFile);
   if (config.responses) config.responses.directory = resolve(directory, config.responses.directory);

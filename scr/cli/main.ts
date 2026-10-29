@@ -43,6 +43,7 @@ export async function main(args = process.argv.slice(2)) {
       const native = await (await import("../seclang/node.js")).loadSecLangDeployment(
         config.secLangFile,
         config.localRulesFile,
+        config.setupRulesFile,
       );
       const program = (await import("../seclang/index.js")).compileSecLang(native.secLang, {
         ...native.secLangOptions,
