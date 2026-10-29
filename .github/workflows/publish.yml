@@ -96,7 +96,7 @@ jobs:
       - name: Publish using the configured npm trusted publisher
         env:
           PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
-        run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --access public --provenance --ignore-scripts
+        run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --access public --provenance --ignore-scripts --loglevel=verbose
       - name: Wait for the tested version to become installable
         env:
           PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
