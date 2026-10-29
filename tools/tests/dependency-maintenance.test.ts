@@ -48,7 +48,7 @@ for (const unpatchable of [false, true])
       else assert.equal(updated.overrides["fixture-leaf"], "^1.0.2");
       await assert.rejects(readFile(join(directory, "package-lock.json")));
       const report = JSON.parse(
-        await readFile(join(directory, "tools/.cache/shieldweave-maintenance/report.json"), "utf8"),
+        await readFile(join(directory, "tools/.cache/edgeaegis-maintenance/report.json"), "utf8"),
       );
       assert.equal(report.blocked, unpatchable);
       assert.equal(report.locksRetained, false);

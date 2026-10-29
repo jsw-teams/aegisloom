@@ -44,8 +44,8 @@ for (const file of paths) {
     if (bytes.includes(Buffer.from(value)))
       throw new Error(`Private credential found in package: ${file}`);
 }
-const directory = await mkdtemp(join(tmpdir(), "edgeshield-package-"));
-if (!resolve(directory).startsWith(`${resolve(tmpdir()) + sep}edgeshield-package-`))
+const directory = await mkdtemp(join(tmpdir(), "edgeaegis-package-"));
+if (!resolve(directory).startsWith(`${resolve(tmpdir()) + sep}edgeaegis-package-`))
   throw new Error("Unsafe package verification directory");
 try {
   const packed = JSON.parse(
@@ -75,12 +75,12 @@ try {
     [
       "--input-type=module",
       "-e",
-      `import {createRequire} from 'node:module';import{dirname,join}from'node:path';const r=createRequire(import.meta.url);const {compileSecLang,executeSecLang}=await import('@toewpq/edgeshield/seclang');const{loadSecLangFile}=await import('@toewpq/edgeshield/seclang/node');const root=dirname(dirname(dirname(dirname(dirname(r.resolve('@toewpq/edgeshield'))))));const loaded=await loadSecLangFile(join(root,'rules/seclang-bundle.json'));const program=compileSecLang(loaded.secLang,{...loaded.secLangOptions,strict:true});if(program.sourceRules<600||program.unsupported.length)throw Error('Incomplete packaged CRS');const result=executeSecLang(program,{url:'https://test/?q=1%20UNION%20SELECT%20password%20FROM%20users',method:'GET',protocol:'HTTP/1.1',remoteAddr:'192.0.2.1',headers:{host:'test','user-agent':'Mozilla/5.0',accept:'text/html'}});if(!result.blocked||!result.matched.includes('949110'))throw Error('Packaged CRS bypass');program.dispose();console.log('Isolated npm consumer executed complete CRS');`,
+      `import {createRequire} from 'node:module';import{dirname,join}from'node:path';const r=createRequire(import.meta.url);const {compileSecLang,executeSecLang}=await import('edgeaegis/seclang');const{loadSecLangFile}=await import('edgeaegis/seclang/node');const root=dirname(dirname(dirname(dirname(dirname(r.resolve('edgeaegis'))))));const loaded=await loadSecLangFile(join(root,'rules/seclang-bundle.json'));const program=compileSecLang(loaded.secLang,{...loaded.secLangOptions,strict:true});if(program.sourceRules<600||program.unsupported.length)throw Error('Incomplete packaged CRS');const result=executeSecLang(program,{url:'https://test/?q=1%20UNION%20SELECT%20password%20FROM%20users',method:'GET',protocol:'HTTP/1.1',remoteAddr:'192.0.2.1',headers:{host:'test','user-agent':'Mozilla/5.0',accept:'text/html'}});if(!result.blocked||!result.matched.includes('949110'))throw Error('Packaged CRS bypass');program.dispose();console.log('Isolated npm consumer executed complete CRS');`,
     ],
     { cwd: directory, encoding: "utf8" },
   );
   console.log(result.trim());
-  const cli = join(directory, "node_modules/@toewpq/edgeshield/tools/.build/scr/cli/main.js");
+  const cli = join(directory, "node_modules/edgeaegis/tools/.build/scr/cli/main.js");
   if (
     execFileSync(process.execPath, [cli, "--version"], {
       cwd: directory,

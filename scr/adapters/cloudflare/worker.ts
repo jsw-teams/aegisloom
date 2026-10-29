@@ -1,6 +1,6 @@
-import deployment from "edgeshield:deployment";
-import originFetches from "edgeshield:origin";
-import { INJECTION, PCRE2 } from "edgeshield:wasm";
+import deployment from "edgeaegis:deployment";
+import originFetches from "edgeaegis:origin";
+import { INJECTION, PCRE2 } from "edgeaegis:wasm";
 import { createCloudflareRuntime } from "./runtime.js";
 
 // Cloudflare charges module initialization separately from request execution.

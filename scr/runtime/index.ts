@@ -41,7 +41,7 @@ export interface ShieldOptions {
   service: string;
   publicHosts: string[];
   routes: Route[];
-  /** Native SecLang rules, compiled and evaluated by EdgeShield itself (no conversion). */
+  /** Native SecLang rules, compiled and evaluated by EdgeAegis itself (no conversion). */
   secLang: string;
   secLangOptions?: Omit<CompileSecLangOptions, "strict">;
   /** Fully operator-defined rule exemptions, including optional global bypass. */

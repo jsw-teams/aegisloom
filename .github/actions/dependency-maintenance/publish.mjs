@@ -20,7 +20,7 @@ const git = (args, env = process.env) =>
   });
 const original = JSON.parse(git(["show", `${base}:${path}`]));
 const proposed = JSON.parse(
-  await readFile(resolve(process.env.RUNNER_TEMP, "shieldweave-maintenance/package.json"), "utf8"),
+  await readFile(resolve(process.env.RUNNER_TEMP, "edgeaegis-maintenance/package.json"), "utf8"),
 );
 for (const key of new Set([...Object.keys(original), ...Object.keys(proposed)]))
   if (!["dependencies", "devDependencies", "optionalDependencies", "overrides"].includes(key))

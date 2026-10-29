@@ -1,4 +1,4 @@
-/** PCRE2 primitive backend. SecLang parsing, matching policy and state remain in EdgeShield. */
+/** PCRE2 primitive backend. SecLang parsing, matching policy and state remain in EdgeAegis. */
 import { octets } from "./bytes.js";
 export interface SecLangRegex {
   matcher(value: string): { find(): boolean; group(index: number): string | null };

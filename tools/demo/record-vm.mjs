@@ -28,18 +28,18 @@ await guest([
   `test -e /opt/recording/workspace/api-shield || ln -s '${mounted}' /opt/recording/workspace/api-shield`,
 ]);
 assert.equal(await guest(["readlink", "-f", "/opt/recording/workspace/api-shield"]), mounted);
-const demo = "/opt/recording/edgeshield-native-demo",
-  archive = `/opt/recording/packages/toewpq-edgeshield-${JSON.parse(await readFile(resolve(root, "package.json"))).version}.tgz`;
-await guest(["/opt/recording/edgeshield-cli/node_modules/.bin/edgeshield", "init", demo]);
+const demo = "/opt/recording/edgeaegis-native-demo",
+  archive = `/opt/recording/packages/edgeaegis-${JSON.parse(await readFile(resolve(root, "package.json"))).version}.tgz`;
+await guest(["/opt/recording/edgeaegis-cli/node_modules/.bin/edgeaegis", "init", demo]);
 await guest([
   "node",
   "--input-type=module",
   "-e",
   `
 import{readFileSync,writeFileSync,copyFileSync,rmSync}from'node:fs';const root=${JSON.stringify(demo)},archive=${JSON.stringify(archive)};
-for(const file of ['setup.conf','emergency.conf'])copyFileSync('/opt/recording/edgeshield-cli/node_modules/@toewpq/edgeshield/rules/'+file,root+'/rules/'+file);
+for(const file of ['setup.conf','emergency.conf'])copyFileSync('/opt/recording/edgeaegis-cli/node_modules/edgeaegis/rules/'+file,root+'/rules/'+file);
 for(const file of ['.install-complete','.probe-complete'])rmSync(root+'/'+file,{force:true});
-const p=JSON.parse(readFileSync(root+'/package.json'));p.dependencies['@toewpq/edgeshield']='file:'+archive;writeFileSync(root+'/package.json',JSON.stringify(p,null,2));
+const p=JSON.parse(readFileSync(root+'/package.json'));p.dependencies['edgeaegis']='file:'+archive;writeFileSync(root+'/package.json',JSON.stringify(p,null,2));
 let c=readFileSync(root+'/config.yml','utf8').replace('publicHosts: [api.example]',"publicHosts: ['127.0.0.1:8787']");writeFileSync(root+'/config.yml',c);
 let s=readFileSync(root+'/rules/setup.conf','utf8').replaceAll('expirevar:ip.edgeshield_blocked=300','expirevar:ip.edgeshield_blocked=5');writeFileSync(root+'/rules/setup.conf',s);
 writeFileSync(root+'/origin/cloudflare/app/index.js','export default {async fetch(){return Response.json({ok:true,business:"demo"});}};');
@@ -60,8 +60,8 @@ const rc = resolve(artifact, "bashrc");
 await writeFile(rc, `export PATH=/usr/local/bin:/usr/bin:/bin\ncd '${demo}'\nexport PS1='❯ '\n`);
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
 const context = await recordingContext(browser, { locale: "en" }, artifact);
-const terminal = "EdgeShield native demo",
-  probeTerminal = "EdgeShield verification";
+const terminal = "EdgeAegis native demo",
+  probeTerminal = "EdgeAegis verification";
 try {
   await openApp(
     [
@@ -88,7 +88,7 @@ try {
   const page = await context.newPage();
   await record(
     page,
-    "edgeshield-native",
+    "edgeaegis-native",
     async () => {
       await typeCommand(
         artifact,

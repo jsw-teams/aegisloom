@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * EdgeShield's first-party SecLang state machine (no ModSecurity process).
+ * EdgeAegis's first-party SecLang state machine (no ModSecurity process).
  * Compiles native rules, source includes and data into executable transaction instructions.
  * Data is a Request-like object or real Web Request; no I/O occurs while executing.
  */

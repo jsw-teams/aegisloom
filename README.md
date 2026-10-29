@@ -1,12 +1,14 @@
-# EdgeShield · 边缘盾
+# EdgeAegis
+
+Edge + Aegis（盾牌、庇护）：运行在边缘与服务器上的应用防火墙。
 
 自研 TypeScript SecLang 编译器和执行引擎，直接运行完整 OWASP CRS，不转换为 Shield IR。Cloudflare、Vercel、Netlify、ESA、EdgeOne 和 Node/VPS 共用同一套规则执行代码。Cloudflare 部署只需要 Worker。
 
 真实 VM 录制：实际终端安装与启动、Geany 中的原生规则、完整 CRS 拦截和 TTL 恢复。演示将封禁 TTL 调为 5 秒；项目默认仍为 300 秒。
 
-[![原生 SecLang 防护的真实 VM 演示](tools/demo/edgeshield-native.8a7f4ce017aa5453.webp)](tools/demo/edgeshield-native.99f5c815d4030fec.mp4)
+[![原生 SecLang 防护的真实 VM 演示](tools/demo/edgeaegis-native.d1ce9a3778e5e1ee.webp)](tools/demo/edgeaegis-native.1bdc3f50e62f9c2f.mp4)
 
-[播放录像](tools/demo/edgeshield-native.99f5c815d4030fec.mp4) · [GIF](tools/demo/edgeshield-native.d9684c4fe408de9a.gif)
+[播放录像](tools/demo/edgeaegis-native.1bdc3f50e62f9c2f.mp4) · [GIF](tools/demo/edgeaegis-native.2c24d6106b040847.gif)
 
 ## 目录
 
@@ -29,7 +31,7 @@
 
 变量宏通过同一套变量解析器读取请求、正文错误、Cookie、参数和响应数据，遵守对应阶段的可见性。TX 始终读取当前事务状态，正文处理控制发生改变时仍重新解析所需正文。请求目标与默认正文处理器只初始化一次；集合只刷新正在访问的记录，在容量不足时清理过期记录，保留其他仍有效的状态。动作合并默认策略后完整编译一次。
 
-PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调用，来源、哈希及许可证在 `scr/seclang/vendor/`。规则解析、事务、状态与决策由 EdgeShield 实现，不依赖第三方 WAF 引擎，没有正则翻译、RE2 回退或按平台裁剪规则。
+PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调用，来源、哈希及许可证在 `scr/seclang/vendor/`。规则解析、事务、状态与决策由 EdgeAegis 实现，不依赖第三方 WAF 引擎，没有正则翻译、RE2 回退或按平台裁剪规则。
 
 兼容范围以锁定的完整 CRS 和执行回归为依据。Apache 服务器配置、外部脚本等不属于已验证的规则指令范围。
 
@@ -42,16 +44,16 @@ npm run start:local
 
 安装会把依赖放到 `tools/node_modules/`、编译到 `tools/.build/`，并仅在密钥文件不存在时创建随机凭据。已有密钥不会被覆盖。
 
-npm 包名为 `@toewpq/edgeshield`。独立 CLI 初始化新项目后，即可使用相同的 npm 部署命令：
+npm 包名为 `edgeaegis`。独立 CLI 初始化新项目后，即可使用相同的 npm 部署命令：
 
 ```sh
-npm exec --package=@toewpq/edgeshield -- edgeshield init my-shield
-cd my-shield
+npm exec --package=edgeaegis -- edgeaegis init my-firewall
+cd my-firewall
 npm install
 npm run deploy:local
 ```
 
-发布流程在 `.github/workflows/publish.yml`。`main` 的版本文件 `scr/core/version.ts` 更新后自动触发，也可在 `main` 手动执行；package.json 和 CLI 版本必须一致。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，等待 npm 开放安装并核对归档哈希，验证 `latest` 已指向该版本。npm trusted publisher 指定 GitHub 仓库 `jsw-teams/edgeshield`、工作流 `publish.yml`，Environment 留空；Allowed actions 允许直接发布。`npm publish --tag latest` 在版本开放下载后推进标签，工作流只读核验标签，无需额外的 dist-tag 管理权限。认证使用 OIDC，无需把 npm token 放进仓库。
+发布流程在 `.github/workflows/publish.yml`。`main` 的版本文件 `scr/core/version.ts` 更新后自动触发，也可在 `main` 手动执行；package.json 和 CLI 版本必须一致。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，等待 npm 开放安装并核对归档哈希，验证 `latest` 已指向该版本。npm trusted publisher 指定 GitHub 仓库 `jsw-teams/edgeaegis`、工作流 `publish.yml`，Environment 留空；Allowed actions 允许直接发布。`npm publish --tag latest` 在版本开放下载后推进标签，工作流只读核验标签，无需额外的 dist-tag 管理权限。认证使用 OIDC，无需把 npm token 放进仓库。
 
 修改 config.yml 的 platform、域名、路由和监听地址。Node/VPS 读取选定平台的 `origin/<平台>/<业务>/config.yml`；没有单独的 Node 业务目录。默认监听回环地址，公网由自己的 TLS 入口承接。容器需要挂载自己的 secret，并按容器网络配置监听地址。
 
@@ -120,7 +122,7 @@ npm run deploy:cloudflare
 node tools/.build/scr/cli/main.js deploy vercel config.yml --plan
 ```
 
-独立安装的 npm CLI 使用 `edgeshield build <平台> config.yml`、`edgeshield start <平台> config.yml`、`edgeshield deploy <平台> config.yml`。本地 build 严格验证完整规则与配置，start/deploy 启动同一个 Node 服务。
+独立安装的 npm CLI 使用 `edgeaegis build <平台> config.yml`、`edgeaegis start <平台> config.yml`、`edgeaegis deploy <平台> config.yml`。本地 build 严格验证完整规则与配置，start/deploy 启动同一个 Node 服务。
 
 云平台命令先构建当前平台，再调用项目已安装的官方 CLI：Cloudflare 为 wrangler，Vercel 为 vercel，Netlify 为 netlify-cli，ESA 为 esa-cli，EdgeOne 为 edgeone。先在自己的部署项目安装对应工具并完成登录及项目关联；启动、部署使用工具自身的权限，不增加引擎环境变量。
 
@@ -128,7 +130,7 @@ node tools/.build/scr/cli/main.js deploy vercel config.yml --plan
 
 CRS 的 REQUEST_PROTOCOL、REQUEST_LINE 和 REMOTE_ADDR 需要真实传输信息。Cloudflare 读取平台信息，Node 读取连接元数据。其他 Fetch 入口要求由可信入口用 `secret/credentials.yml` 的 ingressKey 签名传递原始协议/IP；缺失或伪造返回 503，不会编造 HTTP/1.1 或跳过相关规则。
 
-`@toewpq/edgeshield/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
+`edgeaegis/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
 
 ## 请求次数与缓存成本
 
@@ -198,7 +200,7 @@ SecRule ARGS "@pmFromFile threat-phrases.txt" "id:1000401,phase:2,deny,status:40
 npm run test:crs
 node tools/sync-native-seclang.mjs --latest
 # npm CLI 也提供相同的严格同步器
-edgeshield sync --registry rules/seclang-upstreams.json --output rules/seclang-bundle.json
+edgeaegis sync --registry rules/seclang-upstreams.json --output rules/seclang-bundle.json
 npm run check
 npm run cloudflare:dry-run
 npm run audit

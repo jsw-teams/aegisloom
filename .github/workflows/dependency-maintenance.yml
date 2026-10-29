@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: dependency-repair-plan
-          path: ${{ runner.temp }}/shieldweave-maintenance/
+          path: ${{ runner.temp }}/edgeaegis-maintenance/
           retention-days: 14
       - name: Install compatible dependencies and verify
         id: verify
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: dependency-repair-plan
-          path: ${{ runner.temp }}/shieldweave-maintenance/
+          path: ${{ runner.temp }}/edgeaegis-maintenance/
       - uses: ./.github/actions/dependency-maintenance
         with:
           mode: publish

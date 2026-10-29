@@ -9,16 +9,14 @@ export async function initProject(target: string) {
   let found = false;
   for (let i = 0; i < 6; i++) {
     try {
-      if (
-        JSON.parse(await readFile(join(root, "package.json"), "utf8")).name === "@toewpq/edgeshield"
-      ) {
+      if (JSON.parse(await readFile(join(root, "package.json"), "utf8")).name === "edgeaegis") {
         found = true;
         break;
       }
     } catch {}
     root = dirname(root);
   }
-  if (!found) throw new Error("Cannot locate installed EdgeShield package");
+  if (!found) throw new Error("Cannot locate installed EdgeAegis package");
   const directory = resolve(target);
   const files = [
     "config.yml",
@@ -54,10 +52,10 @@ export async function initProject(target: string) {
   const scripts: Record<string, string> = {};
   for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone", "local"])
     for (const command of ["build", "start", "deploy"])
-      scripts[`${command}:${platform}`] = `edgeshield ${command} ${platform}`;
+      scripts[`${command}:${platform}`] = `edgeaegis ${command} ${platform}`;
   await put(
     "package.json",
-    `${JSON.stringify({ private: true, type: "module", scripts, dependencies: { "@toewpq/edgeshield": `^${SHIELD_VERSION}` } }, null, 2)}\n`,
+    `${JSON.stringify({ private: true, type: "module", scripts, dependencies: { edgeaegis: `^${SHIELD_VERSION}` } }, null, 2)}\n`,
   );
   await put(".gitignore", "secret/*\n!secret/credentials.example.yml\ntools/.state/\n");
   console.log(`Initialized operator files in ${directory}`);

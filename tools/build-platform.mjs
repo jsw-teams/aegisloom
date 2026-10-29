@@ -87,15 +87,15 @@ export async function buildPlatform(
       {
         name: "private-project-assets",
         setup(api) {
-          api.onResolve({ filter: /^edgeshield:/ }, (args) => ({
+          api.onResolve({ filter: /^edgeaegis:/ }, (args) => ({
             path: args.path,
             namespace: "project",
           }));
           api.onLoad({ filter: /.*/, namespace: "project" }, (args) => ({
             contents:
-              args.path === "edgeshield:deployment"
+              args.path === "edgeaegis:deployment"
                 ? `export default ${JSON.stringify(data)};`
-                : args.path === "edgeshield:origin"
+                : args.path === "edgeaegis:origin"
                   ? origin
                   : wasmSource,
             loader: "js",
@@ -125,7 +125,7 @@ export async function buildPlatform(
   const deployDirectory = join(directory, "deploy");
   await mkdir(deployDirectory, { recursive: true });
   const code = result.outputFiles.find((file) => file.path.endsWith("worker.js")).contents;
-  const name = `edgeshield-${config.tenant}-${config.service}`
+  const name = `edgeaegis-${config.tenant}-${config.service}`
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
     .slice(0, 63);
@@ -171,7 +171,7 @@ export async function buildPlatform(
       ),
     );
   } else if (platform === "netlify") {
-    await put("edge-functions/edgeshield.js", code);
+    await put("edge-functions/edgeaegis.js", code);
     await mkdir(join(deployDirectory, "public"), { recursive: true });
     await put("netlify.toml", '[build]\npublish = "public"\nedge_functions = "edge-functions"\n');
   } else if (platform === "esa") {

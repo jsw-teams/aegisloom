@@ -11,7 +11,7 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!command || command === "--help") {
     console.log(
-      "edgeshield init [directory]\nedgeshield build <cloudflare|vercel|netlify|esa|edgeone|local> [config.yml]\nedgeshield start <platform|local> [config.yml] [--plan]\nedgeshield deploy <platform|local> [config.yml] [--plan]\nedgeshield serve [config.yml]\nedgeshield serve-relay <secret/relay-server.yml>\nedgeshield check <SecLang file or source bundle>\nedgeshield sync [--registry path] [--output path] [--latest]\nedgeshield --version",
+      "edgeaegis init [directory]\nedgeaegis build <cloudflare|vercel|netlify|esa|edgeone|local> [config.yml]\nedgeaegis start <platform|local> [config.yml] [--plan]\nedgeaegis deploy <platform|local> [config.yml] [--plan]\nedgeaegis serve [config.yml]\nedgeaegis serve-relay <secret/relay-server.yml>\nedgeaegis check <SecLang file or source bundle>\nedgeaegis sync [--registry path] [--output path] [--latest]\nedgeaegis --version",
     );
     return;
   }
@@ -29,7 +29,7 @@ export async function main(args = process.argv.slice(2)) {
           JSON.stringify({
             platform: "local",
             tool: "node",
-            args: ["edgeshield", "start", "local", configFile],
+            args: ["edgeaegis", "start", "local", configFile],
           }),
         );
         return;

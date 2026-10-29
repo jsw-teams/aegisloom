@@ -1,4 +1,4 @@
-declare module "edgeshield:deployment" {
+declare module "edgeaegis:deployment" {
   import type { DeploymentConfig, ProjectCredentials } from "../config.js";
   import type { ErrorPages } from "../runtime/error-pages.js";
   import type { AllowlistEntry } from "../runtime/index.js";
@@ -13,13 +13,13 @@ declare module "edgeshield:deployment" {
   };
   export default value;
 }
-declare module "edgeshield:origin" {
+declare module "edgeaegis:origin" {
   import type { Fetch } from "../core/types.js";
 
   const value: Record<string, Fetch>;
   export default value;
 }
-declare module "edgeshield:wasm" {
+declare module "edgeaegis:wasm" {
   export const PCRE2: WebAssembly.Module | BufferSource;
   export const INJECTION: WebAssembly.Module | BufferSource;
 }

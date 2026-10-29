@@ -18,8 +18,8 @@ const semver = createRequire(npmCli)("semver");
 const original = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
 const proposed = structuredClone(original),
   report = { updated: [], blocked: [], remaining: [] };
-const temporary = await mkdtemp(join(tmpdir(), "shieldweave-repair-"));
-if (!resolve(temporary).startsWith(resolve(tmpdir()) + sep + "shieldweave-repair-"))
+const temporary = await mkdtemp(join(tmpdir(), "edgeaegis-repair-"));
+if (!resolve(temporary).startsWith(resolve(tmpdir()) + sep + "edgeaegis-repair-"))
   throw new Error("Invalid temporary directory");
 const environment = {
   ...process.env,
@@ -152,7 +152,7 @@ try {
     .map(([name, v]) => ({ name, severity: v.severity }));
   const changed = JSON.stringify(original) !== JSON.stringify(proposed),
     blocked = report.remaining.length > 0;
-  const artifact = resolve(process.env.RUNNER_TEMP || tmpdir(), "shieldweave-maintenance");
+  const artifact = resolve(process.env.RUNNER_TEMP || tmpdir(), "edgeaegis-maintenance");
   await mkdir(artifact, { recursive: true });
   await writeFile(join(artifact, "package.json"), JSON.stringify(proposed, null, 2) + "\n");
   await writeFile(

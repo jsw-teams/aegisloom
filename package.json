@@ -1,6 +1,6 @@
 {
-  "name": "@toewpq/edgeshield",
-  "version": "2026.10.18",
+  "name": "edgeaegis",
+  "version": "2026.10.19",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "node": ">=22.13"
   },
   "bin": {
-    "edgeshield": "tools/.build/scr/cli/main.js"
+    "edgeaegis": "tools/.build/scr/cli/main.js"
   },
   "exports": {
     ".": "./tools/.build/scr/runtime/index.js",
@@ -115,7 +115,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsw-teams/edgeshield.git"
+    "url": "git+https://github.com/jsw-teams/edgeaegis.git"
   },
   "publishConfig": {
     "access": "public"
