@@ -1,6 +1,6 @@
 {
   "name": "@toewpq/edgeshield",
-  "version": "2026.10.16",
+  "version": "2026.10.17",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",

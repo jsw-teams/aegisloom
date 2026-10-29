@@ -65,6 +65,7 @@ jobs:
     needs: verify
     if: inputs.publish
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     permissions:
       contents: read
       id-token: write
@@ -96,6 +97,28 @@ jobs:
         env:
           PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
         run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --access public --provenance --ignore-scripts
+      - name: Wait for the tested version to become installable
+        env:
+          PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
+          PACKAGE_INTEGRITY: ${{ needs.verify.outputs.integrity }}
+        run: |
+          node --input-type=module <<'NODE'
+          const endpoint='https://registry.npmjs.org/@toewpq%2Fedgeshield/'+encodeURIComponent(process.env.PACKAGE_VERSION);
+          const deadline=Date.now()+20*60*1000;
+          while(Date.now()<deadline){
+            const response=await fetch(endpoint,{headers:{'cache-control':'no-cache'},signal:AbortSignal.timeout(15000)});
+            if(response.ok){
+              const pkg=await response.json();
+              if(pkg.dist?.integrity!==process.env.PACKAGE_INTEGRITY)throw Error('Registry archive differs from the tested archive');
+              console.log('The tested version is available from npm with the expected integrity');
+              process.exit(0);
+            }
+            if(response.status!==404)throw Error('npm registry verification returned HTTP '+response.status);
+            console.log('Waiting for npm publication checks');
+            await new Promise(resolve=>setTimeout(resolve,15000));
+          }
+          throw Error('npm has not made this version available; inspect the publisher notifications before retrying');
+          NODE
   release:
     needs: [verify, publish]
     runs-on: ubuntu-24.04

@@ -49,7 +49,7 @@ npm install
 npm run deploy:local
 ```
 
-发布流程在 `.github/workflows/publish.yml`，仅允许从 `main` 手动触发。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，再创建 GitHub Release。后续自动认证使用 npm 的 GitHub trusted publisher，指定仓库 `jsw-teams/edgeshield` 和工作流 `publish.yml`，无需把 npm token 放进仓库。
+发布流程在 `.github/workflows/publish.yml`，仅允许从 `main` 手动触发。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，等待 npm 开放安装并核对归档哈希，再创建 GitHub Release。认证使用 npm 的 GitHub trusted publisher，指定仓库 `jsw-teams/edgeshield` 和工作流 `publish.yml`，无需把 npm token 放进仓库。
 
 修改 config.yml 的 platform、域名、路由和监听地址。Node/VPS 读取选定平台的 `origin/<平台>/<业务>/config.yml`；没有单独的 Node 业务目录。默认监听回环地址，公网由自己的 TLS 入口承接。容器需要挂载自己的 secret，并按容器网络配置监听地址。
 
