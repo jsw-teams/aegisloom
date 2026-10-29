@@ -5,6 +5,8 @@ A portable, first-party SecLang firewall. Load and execute OWASP CRS source dire
 [![npm](https://img.shields.io/npm/v/edgeaegis)](https://www.npmjs.com/package/edgeaegis)
 [![CI](https://github.com/jsw-teams/edgeaegis/actions/workflows/ci.yml/badge.svg)](https://github.com/jsw-teams/edgeaegis/actions/workflows/ci.yml)
 
+[中文说明](#中文说明) · [Agent contributions and security reports](#agent-contributions-and-security-reports)
+
 ![Real VM terminal: configure multiple origins and keys, run curl, block SQL injection before the origin, recover after the temporary ban](https://raw.githubusercontent.com/jsw-teams/edgeaegis/main/tools/demo/edgeaegis-routing.3d240e2bb6009766.gif)
 
 The GIF records an actual isolated Linux desktop and terminal. It shows two business functions, three authenticated HTTPS origins, real `curl -i` responses, an unchanged origin access log after a CRS block, and native temporary protection. All addresses, certificates and keys belong to the disposable lab. The recording shortens the ban TTL to five seconds; the default is 300 seconds. Reproduction sources are in `tools/demo/`.
@@ -177,5 +179,32 @@ npm run audit
 CI covers Windows/Linux and Node 22/24, full CRS PL1–4, five built adapters, real workerd, PCRE2/capture/chain/TX/ctl, normal traffic, SQLi/XSS/LFI/RCE, response WebShell signatures, uploads, origin isolation, replay rejection, TTL and isolated npm installation. The current verified snapshot contains 693 SecRule and 8 SecAction instructions, with zero unsupported rules. Local adapter verification is not a claim of deployment to five live accounts.
 
 Releases use `YYYY.M.monthly-release-number`, starting at `2026.10.1`, with tags such as `v2026.10.1`, matching EdgePress. Earlier naming experiments are test history. GitHub Actions `publish.yml` verifies and publishes the same hashed npm archive through Trusted Publishing/OIDC, checks public installation and the `latest` tag, and requires no stored npm token.
+
+## Agent contributions and security reports
+
+Vibe Coding and AI-assisted contributions are welcome. Humans remain responsible for the submitted code and evidence. Read [AGENTS.md](AGENTS.md), explain the change, and run the relevant regression tests **before uploading a branch or PR**. Engine, parser, rule or adapter changes require `npm run check`, `npm run test:crs`, `npm run cloudflare:dry-run` and `npm run audit`. Include commands, runtime, results and any unrun checks; never substitute generated output for an actual run or remove rules to improve results. Documentation-only changes require checking the documented commands, links and examples; identify checks that do not apply.
+
+Agents may submit security reports, subject to the same evidence standard. Use [GitHub private vulnerability reporting](https://github.com/jsw-teams/edgeaegis/security/advisories/new) for sensitive findings. If private reporting is unavailable, request a private contact through an issue without exploit details. Do not publish live tokens, private origin addresses, customer payloads or a working exploit against an unfixed live deployment. Test only a local/disposable environment or an explicitly authorized target.
+
+Each report must state the affected version/commit and configuration, prerequisites and trust boundary, a minimal sanitized reproducer, expected versus actual behavior, concrete impact, and exact verification commands/results. Distinguish reproduced findings from hypotheses and include a regression test or explain why one cannot be supplied. Disclose AI assistance and any uncertainty; consolidate duplicates. Maintainers validate reports before assigning severity or publishing an advisory. A report does not authorize production changes or release publication.
+
+## 中文说明
+
+EdgeAegis 是自研 SecLang 防火墙，直接加载并执行 OWASP CRS；Cloudflare Workers、Vercel、Netlify、ESA、EdgeOne 与 Node.js/VPS 共用引擎。规则配置位于 `rules/config.yml`，所有主机名、路径、VPS IP、负载均衡 CNAME、外部云函数和同一运行时业务函数统一配置在 `origin/config.yml`。每个外部服务引用自己的 `secret/credentials.yml` 密钥；实际凭据只放私有部署库，不上传公共仓库或 npm。
+
+```sh
+npm exec --package=edgeaegis -- edgeaegis init my-firewall
+cd my-firewall
+npm install
+# 编辑 config.yml、rules/config.yml、origin/config.yml 和 secret/credentials.yml
+npm run deploy:cloudflare
+# 其他目标：deploy:vercel、deploy:netlify、deploy:esa、deploy:edgeone、deploy:local
+```
+
+通过 SSH 在 Linux/VPS 长期运行时，使用 `npx edgeaegis service install config.yml --system` 安装 systemd 后台服务，使用 `npx edgeaegis service status config.yml --system` 查看状态。需要相应管理权限；`deploy:local` 是前台开发命令。安装 npm 包不会自动开启后台服务。
+
+上方 GIF 来自真实隔离虚拟机终端，演示多个业务、独立回源密钥、真实 curl 响应、完整 CRS 拦截与临时封禁到期恢复。全部示例地址和密钥属于一次性实验环境。CRS 定时跟踪最新稳定版，完整验证后才更新；来源提交与哈希用于核验，不作为永久锁定。白名单和自定义拒绝页面始终由部署者控制。
+
+欢迎 Vibe Coding、AI 辅助开发及 Agent 安全报告。提交者须先阅读 [AGENTS.md](AGENTS.md)，**测试后再上传代码**，注明实际执行的命令、结果和未验证项。安全报告须提供受影响版本、前提、脱敏复现、预期与实际行为、影响及验证证据，区分已复现问题和推测；敏感漏洞使用上述 GitHub 私密报告入口。不得在公共报告中包含真实凭据、私有源站或用户数据，也不得把提交报告当作攻击生产环境的授权。
 
 Licensed under [Apache-2.0](LICENSE); third-party notices are in [NOTICE](NOTICE).
