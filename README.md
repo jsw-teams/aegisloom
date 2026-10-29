@@ -2,6 +2,12 @@
 
 自研 TypeScript SecLang 编译器和执行引擎，直接运行完整 OWASP CRS，不转换为 Shield IR。Cloudflare、Vercel、Netlify、ESA、EdgeOne 和 Node/VPS 共用同一套规则执行代码。Cloudflare 部署只需要 Worker。
 
+真实 VM 录制：实际终端安装与启动、Geany 中的原生规则、完整 CRS 拦截和 TTL 恢复。演示将封禁 TTL 调为 5 秒；项目默认仍为 300 秒。
+
+[![原生 SecLang 防护的真实 VM 演示](tools/demo/edgeshield-native.8a7f4ce017aa5453.webp)](tools/demo/edgeshield-native.99f5c815d4030fec.mp4)
+
+[播放录像](tools/demo/edgeshield-native.99f5c815d4030fec.mp4) · [GIF](tools/demo/edgeshield-native.d9684c4fe408de9a.gif)
+
 ## 目录
 
 - `scr/`：引擎、HTTP 运行时、平台适配器、CLI、回源协议。

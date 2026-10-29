@@ -129,3 +129,41 @@ test("native emergency patch and repeated real CRS attacks block before origin a
     program.dispose();
   }
 });
+
+test("a configured ban shorter than the attack window expires without rearming on innocent traffic", async () => {
+  let now = 0;
+  const source = (await readFile("rules/setup.conf", "utf8")).replaceAll(
+    "expirevar:ip.edgeshield_blocked=300",
+    "expirevar:ip.edgeshield_blocked=5",
+  );
+  const program = compileSecLang(source, {
+    strict: true,
+    now: () => now,
+    files: { "emergency.conf": await readFile("rules/emergency.conf", "utf8") },
+  });
+  const send = (attack = false) => {
+    const request = {
+      url: "https://test/",
+      method: "GET",
+      remoteAddr: "192.0.2.40",
+      headers: attack ? { "x-middleware-subrequest": "middleware" } : {},
+    };
+    const result = executeSecLang(program, request);
+    executeSecLang(program, request, { phases: [5], transaction: result.transaction });
+    return result;
+  };
+  try {
+    for (let n = 0; n < 3; n++) assert.equal(send(true).blocked, true);
+    assert.equal(send().blocked, true);
+    now = 5000;
+    for (let n = 0; n < 3; n++) assert.equal(send().blocked, false);
+    assert.equal(send(true).blocked, true);
+    assert.equal(
+      send().blocked,
+      false,
+      "a new single offense must not inherit the previous ban's counters",
+    );
+  } finally {
+    program.dispose();
+  }
+});
