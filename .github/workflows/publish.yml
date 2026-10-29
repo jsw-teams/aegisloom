@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: edgeshield-npm-release
+  group: ${{ inputs.tag_version != '' && 'edgeshield-npm-tags' || 'edgeshield-npm-release' }}
   cancel-in-progress: false
 jobs:
   verify:
