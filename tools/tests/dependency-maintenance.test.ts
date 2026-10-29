@@ -6,8 +6,10 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
 
-for (const unpatchable of [false, true])
-  test(`weekly repair ${unpatchable ? "withholds a breaking upgrade" : "repairs a same-major transitive vulnerability"} without retaining locks`, async () => {
+for (const mode of ["compatible", "breaking", "deprecated"])
+  test(`weekly repair ${mode} handling without retaining locks`, async () => {
+    const unpatchable = mode === "breaking",
+      deprecated = mode === "deprecated";
     const directory = await mkdtemp(join(tmpdir(), "shield-maintenance-test-"));
     const manifest = {
       name: "fixture-project",
@@ -32,10 +34,11 @@ for (const unpatchable of [false, true])
             GITHUB_OUTPUT: join(directory, "outputs"),
             npm_execpath: resolve("tools/tests/fixtures/maintenance-npm.cjs"),
             ...(unpatchable ? { TEST_UNPATCHABLE: "true" } : {}),
+            ...(deprecated ? { TEST_DEPRECATED: "true" } : {}),
           },
         },
       );
-      assert.equal(JSON.parse(result).blocked, unpatchable);
+      assert.equal(JSON.parse(result).blocked, unpatchable || deprecated);
       const updated = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
       assert.deepEqual(updated.scripts, manifest.scripts);
       assert.match(
@@ -50,7 +53,8 @@ for (const unpatchable of [false, true])
       const report = JSON.parse(
         await readFile(join(directory, "tools/.cache/edgeaegis-maintenance/report.json"), "utf8"),
       );
-      assert.equal(report.blocked, unpatchable);
+      assert.equal(report.blocked, unpatchable || deprecated);
+      assert.equal(report.deprecated.length, deprecated ? 1 : 0);
       assert.equal(report.locksRetained, false);
     } finally {
       await rm(directory, { recursive: true, force: true });

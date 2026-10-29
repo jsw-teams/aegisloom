@@ -13,7 +13,14 @@ if (command === "view") {
 } else if (command === "install") {
   fs.writeFileSync(
     "package-lock.json",
-    JSON.stringify({ packages: { "node_modules/fixture-leaf": { version: "1.0.0" } } }),
+    JSON.stringify({
+      packages: {
+        "node_modules/fixture-leaf": {
+          version: "1.0.0",
+          ...(process.env.TEST_DEPRECATED ? { deprecated: "Use the maintained replacement" } : {}),
+        },
+      },
+    }),
   );
 } else if (command === "audit") {
   const manifest = JSON.parse(fs.readFileSync("package.json"));

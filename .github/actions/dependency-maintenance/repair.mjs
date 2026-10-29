@@ -147,11 +147,14 @@ try {
     report.updated.push({ name, to: "^" + target, reason: "same-major-security-fix" });
   }
   tree = await resolveTree();
+  report.deprecated = Object.entries(tree.lock.packages ?? {})
+    .filter(([,pkg]) => typeof pkg.deprecated === "string" && pkg.deprecated)
+    .map(([path,pkg]) => ({path,version:pkg.version,message:pkg.deprecated}));
   report.remaining = Object.entries(tree.audit.vulnerabilities)
     .filter(([, v]) => severity.indexOf(v.severity) >= severity.indexOf(level))
     .map(([name, v]) => ({ name, severity: v.severity }));
   const changed = JSON.stringify(original) !== JSON.stringify(proposed),
-    blocked = report.remaining.length > 0;
+    blocked = report.remaining.length > 0 || report.deprecated.length > 0;
   const artifact = resolve(process.env.RUNNER_TEMP || tmpdir(), "edgeaegis-maintenance");
   await mkdir(artifact, { recursive: true });
   await writeFile(join(artifact, "package.json"), JSON.stringify(proposed, null, 2) + "\n");
@@ -172,6 +175,7 @@ try {
       blocked,
       compatibleUpdates: report.updated.length,
       remaining: report.remaining,
+      deprecated: report.deprecated,
     }),
   );
 } finally {
