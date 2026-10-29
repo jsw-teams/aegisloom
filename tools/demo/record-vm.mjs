@@ -29,7 +29,7 @@ await guest([
 ]);
 assert.equal(await guest(["readlink", "-f", "/opt/recording/workspace/api-shield"]), mounted);
 const demo = "/opt/recording/edgeshield-native-demo",
-  archive = `/opt/recording/packages/jsw-teams-edgeshield-${JSON.parse(await readFile(resolve(root, "package.json"))).version}.tgz`;
+  archive = `/opt/recording/packages/toewpq-edgeshield-${JSON.parse(await readFile(resolve(root, "package.json"))).version}.tgz`;
 await guest(["/opt/recording/edgeshield-cli/node_modules/.bin/edgeshield", "init", demo]);
 await guest([
   "node",
@@ -37,9 +37,9 @@ await guest([
   "-e",
   `
 import{readFileSync,writeFileSync,copyFileSync,rmSync}from'node:fs';const root=${JSON.stringify(demo)},archive=${JSON.stringify(archive)};
-for(const file of ['setup.conf','emergency.conf'])copyFileSync('/opt/recording/edgeshield-cli/node_modules/@jsw-teams/edgeshield/rules/'+file,root+'/rules/'+file);
+for(const file of ['setup.conf','emergency.conf'])copyFileSync('/opt/recording/edgeshield-cli/node_modules/@toewpq/edgeshield/rules/'+file,root+'/rules/'+file);
 for(const file of ['.install-complete','.probe-complete'])rmSync(root+'/'+file,{force:true});
-const p=JSON.parse(readFileSync(root+'/package.json'));p.dependencies['@jsw-teams/edgeshield']='file:'+archive;writeFileSync(root+'/package.json',JSON.stringify(p,null,2));
+const p=JSON.parse(readFileSync(root+'/package.json'));p.dependencies['@toewpq/edgeshield']='file:'+archive;writeFileSync(root+'/package.json',JSON.stringify(p,null,2));
 let c=readFileSync(root+'/config.yml','utf8').replace('publicHosts: [api.example]',"publicHosts: ['127.0.0.1:8787']");writeFileSync(root+'/config.yml',c);
 let s=readFileSync(root+'/rules/setup.conf','utf8').replaceAll('expirevar:ip.edgeshield_blocked=300','expirevar:ip.edgeshield_blocked=5');writeFileSync(root+'/rules/setup.conf',s);
 writeFileSync(root+'/origin/cloudflare/app/index.js','export default {async fetch(){return Response.json({ok:true,business:"demo"});}};');

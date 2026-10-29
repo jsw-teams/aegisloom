@@ -40,12 +40,16 @@ npm run start:local
 
 安装会把依赖放到 `tools/node_modules/`、编译到 `tools/.build/`，并仅在密钥文件不存在时创建随机凭据。已有密钥不会被覆盖。
 
-npm 包提供独立 CLI：
+npm 包名为 `@toewpq/edgeshield`。独立 CLI 初始化新项目后，即可使用相同的 npm 部署命令：
 
 ```sh
-npx @jsw-teams/edgeshield init .
-npx @jsw-teams/edgeshield start local config.yml
+npm exec --package=@toewpq/edgeshield -- edgeshield init my-shield
+cd my-shield
+npm install
+npm run deploy:local
 ```
+
+发布流程在 `.github/workflows/publish.yml`，仅允许从 `main` 手动触发。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，再创建 GitHub Release。后续自动认证使用 npm 的 GitHub trusted publisher，指定仓库 `jsw-teams/edgeshield` 和工作流 `publish.yml`，无需把 npm token 放进仓库。
 
 修改 config.yml 的 platform、域名、路由和监听地址。Node/VPS 读取选定平台的 `origin/<平台>/<业务>/config.yml`；没有单独的 Node 业务目录。默认监听回环地址，公网由自己的 TLS 入口承接。容器需要挂载自己的 secret，并按容器网络配置监听地址。
 
@@ -122,7 +126,7 @@ node tools/.build/scr/cli/main.js deploy vercel config.yml --plan
 
 CRS 的 REQUEST_PROTOCOL、REQUEST_LINE 和 REMOTE_ADDR 需要真实传输信息。Cloudflare 读取平台信息，Node 读取连接元数据。其他 Fetch 入口要求由可信入口用 `secret/credentials.yml` 的 ingressKey 签名传递原始协议/IP；缺失或伪造返回 503，不会编造 HTTP/1.1 或跳过相关规则。
 
-`@jsw-teams/edgeshield/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
+`@toewpq/edgeshield/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
 
 ## 请求次数与缓存成本
 

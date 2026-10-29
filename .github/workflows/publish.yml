@@ -1,0 +1,117 @@
+name: Publish npm and GitHub Release
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the verified archive (disable for the initial account bootstrap)
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: edgeshield-npm-release
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository == 'jsw-teams/edgeshield' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      filename: ${{ steps.archive.outputs.filename }}
+      integrity: ${{ steps.archive.outputs.integrity }}
+      version: ${{ steps.archive.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm run test:crs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Require the verified upstream corpus to match the release commit
+        run: git diff --exit-code -- rules/seclang-bundle.json rules/seclang-upstreams.json
+      - run: npm run cloudflare:dry-run
+      - run: npm run audit
+      - name: Pack the checked source
+        id: archive
+        shell: bash
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/package-info.json"
+          node --input-type=module <<'NODE'
+          import {readFile,appendFile,writeFile} from 'node:fs/promises';
+          import {join} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const [info]=JSON.parse(await readFile(join(process.env.RUNNER_TEMP,'package-info.json'),'utf8'));
+          const pkg=JSON.parse(await readFile('package.json','utf8'));
+          if(pkg.name!=='@toewpq/edgeshield'||pkg.private||pkg.publishConfig?.access!=='public')throw Error('Unexpected publication identity');
+          const integrity='sha512-'+createHash('sha512').update(await readFile(join(process.env.RUNNER_TEMP,info.filename))).digest('base64');
+          if(integrity!==info.integrity)throw Error('Archive integrity mismatch');
+          await writeFile(join(process.env.RUNNER_TEMP,'publication.json'),JSON.stringify({name:pkg.name,version:pkg.version,filename:info.filename,integrity,commit:process.env.GITHUB_SHA}));
+          await appendFile(process.env.GITHUB_OUTPUT,`filename=${info.filename}\nintegrity=${integrity}\nversion=${pkg.version}\n`);
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: edgeshield-verified-package
+          path: |
+            ${{ runner.temp }}/*.tgz
+            ${{ runner.temp }}/publication.json
+          retention-days: 7
+  publish:
+    needs: verify
+    if: inputs.publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm install --global 'npm@^11.15.0' --ignore-scripts --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: edgeshield-verified-package
+          path: ${{ runner.temp }}/verified-package
+      - name: Verify the exact archive without running project dependencies
+        env:
+          PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
+          PACKAGE_INTEGRITY: ${{ needs.verify.outputs.integrity }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFile} from 'node:fs/promises';import {createHash} from 'node:crypto';import{join}from'node:path';
+          const integrity='sha512-'+createHash('sha512').update(await readFile(join(process.env.RUNNER_TEMP,'verified-package',process.env.PACKAGE_FILENAME))).digest('base64');
+          if(integrity!==process.env.PACKAGE_INTEGRITY)throw Error('Tested archive changed');
+          NODE
+      - name: Publish using the configured npm trusted publisher
+        env:
+          PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
+        run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --access public --provenance --ignore-scripts
+  release:
+    needs: [verify, publish]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: edgeshield-verified-package
+          path: ${{ runner.temp }}/verified-package
+      - name: Release the same archive after npm publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
+          PACKAGE_VERSION: ${{ needs.verify.outputs.version }}
+        run: gh release create "v$PACKAGE_VERSION" "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" "$RUNNER_TEMP/verified-package/publication.json" --target "$GITHUB_SHA" --title "EdgeShield $PACKAGE_VERSION" --generate-notes

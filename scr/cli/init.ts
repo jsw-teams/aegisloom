@@ -10,8 +10,7 @@ export async function initProject(target: string) {
   for (let i = 0; i < 6; i++) {
     try {
       if (
-        JSON.parse(await readFile(join(root, "package.json"), "utf8")).name ===
-        "@jsw-teams/edgeshield"
+        JSON.parse(await readFile(join(root, "package.json"), "utf8")).name === "@toewpq/edgeshield"
       ) {
         found = true;
         break;
@@ -58,7 +57,7 @@ export async function initProject(target: string) {
       scripts[`${command}:${platform}`] = `edgeshield ${command} ${platform}`;
   await put(
     "package.json",
-    `${JSON.stringify({ private: true, type: "module", scripts, dependencies: { "@jsw-teams/edgeshield": `https://github.com/jsw-teams/edgeshield/releases/download/v${SHIELD_VERSION}/jsw-teams-edgeshield-${SHIELD_VERSION}.tgz` } }, null, 2)}\n`,
+    `${JSON.stringify({ private: true, type: "module", scripts, dependencies: { "@toewpq/edgeshield": `^${SHIELD_VERSION}` } }, null, 2)}\n`,
   );
   await put(".gitignore", "secret/*\n!secret/credentials.example.yml\ntools/.state/\n");
   console.log(`Initialized operator files in ${directory}`);
