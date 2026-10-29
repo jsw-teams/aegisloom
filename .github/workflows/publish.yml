@@ -9,6 +9,10 @@ on:
         description: Publish the verified archive (disable for the initial account bootstrap)
         type: boolean
         default: true
+      resume:
+        description: Verify an earlier accepted publication without uploading it again
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -114,7 +118,7 @@ jobs:
           await appendFile(process.env.GITHUB_OUTPUT,'published='+published+'\n');
           NODE
       - name: Publish using the configured npm trusted publisher
-        if: steps.existing.outputs.published != 'true'
+        if: steps.existing.outputs.published != 'true' && !inputs.resume
         env:
           PACKAGE_FILENAME: ${{ needs.verify.outputs.filename }}
         run: npm publish "$RUNNER_TEMP/verified-package/$PACKAGE_FILENAME" --tag latest --access public --provenance --ignore-scripts
