@@ -84,3 +84,47 @@ test("phase 1 does not inspect the request body or its form arguments", () => {
   assert.equal(executeSecLang(program, input, { phases: [1] }).blocked, false);
   assert.deepEqual(executeSecLang(program, input).matched, ["30009"]);
 });
+
+test("TX reads preserve body processing after controls enable parsing within phase 2", () => {
+  const program = compileSecLang(
+    'SecAction "id:30010,phase:1,pass,ctl:requestBodyAccess=Off,setvar:tx.ready=1"\n' +
+      'SecAction "id:30011,phase:2,pass,ctl:requestBodyAccess=On,ctl:requestBodyProcessor=JSON"\n' +
+      'SecRule TX:ready "@eq 1" "id:30012,phase:2,pass,setvar:tx.error=%{REQBODY_ERROR}"\n' +
+      'SecRule TX:error "@eq 1" "id:30013,phase:2,deny"',
+    { strict: true },
+  );
+  const result = executeSecLang(program, {
+    ...request(""),
+    method: "POST",
+    headers: { "content-type": "application/octet-stream" },
+    bodyText: "invalid JSON",
+  });
+  assert.equal(result.blocked, true);
+  assert.equal(result.tx.error, "1");
+});
+
+test("native variable macros resolve request collections and response values at their actual phase", () => {
+  const program = compileSecLang(
+    'SecAction "id:30014,phase:1,pass,setvar:tx.uri=%{REQUEST_URI},setvar:tx.argument=%{ARGS_GET.q},setvar:tx.cookie=%{REQUEST_COOKIES.token},setvar:tx.early=%{RESPONSE_STATUS}"\n' +
+      'SecAction "id:30015,phase:3,pass,setvar:tx.status=%{RESPONSE_STATUS},setvar:tx.type=%{RESPONSE_HEADERS.content-type}"\n' +
+      'SecRule TX:status "@eq 200" "id:30016,phase:4,deny,chain"\n' +
+      'SecRule TX:type "@streq application/json"',
+    { strict: true },
+  );
+  const result = executeSecLang(
+    program,
+    {
+      ...request("q=One"),
+      headers: { cookie: "token=Abc" },
+      responseStatus: 200,
+      responseHeaders: { "content-type": "application/json" },
+    },
+    { phases: [1, 2, 3, 4] },
+  );
+  assert.equal(result.blocked, true);
+  assert.equal(result.tx.uri, "/?q=One");
+  assert.equal(result.tx.argument, "One");
+  assert.equal(result.tx.cookie, "Abc");
+  assert.equal(result.tx.early, "");
+  assert.equal(result.tx.status, "200");
+});

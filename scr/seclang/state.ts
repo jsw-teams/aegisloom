@@ -32,16 +32,20 @@ export class CollectionStore {
   get(key: string) {
     if (key.length > 4096) throw new Error("Collection key exceeds limit");
     const now = this.clock();
-    for (const [name, record] of this.records) {
-      this.refresh(record);
-      if (now - record.touched >= this.timeoutSeconds * 1000) this.records.delete(name);
-    }
     let record = this.records.get(key);
+    if (record && now - record.touched >= this.timeoutSeconds * 1000) {
+      this.records.delete(key);
+      record = undefined;
+    }
+    if (record) this.refresh(record);
     if (!record) {
       // Expired empty entries can be reclaimed; live values are never silently evicted.
       if (this.records.size >= 1024)
-        for (const [name, entry] of this.records)
-          if (entry.values.size === 0) this.records.delete(name);
+        for (const [name, entry] of this.records) {
+          this.refresh(entry);
+          if (entry.values.size === 0 || now - entry.touched >= this.timeoutSeconds * 1000)
+            this.records.delete(name);
+        }
       if (this.records.size >= 1024) throw new Error("Persistent collection capacity exceeded");
       record = collectionRecord(now);
       this.records.set(key, record);

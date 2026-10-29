@@ -113,6 +113,31 @@ const OPERATOR_NAMES = new Set([
   "validateutf8encoding",
 ]);
 const TRANSFORM_NAMES = new Set(Object.keys(transformations));
+const BYTE_COLLECTIONS = new Set([
+  "ARGS",
+  "ARGS_NAMES",
+  "ARGS_GET",
+  "ARGS_POST",
+  "ARGS_GET_NAMES",
+  "ARGS_POST_NAMES",
+  "TX",
+  "IP",
+  "GLOBAL",
+  "MATCHED_VAR",
+  "MATCHED_VAR_NAME",
+  "MATCHED_VARS",
+  "REQUEST_HEADERS",
+  "REQUEST_HEADERS_NAMES",
+  "REQUEST_COOKIES",
+  "REQUEST_COOKIES_NAMES",
+  "FILES",
+  "FILES_NAMES",
+  "MULTIPART_PART_HEADERS",
+  "RESPONSE_BODY",
+  "REQUEST_BODY",
+  "REQUEST_FILENAME",
+  "REQUEST_BASENAME",
+]);
 const VARIABLES = new Set([
   "REQUEST_METHOD",
   "REQUEST_URI",
@@ -476,6 +501,7 @@ export function compileSecLang(
   let prior = null;
   const ids = new Set();
   const defaults = new Map();
+  const defaultDecisions = new Map();
   const targetUpdates = [];
   const components = [];
   let unicodeMap = defaultUnicodeMap;
@@ -547,6 +573,7 @@ export function compileSecLang(
         if (!data.phase || !data.decision || data.id || data.chain)
           throw new Error("SecDefaultAction requires phase and disruptive action without id/chain");
         defaults.set(data.phase, list);
+        defaultDecisions.set(data.phase, data.decision);
       } catch (error) {
         unsupported.push(compilerError(String(error.message), stmt));
       }
@@ -588,8 +615,11 @@ export function compileSecLang(
         ? undefined
         : compileOperator(operatorText, phraseFiles, regexBackend, detectors, stmt.file);
       const explicit = parseActions(isAction ? selectorsText : actionText);
-      const specified = compileActionSet(explicit);
-      if (isAction && (specified.chain || specified.capture || prior?.actions.chain))
+      if (
+        isAction &&
+        (explicit.some(({ name }) => name === "chain" || name === "capture") ||
+          prior?.actions.chain)
+      )
         throw new Error("SecAction cannot participate in a chain or capture");
       if (
         prior?.actions.chain &&
@@ -612,7 +642,12 @@ export function compileSecLang(
         )
       )
         throw new Error("Chain child contains an action restricted to the chain starter");
-      const phase = specified.phase ?? (prior?.actions.chain ? prior.actions.phase : 2);
+      const explicitPhase = explicit.findLast(({ name }) => name === "phase");
+      const phase = explicitPhase
+        ? Number(explicitPhase.arg)
+        : prior?.actions.chain
+          ? prior.actions.phase
+          : 2;
       const actions = compileActionSet([...(defaults.get(phase) ?? []), ...explicit]);
       for (const control of actions.controls) {
         if (control.option.startsWith("ruleremovetarget")) {
@@ -625,7 +660,7 @@ export function compileSecLang(
         }
       }
       if (actions.decision === "block") {
-        const inherited = compileActionSet(defaults.get(phase) ?? []).decision;
+        const inherited = defaultDecisions.get(phase);
         actions.decision = inherited && inherited !== "block" ? inherited : "deny";
       }
       if (phase === 5 && ["deny", "block"].includes(actions.decision))
@@ -714,14 +749,33 @@ function transformed(value, transforms, context) {
   return transform(String(value), transforms, context.program.unicodeMap);
 }
 function values(selector, request, tx, phase, context = {}) {
+  if (selector.name === "TX") {
+    if (phase >= 2 && context.requestBodyAccess !== false && !context.body)
+      values({ name: "REQBODY_ERROR" }, request, tx, phase, context);
+    if (selector.key !== undefined && !selector.keyRegex) {
+      selector.foldedKey ??= asciiLower(utf8Bytes(selector.key));
+      return tx.has(selector.foldedKey)
+        ? [[selector.foldedKey, String(tx.get(selector.foldedKey))]]
+        : [];
+    }
+    const entries = [...tx].map(([key, value]) => [key, String(value)]);
+    return selector.key === undefined
+      ? entries
+      : entries.filter(([key]) => selectorKeyMatches(selector, key));
+  }
   context.url ??= new URL(request.url);
   context.headers ??= new Headers(request.headers ?? {});
   context.target ??=
     request.rawTarget ?? (/^https?:\/\/[^/?#]+([^#]*)/i.exec(request.url)?.[1] || "/");
   const target = context.target;
-  const question = target.indexOf("?"),
-    rawPath = question < 0 ? target : target.slice(0, question),
-    query = question < 0 ? "" : target.slice(question + 1);
+  if (!context.targetParts) {
+    const question = target.indexOf("?");
+    context.targetParts = {
+      rawPath: question < 0 ? target : target.slice(0, question),
+      query: question < 0 ? "" : target.slice(question + 1),
+    };
+  }
+  const { rawPath, query } = context.targetParts;
   context.filename ??= utf8Bytes(rawPath).replace(/%([\da-f]{2})/gi, (_all, hex) =>
     String.fromCharCode(Number.parseInt(hex, 16)),
   );
@@ -729,7 +783,9 @@ function values(selector, request, tx, phase, context = {}) {
   let entries = [];
   context.getArgs ??= formEntries(query);
   const getArgs = context.getArgs;
-  const processor = context.processor ?? bodyProcessor(headers);
+  if (context.processor === undefined || context.processor === null)
+    context.defaultBodyProcessor ??= bodyProcessor(headers);
+  const processor = context.processor ?? context.defaultBodyProcessor;
   if (phase >= 2 && context.requestBodyAccess !== false && !context.body) {
     context.bodyParseError = false;
     context.bodyErrorMessage = "";
@@ -961,44 +1017,10 @@ function values(selector, request, tx, phase, context = {}) {
           ? context.cookieEntries
           : context.cookieEntries.map(([k]) => [k, k]);
       break;
-    case "TX":
-      if (selector.key !== undefined && !selector.keyRegex) {
-        selector.foldedKey ??= asciiLower(utf8Bytes(selector.key));
-        entries = tx.has(selector.foldedKey)
-          ? [[selector.foldedKey, String(tx.get(selector.foldedKey))]]
-          : [];
-      } else entries = [...tx].map(([k, v]) => [k, String(v)]);
-      break;
   }
   if (selector.key !== undefined)
     entries = entries.filter(([k]) => selectorKeyMatches(selector, k));
-  if (
-    ![
-      "ARGS",
-      "ARGS_NAMES",
-      "ARGS_GET",
-      "ARGS_POST",
-      "ARGS_GET_NAMES",
-      "ARGS_POST_NAMES",
-      "TX",
-      "IP",
-      "GLOBAL",
-      "MATCHED_VAR",
-      "MATCHED_VAR_NAME",
-      "MATCHED_VARS",
-      "REQUEST_HEADERS",
-      "REQUEST_HEADERS_NAMES",
-      "REQUEST_COOKIES",
-      "REQUEST_COOKIES_NAMES",
-      "FILES",
-      "FILES_NAMES",
-      "MULTIPART_PART_HEADERS",
-      "RESPONSE_BODY",
-      "REQUEST_BODY",
-      "REQUEST_FILENAME",
-      "REQUEST_BASENAME",
-    ].includes(selector.name)
-  )
+  if (!BYTE_COLLECTIONS.has(selector.name))
     entries = entries.map(([key, value]) => [key, utf8Bytes(String(value))]);
   return entries;
 }
@@ -1169,12 +1191,20 @@ function match(step, request, tx, phase, context) {
   }
   return matched;
 }
+function macroVariable(name) {
+  const dot = name.indexOf(".");
+  const collection = (dot < 0 ? name : name.slice(0, dot)).toUpperCase();
+  if (!VARIABLES.has(collection) || (dot >= 0 && dot === name.length - 1)) return undefined;
+  return { name: collection, key: dot < 0 ? undefined : name.slice(dot + 1) };
+}
 function validateMacros(value) {
+  if (!value.includes("%{")) return;
   for (const match of value.matchAll(/%\{([^}]+)\}/g)) {
     if (
       !/^(?:(?:tx|ip|global)\.[\w.-]+|rule\.(?:id|msg|severity)|matched_var|matched_var_name|remote_addr|request_line|request_headers\.[^}]+|args\.[^}]+)$/i.test(
         match[1],
-      )
+      ) &&
+      !macroVariable(match[1])
     )
       throw new Error(`Unsupported macro ${match[1]}`);
   }
@@ -1215,6 +1245,9 @@ function macro(value, tx, context = {}) {
           context,
         )[0]?.[1] ?? ""
       );
+    const selector = macroVariable(name);
+    if (selector)
+      return values(selector, context.request, tx, context.phase, context)[0]?.[1] ?? "";
     throw new Error(`Unsupported macro ${name}`);
   });
 }
