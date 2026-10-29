@@ -1,52 +1,17 @@
 # EdgeAegis
 
-Edge + Aegis（盾牌、庇护）：运行在边缘与服务器上的应用防火墙。
+A portable, first-party SecLang firewall. Load and execute OWASP CRS source directly on Cloudflare Workers, Vercel, Netlify, Alibaba Cloud ESA, Tencent EdgeOne, or Node.js/VPS. The parser, transaction state and execution engine are shared across all adapters. No ModSecurity dependency, rule converter or legacy IR.
 
-自研 TypeScript SecLang 编译器和执行引擎，直接运行完整 OWASP CRS，不转换为 Shield IR。Cloudflare、Vercel、Netlify、ESA、EdgeOne 和 Node/VPS 共用同一套规则执行代码。Cloudflare 部署只需要 Worker。
+[![npm](https://img.shields.io/npm/v/edgeaegis)](https://www.npmjs.com/package/edgeaegis)
+[![CI](https://github.com/jsw-teams/edgeaegis/actions/workflows/ci.yml/badge.svg)](https://github.com/jsw-teams/edgeaegis/actions/workflows/ci.yml)
 
-真实 VM 录制：实际终端安装与启动、Geany 中的原生规则、完整 CRS 拦截和 TTL 恢复。演示将封禁 TTL 调为 5 秒；项目默认仍为 300 秒。
+![Real VM terminal: configure multiple origins and keys, run curl, block SQL injection before the origin, recover after the temporary ban](https://raw.githubusercontent.com/jsw-teams/edgeaegis/main/tools/demo/edgeaegis-routing.3d240e2bb6009766.gif)
 
-![原生 SecLang 防护的真实 VM 终端演示](tools/demo/edgeaegis-native.2c24d6106b040847.gif)
+The GIF records an actual isolated Linux desktop and terminal. It shows two business functions, three authenticated HTTPS origins, real `curl -i` responses, an unchanged origin access log after a CRS block, and native temporary protection. All addresses, certificates and keys belong to the disposable lab. The recording shortens the ban TTL to five seconds; the default is 300 seconds. Reproduction sources are in `tools/demo/`.
 
-## 目录
+## Install
 
-- `scr/`：引擎、HTTP 运行时、平台适配器、CLI、回源协议。
-- `tools/`：维护工具和测试；依赖、构建、缓存、运行状态分别位于其下的 `node_modules/`、`.build/`、`.cache/`、`.state/`。
-- `rules/`：完整上游源码包、同步配置、白名单和用户规则。
-- `secret/`：项目凭据和回源密钥；实际文件不进入 Git 或 npm。
-- `origin/{cloudflare,vercel,netlify,esa,edgeone}/<业务>/`：各平台自己的回源配置和可选业务函数。
-- `respond/`：用户自定义拦截 HTML、JSON。
-
-普通设置在根目录 `config.yml`，GitHub Actions 使用标准 `.github/` 目录。本文是唯一说明文档；许可证单独保留。
-
-## SecLang 引擎
-
-当前锁定 OWASP CRS v4.30.0，提交 `e03a4f6dabc7a30ebd8c52c97d28a154f590a48f`。原始 setup、所有规则及引用的数据文件一起加载：693 条 SecRule、8 条 SecAction，共 701 个执行步骤、628 条根规则。编译器核对每条源规则；缺失文件、重复 ID 和不支持的语义使严格加载失败，不完整的程序不能执行。
-
-实现 CRS 使用的变量集合、计数、选择和排除、PCRE2、转换链、multiMatch、宏、TX、capture、chain、phase 1–5、SecDefaultAction、setvar、initcol、skip/skipAfter、ctl、异常评分及匹配日志。请求中断后仍执行 phase 5。实际解析 URL 编码、JSON、XML/XPath、multipart 和二进制请求；响应阶段检查源站返回的头与正文。
-
-编译时为每个阶段建立保留源文件顺序的指令索引，标记在各阶段保持可见，减少运行时扫描其他阶段的开销；没有变量排除或白名单时不重复分配、检查空列表。优化不缓存规则决策、TX 状态或匹配结果。
-
-变量宏通过同一套变量解析器读取请求、正文错误、Cookie、参数和响应数据，遵守对应阶段的可见性。TX 始终读取当前事务状态，正文处理控制发生改变时仍重新解析所需正文。请求目标与默认正文处理器只初始化一次；集合只刷新正在访问的记录，在容量不足时清理过期记录，保留其他仍有效的状态。动作合并默认策略后完整编译一次。
-
-PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调用，来源、哈希及许可证在 `scr/seclang/vendor/`。规则解析、事务、状态与决策由 EdgeAegis 实现，不依赖第三方 WAF 引擎，没有正则翻译、RE2 回退或按平台裁剪规则。
-
-兼容范围以锁定的完整 CRS 和执行回归为依据。Apache 服务器配置、外部脚本等不属于已验证的规则指令范围。
-
-## 版本
-
-EdgeAegis 的首个正式版本为 `2026.10.1`，Git 标签为 `v2026.10.1`，与 EdgePress 使用相同格式。版本号采用 `年.月.本月正式发布序号`。更名前的发布属于测试历史，不延续为新包的正式版本序列。
-
-## 安装和运行
-
-```sh
-npm install
-npm run start:local
-```
-
-安装会把依赖放到 `tools/node_modules/`、编译到 `tools/.build/`，并仅在密钥文件不存在时创建随机凭据。已有密钥不会被覆盖。
-
-npm 包名为 `edgeaegis`。独立 CLI 初始化新项目后，即可使用相同的 npm 部署命令：
+Node.js 22.13 or newer is required. Initialize a deployment project, edit its routing and private credentials, then start it:
 
 ```sh
 npm exec --package=edgeaegis -- edgeaegis init my-firewall
@@ -55,159 +20,162 @@ npm install
 npm run deploy:local
 ```
 
-发布流程在 `.github/workflows/publish.yml`。`main` 的版本文件 `scr/core/version.ts` 更新后自动触发，也可在 `main` 手动执行；package.json 和 CLI 版本必须一致。它完成引擎、完整 CRS、打包安装和 Worker 构建验证后，发布同一份经过哈希核验的 npm 归档，等待 npm 开放安装并核对归档哈希，验证 `latest` 已指向该版本。npm trusted publisher 指定 GitHub 仓库 `jsw-teams/edgeaegis`、工作流 `publish.yml`，Environment 留空；Allowed actions 允许直接发布。`npm publish --tag latest` 在版本开放下载后推进标签，工作流只读核验标签，无需额外的 dist-tag 管理权限。认证使用 OIDC，无需把 npm token 放进仓库。
+From a source checkout, use `npm install` followed by the same platform commands. Dependencies and compiled output live under `tools/`. Installation generates random credentials only when the credentials file does not exist; initialization preserves existing operator files. Ordinary settings and secrets are files, without runtime Secret environment bindings or `SKIP_DEPENDENCY_INSTALL`.
 
-修改 config.yml 的 platform、域名、路由和监听地址。Node/VPS 读取选定平台的 `origin/<平台>/<业务>/config.yml`；没有单独的 Node 业务目录。默认监听回环地址，公网由自己的 TLS 入口承接。容器需要挂载自己的 secret，并按容器网络配置监听地址。
+| Location | Purpose |
+| --- | --- |
+| `config.yml` | Runtime, platform, listener and resource limits |
+| `rules/config.yml` | Rule source, setup policy, local rules and allowlist |
+| `origin/config.yml` | All hostname/path routing, origins and optional named upstreams |
+| `origin/<platform>/<business>/index.js` | Same-runtime business functions |
+| `secret/credentials.yml` | Independent origin keys and optional client/ingress credentials |
+| `secret/<business>.yml` | Optional private business settings |
+| `respond/` | Operator-controlled HTML/JSON rejection responses |
+| `scr/`, `tools/` | Engine source, build tools, tests and recordings |
 
-凭据均来自项目文件，不使用 Secret 环境绑定。云端私有构建会打包所需凭据，产物不能作为公开静态资源或 npm 包发布。Node 支持规则、白名单和自定义回应热更新；业务代码或监听地址修改后重启。
+The Node listener defaults to loopback. Put your TLS ingress in front of it and use a hostname configured in `origin/config.yml`.
 
-## 回源
+For production over SSH, install a supervised **background service**, so the firewall survives a closed terminal:
 
-每条路由必须通过 `business` 选择业务名。例如同一 EdgeOne 部署可以使用 `origin/edgeone/shop/index.js` 处理商城函数，`origin/edgeone/orders/config.yml` 回源订单 VPS，`origin/edgeone/search/config.yml` 回源搜索服务的负载均衡 CNAME。各业务配置独立，不能通过请求参数更换源站；同一引擎检查所有业务的请求和响应。构建只包含当前平台被路由引用的业务。
+```sh
+npx edgeaegis service install config.yml --system
+npx edgeaegis service status config.yml --system
+```
+
+Run the system-service installation with the required administrative account on Linux/systemd. It installs and enables a uniquely named unit with automatic restart and journal logging; no service is started during npm installation. Omit `--system` for a systemd user service; persistent operation after logout then requires that account's existing linger policy. `service start` and `service stop` manage the same unit. `start:local` and `deploy:local` stay foreground development commands.
+
+## Configure routes and origins
+
+Keep **all origins in one file**, `origin/config.yml`. A route combines a public hostname/path pattern with a destination. Paths are preserved. Exact routes take precedence, followed by the longest matching prefix. A single trailing `*` is supported; host wildcards and ambiguous paths fail validation.
 
 ```yaml
 routes:
-  - path: /shop
-    business: shop
-    methods: [GET]
-    authenticated: false
-  - path: /orders
-    business: orders
+  - pattern: api.example/orders/*
+    origin: https://192.0.2.10
+    key: orders-vps
     methods: [GET, POST]
-    authenticated: false
-    body: text
-  - path: /search
-    business: search
-    methods: [GET]
-    authenticated: false
+  - pattern: api.example/search/*
+    origin: https://lb.search.example
+    key: search-lb
+  - pattern: api.example/external/*
+    origin: https://other-account-function.example
+    key: external-service
+  - pattern: api.example/shop/*
+    origin: function:shop
+  - pattern: status.example/*
+    origin: function:status
 ```
 
-在各自的 `origin/<平台>/<业务>/config.yml` 选择模式。普通代理支持 VPS IPv4/IPv6、域名和负载均衡 CNAME：
+IP addresses, IPv6 addresses such as `https://[2001:db8::1]:8443`, load-balancer CNAMEs and external cloud functions use the same HTTPS origin form. TLS certificate verification stays enabled. An IP origin needs a certificate valid for that IP; use a hostname when its certificate identifies a hostname. Proxy destinations must be exact HTTPS origins without credentials, query strings or paths. The engine never chooses an origin from request parameters or follows origin redirects.
+
+Each proxy route names a key in **private** `secret/credentials.yml`:
 
 ```yaml
-platform: cloudflare
-mode: proxy
-url: https://lb.business.example
+originKeys:
+  orders-vps: REPLACE_WITH_AN_INDEPENDENT_RANDOM_SECRET
+  search-lb: REPLACE_WITH_ANOTHER_INDEPENDENT_RANDOM_SECRET
+  external-service: REPLACE_WITH_A_THIRD_INDEPENDENT_RANDOM_SECRET
+  shop: REPLACE_WITH_A_FOURTH_INDEPENDENT_RANDOM_SECRET
+  status: REPLACE_WITH_A_FIFTH_INDEPENDENT_RANDOM_SECRET
 ```
 
-也可填写 `https://192.0.2.10` 或 `https://[2001:db8::1]:8443`。使用正常 HTTPS 证书校验，不关闭验证。配置固定源站，拒绝跟随重定向；清理转发头，加入来自 secret 的 `x-shield-origin-auth`。外部业务应验证该令牌，避免绕过防火墙直连源站。请求和源站响应均经过同一个 SecLang 引擎。
+Generate separate random values of at least 32 characters, for example with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`. The placeholders above are not usable deployment credentials. Missing references and duplicate key values fail validation. To intentionally share a trust group, explicitly reference the same key identifier. There is no global origin-token fallback.
 
-平台内业务函数使用 `mode: function`，由 `origin/<平台>/<业务>/index.js` 默认导出的 `fetch(request)` 处理。默认业务只有健康检查，其他路径返回 404。构建器拒绝跨平台引用其他业务文件；代理模式不会加载这些函数。
+Incoming authentication/forwarding headers are sanitized. The engine adds the selected `x-shield-origin-auth` credential. **Every external origin must verify its own key before serving traffic**, and should restrict direct access where possible. A stolen key for one independently keyed service does not authenticate to another. Credentials and compiled private bundles belong in a private deployment repository; never publish them as static files or npm package contents.
 
-加密中继可部署在 VPS 或支持 WebCrypto 的云函数：
+`function:shop` is configuration, not a built-in service name. Add any number of configured businesses, for example `origin/cloudflare/shop/index.js` and `origin/cloudflare/status/index.js`:
 
-```sh
-npm run relay:init
-node tools/.build/scr/cli/main.js serve-relay secret/relay-server.yml
+```js
+export default {
+  async fetch(request, env, context) {
+    return Response.json({ business: "shop" });
+  }
+};
 ```
 
-密钥在 `secret/relay/`，服务器配置由 `secret/relay-server.example.yml` 初始化。云端只读取公钥和认证密钥，服务器私钥留在回源端：
+Only the selected platform's referenced businesses enter the build. Cross-platform imports are rejected. Functions are internal modules with no independently exposed URL: full request inspection runs before their `fetch`, and response inspection runs afterward. The generated deployment exports only the firewall entry point. Never copy business modules into a public assets directory or add a separate unprotected platform route.
+
+For a function that delegates to several upstreams, add `upstreams: [primary, secondary]` and `secrets: secret/shop.yml` to each of its routes. Define those named upstreams in the same origin file:
 
 ```yaml
-platform: cloudflare
-mode: relay
-endpoint: https://relay.example/_edgeshield/relay
-publicKeyFile: ../../../secret/relay/public.jwk
-authenticationKeyFile: ../../../secret/relay/authentication.key
+upstreams:
+  primary: { url: https://primary.example, key: primary-key }
+  secondary: { url: https://secondary.example, key: secondary-key }
 ```
 
-协议使用 ECDH、HKDF、双向 AES-GCM、HMAC、请求绑定和时间窗口，VPS 用 SQLite 持久化防重放。保留二进制正文和多个 Set-Cookie，并限制实际字节数和读取时间。Node 中继默认监听回环地址，需放在 HTTPS 入口后；云函数可通过 `/relay` 的 `createRelayServer` 接入自己的原子性持久化 ReplayStore。
+The function receives `context.upstreams`, the selected `context.originKeys` and its parsed `context.secrets`. It must authenticate its delegated calls with each upstream's key. Cloudflare functions may additionally select an explicitly configured platform binding. Different businesses may use different private files; no business name is hardcoded in the engine.
 
-## 按平台构建、启动和部署
+For encrypted relay transport, set a proxy route's `origin` to its HTTPS relay endpoint and add `relay: { publicKeyFile: secret/relay/public.jwk, authenticationKeyFile: secret/relay/authentication.key }`. In a source checkout, `npm run relay:init` creates the key files; `edgeaegis serve-relay secret/relay-server.yml` starts the loopback Node endpoint. Set its `key` to the matching origin key identifier. The server private key stays on the origin. The relay uses ECDH/HKDF, AES-GCM, HMAC, request/time binding and persistent SQLite replay rejection. It preserves binary bodies and multiple cookies. This is an application transport protocol over HTTPS.
+
+## Deploy
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgeaegis)
+[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgeaegis)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/jsw-teams/edgeaegis)
+[![Deploy to EdgeOne](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgeaegis&install-command=npm%20install&build-command=npm%20run%20build%20%26%26%20node%20tools%2Fhosting-build.mjs%20edgeone&output-directory=tools%2F.build%2Fedgeone%2Fdeploy%2Fpublic)
+[![Import into ESA](https://img.shields.io/badge/ESA-Import_repository-ff6a00)](https://esa.console.aliyun.com/edge/pages/creation)
+
+Buttons open new-project setup. Configure your hostname, origin keys and platform account before directing traffic there. Cloudflare, Vercel, Netlify and EdgeOne support repository imports; ESA opens its official import screen and requires choosing the repository. Existing deployments should update through their existing repository integration. These buttons do not modify an existing Worker or provision a trusted ingress automatically.
 
 ```sh
 npm run build:cloudflare
 npm run start:cloudflare
 npm run deploy:cloudflare
-# 平台名同样支持 vercel、netlify、esa、edgeone、local。
-# 先构建并查看部署命令，不执行云端操作：
-node tools/.build/scr/cli/main.js deploy vercel config.yml --plan
+# Also: vercel, netlify, esa, edgeone, local
 ```
 
-独立安装的 npm CLI 使用 `edgeaegis build <平台> config.yml`、`edgeaegis start <平台> config.yml`、`edgeaegis deploy <平台> config.yml`。本地 build 严格验证完整规则与配置，start/deploy 启动同一个 Node 服务。
+Install and authenticate the selected provider CLI in the deployment project: `wrangler`, `vercel`, `netlify-cli`, `esa-cli` or `edgeone`. Local start/deploy runs the Node server. Cloud commands build the selected platform and invoke its CLI from the private deployment output. To inspect the command without deploying: `edgeaegis deploy vercel config.yml --plan`.
 
-云平台命令先构建当前平台，再调用项目已安装的官方 CLI：Cloudflare 为 wrangler，Vercel 为 vercel，Netlify 为 netlify-cli，ESA 为 esa-cli，EdgeOne 为 edgeone。先在自己的部署项目安装对应工具并完成登录及项目关联；启动、部署使用工具自身的权限，不增加引擎环境变量。
+Private bundles live under `tools/.build/<platform>/deploy/`. Repository imports additionally generate provider-owned function output; static publish directories stay empty. Cloudflare uses only a Worker, with static WASM modules, workers.dev and previews disabled by default. The other adapters use the same engine and WASM primitives; provider payload/CPU/memory limits still apply.
 
-私有产物在部署项目的 `tools/.build/<平台>/`，其中 `deploy/` 只包含该平台需要的部署文件。Vercel 的私有代码放在 api/index.mjs，Netlify 的静态 public 目录保持为空。不要把整个私有构建目录发布为静态资源。Cloudflare 使用静态 WASM；其他入口加载相同 WASM 字节。Vercel 使用 Node Functions，Netlify 使用 Fetch 函数，ESA 使用 Fetch 入口，EdgeOne 使用 onRequest 入口。平台自己的载荷、CPU 和内存限制仍然适用。
+**Trusted transport metadata is required.** Cloudflare reads platform metadata; Node reads its connection. Fetch-only adapters require original protocol/IP information signed by a trusted ingress using the optional `ingressKey` in `secret/credentials.yml`. Missing or forged metadata returns 503. Use `createIngressForwarder` from `edgeaegis/ingress` in an existing trusted Node/Worker ingress, passing the actual protocol/IP and available raw target. Signatures bind the method, destination, original URL, metadata and timestamp. Client-supplied forwarding headers are not trusted. A platform setup screen alone does not establish this trust.
 
-CRS 的 REQUEST_PROTOCOL、REQUEST_LINE 和 REMOTE_ADDR 需要真实传输信息。Cloudflare 读取平台信息，Node 读取连接元数据。其他 Fetch 入口要求由可信入口用 `secret/credentials.yml` 的 ingressKey 签名传递原始协议/IP；缺失或伪造返回 503，不会编造 HTTP/1.1 或跳过相关规则。
+## Native rules and updates
 
-`edgeaegis/ingress` 的 `createIngressForwarder(destination, ingressKey)` 可接入现有可信 Node/Worker 入口，调用时传入实际 httpProtocol、verifiedClientIp，以及可用的 rawTarget。签名绑定方法、目标、原始 URL、元数据和时间戳；后端恢复请求再执行完整 CRS。客户端自报的转发头不能作为可信元数据。
-
-## 请求次数与缓存成本
-
-静态 HTML、指纹 CSS/JS 和图片应交给平台静态资源服务，动态业务才进入函数。Cloudflare 的 assets 默认先匹配静态文件，`run_worker_first` 只列需要引擎处理的动态路径；不要设为全站 `true`。资产服务返回的文件不会执行 SecLang，不应存放需鉴权或请求检查的业务数据。其他平台应使用各自静态托管目录，私有构建目录不能公开。
-
-动态业务可以显式启用浏览器缓存，适用于不因用户身份变化的公开内容：
+`rules/config.yml` selects rule files, separately from origin configuration:
 
 ```yaml
-routes:
-  - path: /catalog
-    business: shop
-    methods: [GET, HEAD]
-    authenticated: false
-    browserCache:
-      maxAgeSeconds: 120
+source: seclang-bundle.json
+setup: setup.conf
+local: local.conf
+allowlist: allowlist.yml
 ```
 
-源站还必须明确返回 `Cache-Control: public, max-age=N`；引擎取源站与配置中较短的期限，输出 `private, max-age=N, must-revalidate`。浏览器在有效期内直接复用正文，从而减少网络请求和函数调用。保留 Date、Age、ETag 与 Vary，并加入 Cookie/Authorization 的 Vary；认证、Cookie、Set-Cookie、强制刷新、错误回应、私有源站回应及 WebSocket 均不启用。默认仍为 no-store；TTL 可配置为 1–86400 秒。内容更新在 TTL 到期或客户端刷新后可见，应按业务的新鲜度要求设置。
+Setup runs before the complete upstream corpus; local rules run afterward. The engine supports CRS collections/selectors/exclusions/counting, PCRE2, transformation chains, multiMatch, macros, TX, capture, chain, phases 1–5, default actions, setvar/initcol, skip/skipAfter, ctl, anomaly scoring and matched-rule events. It parses URL-encoded, JSON, XML/XPath and multipart bodies, and inspects actual response headers/bodies. Phase 5 runs after disruption. Phase indexes preserve source order and do not cache security decisions.
 
-每个实际到达引擎的请求仍执行完整规则，缓存不复用防火墙决策。引擎没有服务端响应缓存，也不会用 304 冒充免调用。Cloudflare 的 `caches.default` 命中仍先执行 Worker；新版 Workers Cache 能减少执行 CPU，但其缓存命中仍按 Worker 请求计费，而且会绕开该次规则执行，因此本项目不自动启用。参见 [静态资源计费](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) 和 [Workers 请求计费](https://developers.cloudflare.com/workers/platform/pricing/)。实时流、写入和鉴权请求保持动态执行；调用次数不能仅靠降低 CPU 或延长服务端缓存变成零。
+PCRE2 and libinjection are matching primitives, not third-party WAF engines. Their sources, hashes and licenses are recorded under `scr/seclang/vendor/`. Unknown semantics, missing data/Includes, duplicate IDs and incomplete compilation fail loading. Compatibility is verified against the entire CRS corpus and executable regressions; Apache server configuration and external-script execution are outside the verified directive scope.
 
-## 原生规则与临时防护
-
-规则入口按 setupRulesFile、secLangFile、localRulesFile 的顺序加载，分别用于前置策略、完整上游规则和用户后置规则。缺失 Include、数据文件、重复 ID 或不支持的语义都会阻止加载；引擎不写规则转换器，不将其他规则语言转换为 SecLang 或旧 IR。
-
-默认 rules/setup.conf 已启用实际行为防护：同一 IP 瞬时超过 120 次请求（每秒恢复 20 次额度），或 60 秒内出现 3 次达到实际 CRS 拦截阈值的攻击，临时拒绝 300 秒。封禁期间的访问不会续期，到期恢复；普通低频访问不累计成永久封禁。阈值、窗口、TTL 和用户白名单都可修改，更新工具不会覆盖用户策略。
-
-rules/emergency.conf 包含直接执行的原生 SecLang 虚拟补丁，目前针对 CVE-2025-29927 拒绝外部携带的 x-middleware-subrequest 头，包括空值；依据 [Next.js 官方应急措施](https://github.com/vercel/next.js/security/advisories/GHSA-f82v-jwr5-mffw)。该文件由维护者更新并运行回归测试，不把 CVE 目录条目自动宣称为已防护。重复命中此补丁也参与临时封禁。
-
-原生 SecLang 规则可直接引用原始数据文件，无需生成规则代码。例如下面的规则会实际阻止列表中 IP/CIDR 发起的请求：
-
-```apache
-# threat-networks.txt 必须是用户选定、校验过的 IP/CIDR 列表；此处不默认启用任何第三方黑名单。
-SecRule REMOTE_ADDR "@ipMatchFromFile threat-networks.txt" "id:1000400,phase:1,deny,status:403,log"
-SecRule ARGS "@pmFromFile threat-phrases.txt" "id:1000401,phase:2,deny,status:403,log"
-```
-
-文件路径相对规则源文件解析。支持多个文件、IPv4/IPv6 与 CIDR，保留短语匹配和 capture 语义；无效网络或缺失文件使严格编译失败。文件可以使用 .data、.txt、.ipset、.list 扩展名。HTTP 参数中的域名短语匹配不等于 DNS 或出站流量防火墙。
-
-[OWASP CRS](https://coreruleset.org/) 是当前完整验证的原生规则源；[Atomicorp](https://docs.atomicorp.com/gotrootModsec/) 也发布原生 SecLang 规则，但需要相应授权和私有规则文件，尚未在本项目验证整套兼容性，不会复制进公有仓库。多个原生来源通过 rules/seclang-upstreams.json 配置，直接加载原文；发现缺失语义时补齐引擎并测试，不能删规则制造通过率。
-
-纯 Worker 的集合属于当前引擎实例，不能提供跨实例、跨区域或重启后的全局计数。到期在访问时核验，不依赖实例存活到某个定时器；不会在平台上遗留需要额外清理的远程封禁规则。未知载荷的突发行为同样执行上述封禁，不依赖载荷恰好命中某个 CVE 签名。
-
-## 白名单与拦截回应
-
-`rules/allowlist.yml` 支持全局、规则 ID、路径/前缀、方法、身份、IP/CIDR 和可选过期时间：
-
-```yaml
-- id: trusted-search
-  skip: [rules]
-  ruleIds: ['942100']
-  path: /api
-  cidrs: [192.0.2.0/24]
-```
-
-省略 ruleIds 或填写 `['*']` 可豁免全部规则，也支持 sec- 前缀。默认没有豁免；白名单不绕过路由、认证、HTTP 边界或字节上限。
-
-在 `respond/403.html` 放完整 HTML，例如 EdgePress 构建页面，403.json 定义 JSON 回应；其他 4xx/5xx 使用相应文件名。HTML 不插入请求内容，CSP 在 config.yml 中配置，保留拦截状态与 HEAD 语义。
-
-## 上传与验证
-
-配置读取的 8 MB 上限与 HTTP 上传无关。limits.maxBodyBytes 控制实际上传字节，项目默认 8 MiB，最高可配置 16 MiB，不相信 Content-Length。完整 CRS 下验证大于 2 MiB 的 multipart 文件保真回源，普通恶意字段仍被检查。
-
-单个转换值上限 2 MiB；PCRE2 的步数、深度、内存以及状态集合有资源边界。超限中止并拒绝，不能当作不匹配放行。压缩请求正文及原始 gRPC 帧未提供入口。显式 websocket 路由检查真实握手及 101 响应头，保持平台原生二进制消息；升级后的不透明消息不交给 SecLang 检查。
+**CRS tracks the latest stable release**, rather than a fixed tag or commit. `rules/seclang-upstreams.json` uses `ref: "latest"`. Multiple native SecLang sources can be added there. The bundled snapshot records its resolved source commit, Git blob hashes and SHA-256 provenance; these are verification records, not update pins. GitHub Actions checks every six hours and replaces the snapshot only after complete compilation, execution, regression tests, audit and Worker build checks pass. User rules, allowlists and credentials are preserved. New unsupported upstream semantics cause a visible failure requiring an engine fix, never rule removal.
 
 ```sh
-npm run test:crs
-node tools/sync-native-seclang.mjs --latest
-# npm CLI 也提供相同的严格同步器
 edgeaegis sync --registry rules/seclang-upstreams.json --output rules/seclang-bundle.json
+npm run test:crs
+```
+
+Native data-file rules execute directly, for example `@ipMatchFromFile threat-networks.txt` or `@pmFromFile threat-phrases.txt` in an operator rule. Files resolve relative to their rule source; missing files or malformed networks fail compilation. Downloading intelligence alone does not enable blocking: an enabled native rule must actually reference and match it. No conversion layer is needed. Third-party sources require their own licenses and full compatibility checks.
+
+The default setup enforces a per-IP burst limit of 120 requests, refilling 20 per second, and a 300-second temporary ban after three confirmed attacks in 60 seconds. Bans expire without being prolonged by innocent blocked requests. Unknown payloads are also subject to burst/anomaly behavior protection. `rules/emergency.conf` contains a tested native virtual patch for CVE-2025-29927. Operators control thresholds, rules, TTLs and exemptions. Collection state is bounded and belongs to the engine instance; a Worker-only deployment does not pretend to maintain global cross-region counters.
+
+## Exemptions, responses and caching
+
+`rules/allowlist.yml` is entirely operator-controlled. It supports global, rule-ID, path/prefix, method, identity and IP/CIDR exemptions with optional expiry. Defaults contain no exemptions. Example: `skip: [rules]`, `ruleIds: ['942100']`, `path: /search`, `cidrs: [192.0.2.0/24]`. Omitting rule IDs or using `['*']` exempts all rules. Route/identity boundaries and byte limits still apply.
+
+Customize `respond/403.html` and `respond/403.json`; other status files use the same convention. Full EdgePress-built HTML is supported. Responses retain their HTTP status and HEAD behavior and never insert untrusted request content. Configure the response CSP in `config.yml`.
+
+For public GET/HEAD content, add `browserCache: { maxAgeSeconds: 120 }` to a route. The origin must also explicitly return `Cache-Control: public, max-age=N`; the shorter lifetime wins. The engine emits private browser freshness, varies on credentials, and declines caching for authentication, cookies, private/error responses or WebSockets. Browser reuse can avoid a network request and function invocation. Every request that reaches the engine still executes the complete rules. Origin-side/Worker-side caches can reduce origin work but do not remove an already-arrived function invocation. Serve genuinely public static assets through platform static hosting; do not put protected business data or private bundles there.
+
+## Limits and verification
+
+The 8 MB configuration-file read limit is separate from uploads. `limits.maxBodyBytes` checks actual streamed bytes, defaults to 8 MiB and is configurable up to 16 MiB. Complete CRS tests cover multipart uploads above 2 MiB and malicious neighboring fields. Individual transformed values, PCRE2 steps/depth/memory, concurrency and collections have enforced resource bounds; exhaustion rejects rather than becoming a non-match. Compressed request bodies and raw gRPC frames are not supported ingress forms. Explicit WebSocket routes inspect the real handshake and 101 headers while preserving native binary frames; opaque upgraded messages are outside SecLang inspection.
+
+```sh
 npm run check
 npm run cloudflare:dry-run
 npm run audit
 ```
 
-rules/seclang-upstreams.json 支持多个来源。同步核对不可变 Git blob 和 SHA-256，严格加载全部源码，核对每条规则的执行指令，再运行正常/攻击/响应及性能回归，全部通过后原子替换源码包。GitHub Actions 每 6 小时验证并更新 main，用户规则、白名单和凭据不参与同步。
+CI covers Windows/Linux and Node 22/24, full CRS PL1–4, five built adapters, real workerd, PCRE2/capture/chain/TX/ctl, normal traffic, SQLi/XSS/LFI/RCE, response WebShell signatures, uploads, origin isolation, replay rejection, TTL and isolated npm installation. The current verified snapshot contains 693 SecRule and 8 SecAction instructions, with zero unsupported rules. Local adapter verification is not a claim of deployment to five live accounts.
 
-CI 覆盖 Linux/Windows、Node 22/24；包括完整 CRS PL1–4、五平台构建入口、真实 workerd、capture/chain/TX/ctl、误杀、SQLi/XSS/LFI/RCE、官方 WebShell 响应签名、上传、回源、防重放、TTL 指令、npm 独立安装和性能。没有用忽略规则或模拟匹配代替执行。本地验证不等于已在五家云账户部署。
+Releases use `YYYY.M.monthly-release-number`, starting at `2026.10.1`, with tags such as `v2026.10.1`, matching EdgePress. Earlier naming experiments are test history. GitHub Actions `publish.yml` verifies and publishes the same hashed npm archive through Trusted Publishing/OIDC, checks public installation and the `latest` tag, and requires no stored npm token.
+
+Licensed under [Apache-2.0](LICENSE); third-party notices are in [NOTICE](NOTICE).

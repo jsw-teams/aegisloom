@@ -1,0 +1,1 @@
+{"buildCommand":"npm run build && node tools/hosting-build.mjs edgeone","installCommand":"npm install","outputDirectory":"tools/.build/edgeone/deploy/public"}

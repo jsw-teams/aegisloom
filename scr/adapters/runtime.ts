@@ -1,4 +1,5 @@
 import type { DeploymentConfig, ProjectCredentials } from "../config.js";
+import { originCredential } from "../config.js";
 import { digest, type Fetch, type TrustedContext } from "../core/types.js";
 import type { ErrorPages } from "../runtime/error-pages.js";
 import { type AllowlistEntry, createShield } from "../runtime/index.js";
@@ -38,7 +39,10 @@ export async function createPortableRuntime(options: PortableOptions) {
       Object.entries(options.config.origins).map(([name, origin]) => {
         const fetch = options.originFetches[name];
         if (!fetch) throw new Error("Missing business transport");
-        return [name, { ...origin, originToken: options.credentials.originToken, fetch }];
+        return [
+          name,
+          { ...origin, originToken: originCredential(options.credentials, origin.key), fetch },
+        ];
       }),
     ),
   });
@@ -47,7 +51,12 @@ export async function createPortableRuntime(options: PortableOptions) {
     : undefined;
   return {
     engine,
-    async handle(request: Request, transport: Omit<TrustedContext, "tenant">, rawTarget?: string) {
+    async handle(
+      request: Request,
+      transport: Omit<TrustedContext, "tenant">,
+      rawTarget?: string,
+      originFetches?: Record<string, Fetch>,
+    ) {
       // Headers are never promoted to identity by the shared engine.
       const token = request.headers.get("authorization");
       const identity =
@@ -59,7 +68,7 @@ export async function createPortableRuntime(options: PortableOptions) {
         tenant: options.config.tenant,
         ...(identity ? { identity } : {}),
       };
-      return engine.handle(request, context, rawTarget);
+      return engine.handle(request, context, rawTarget, originFetches ? { originFetches } : {});
     },
   };
 }

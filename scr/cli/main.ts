@@ -11,12 +11,23 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (!command || command === "--help") {
     console.log(
-      "edgeaegis init [directory]\nedgeaegis build <cloudflare|vercel|netlify|esa|edgeone|local> [config.yml]\nedgeaegis start <platform|local> [config.yml] [--plan]\nedgeaegis deploy <platform|local> [config.yml] [--plan]\nedgeaegis serve [config.yml]\nedgeaegis serve-relay <secret/relay-server.yml>\nedgeaegis check <SecLang file or source bundle>\nedgeaegis sync [--registry path] [--output path] [--latest]\nedgeaegis --version",
+      "edgeaegis init [directory]\nedgeaegis build <cloudflare|vercel|netlify|esa|edgeone|local> [config.yml]\nedgeaegis start <platform|local> [config.yml] [--plan]\nedgeaegis deploy <platform|local> [config.yml] [--plan]\nedgeaegis service <install|start|stop|status> [config.yml] [--system]\nedgeaegis serve [config.yml]\nedgeaegis serve-relay <secret/relay-server.yml>\nedgeaegis check <SecLang file or source bundle>\nedgeaegis sync [--registry path] [--output path]\nedgeaegis --version",
     );
     return;
   }
   if (command === "init") {
     await (await import("./init.js")).initProject(file ?? ".");
+    return;
+  }
+  if (command === "service") {
+    const positional = args.slice(2).filter((value) => value !== "--system");
+    if (!file || positional.length > 1)
+      throw Error("edgeaegis service <install|start|stop|status> [config.yml] [--system]");
+    await (await import("./service.js")).service(
+      file,
+      positional[0] ?? "config.yml",
+      args.includes("--system"),
+    );
     return;
   }
   if (["build", "start", "deploy"].includes(command!) && file) {

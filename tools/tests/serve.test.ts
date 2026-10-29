@@ -12,9 +12,16 @@ test("actual CLI listener accepts the configured public Host independently of it
 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), "shield-cli-host-"));
   await mkdir(join(directory, "origin/cloudflare/app"), { recursive: true });
+  await mkdir(join(directory, "rules"));
+  await writeFile(join(directory, "rules/config.yml"), "source: ../rules.conf\n");
   await writeFile(
-    join(directory, "origin/cloudflare/app/config.yml"),
-    "platform: cloudflare\nmode: function\n",
+    join(directory, "origin/config.yml"),
+    JSON.stringify({
+      routes: [
+        { pattern: "api.vm.test/health", origin: "function:app" },
+        { pattern: "second.vm.test/health", origin: "function:app" },
+      ],
+    }),
   );
   await writeFile(
     join(directory, "origin/cloudflare/app/index.js"),
@@ -24,7 +31,7 @@ test("actual CLI listener accepts the configured public Host independently of it
   await writeFile(join(directory, "rules.conf"), 'SecAction "id:100,phase:1,pass"');
   await writeFile(
     join(directory, "secret.json"),
-    JSON.stringify({ originToken: "test-only-independent-origin-token-32-chars" }),
+    JSON.stringify({ originKeys: { app: "test-only-independent-origin-token-32-chars" } }),
   );
   await writeFile(
     join(directory, "shield.json"),
@@ -32,10 +39,6 @@ test("actual CLI listener accepts the configured public Host independently of it
       tenant: "test",
       service: "api",
       platform: "cloudflare",
-      publicHosts: ["api.vm.test"],
-      routes: [{ business: "app", path: "/health", methods: ["GET"], authenticated: false }],
-      secLangFile: "rules.conf",
-      originDirectory: "origin",
       secretFile: "secret.json",
       listen: { host: "127.0.0.1", port: 0 },
     }),
@@ -90,6 +93,7 @@ test("actual CLI listener accepts the configured public Host independently of it
         outgoing.end();
       });
     assert.equal(await status("api.vm.test"), 404); // Reached the real runtime's route policy.
+    assert.equal(await status("second.vm.test"), 404);
     assert.equal(await status("forged.example"), 400); // Rejected before the handler.
   } finally {
     if (child.exitCode === null) {

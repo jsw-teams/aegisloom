@@ -36,37 +36,41 @@ test("all five built entry points execute the complete CRS and only their own bu
     await mkdir(join(directory, "respond"));
     await writeFile(
       join(directory, "secret/credentials.yml"),
-      JSON.stringify({ originToken: "test-origin-secret-".repeat(3), ingressKey }),
+      JSON.stringify({
+        originKeys: { app: "app-origin-secret-".repeat(3), shop: "shop-origin-secret-".repeat(3) },
+        ingressKey,
+      }),
     );
     await writeFile(join(directory, "respond/403.html"), "<html><p>custom rejection</p></html>");
     await writeFile(join(directory, "respond/403.json"), '{"error":"operator_custom_denial"}');
     const configFile = join(directory, "config.yml");
+    await mkdir(join(directory, "rules"));
+    await mkdir(join(directory, "origin"));
+    await writeFile(
+      join(directory, "rules/config.yml"),
+      JSON.stringify({ source: resolve("rules/seclang-bundle.json") }),
+    );
+    await writeFile(
+      join(directory, "origin/config.yml"),
+      JSON.stringify({
+        routes: [
+          { pattern: "api.test/api", origin: "function:app", methods: ["GET", "POST"] },
+          {
+            pattern: "api.test/shop",
+            origin: "function:shop",
+            methods: ["GET"],
+            browserCache: { maxAgeSeconds: 120 },
+          },
+        ],
+      }),
+    );
     await writeFile(
       configFile,
       JSON.stringify({
         tenant: "test",
         service: "api",
         platform: "cloudflare",
-        publicHosts: ["api.test"],
-        secLangFile: resolve("rules/seclang-bundle.json"),
         secretFile: "secret/credentials.yml",
-        originDirectory: "origin",
-        routes: [
-          {
-            business: "app",
-            path: "/api",
-            methods: ["GET", "POST"],
-            authenticated: false,
-            body: "text",
-          },
-          {
-            business: "shop",
-            path: "/shop",
-            methods: ["GET"],
-            authenticated: false,
-            browserCache: { maxAgeSeconds: 120 },
-          },
-        ],
         listen: { host: "127.0.0.1", port: 0 },
         responses: { directory: "respond", contentSecurityPolicy: "default-src 'none'" },
         limits: { maxBodyBytes: 8388608 },
@@ -75,20 +79,12 @@ test("all five built entry points execute the complete CRS and only their own bu
     for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone"]) {
       await mkdir(join(directory, "origin", platform, "app"), { recursive: true });
       await writeFile(
-        join(directory, "origin", platform, "app", "config.yml"),
-        JSON.stringify({ platform, mode: "function" }),
-      );
-      await writeFile(
         join(directory, "origin", platform, "app", "index.js"),
         `export default{fetch(request){return new Response(new URL(request.url).searchParams.has('leak')?'<title>=[ 1n73ct10n privat shell ]=</title>':${JSON.stringify(`business_${platform}`)},{headers:{'content-type':'text/html'}})}}`,
       );
     }
     for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone"]) {
       await mkdir(join(directory, "origin", platform, "shop"), { recursive: true });
-      await writeFile(
-        join(directory, "origin", platform, "shop", "config.yml"),
-        JSON.stringify({ platform, mode: "function" }),
-      );
       await writeFile(
         join(directory, "origin", platform, "shop", "index.js"),
         `export default{fetch(){return new Response('shop_${platform}',{headers:{'content-type':'text/html','cache-control':'public, max-age=60'}})}}`,

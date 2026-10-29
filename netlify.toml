@@ -1,0 +1,4 @@
+[build]
+command = "npm run build && node tools/hosting-build.mjs netlify"
+publish = "tools/.build/netlify/deploy/public"
+edge_functions = "tools/.build/netlify/deploy/edge-functions"

@@ -1,5 +1,5 @@
 import deployment from "edgeaegis:deployment";
-import originFetches from "edgeaegis:origin";
+import createOriginFetches from "edgeaegis:origin";
 import { INJECTION, PCRE2 } from "edgeaegis:wasm";
 import { verifyIngress } from "./ingress.js";
 import { createPortableRuntime } from "./runtime.js";
@@ -15,7 +15,7 @@ export async function handleCloudRequest(request: Request) {
       ...deployment,
       pcre2: PCRE2,
       libinjection: INJECTION,
-      originFetches,
+      originFetches: createOriginFetches(),
     });
     const headers = new Headers(request.headers);
     headers.delete("x-edgeshield-ingress");

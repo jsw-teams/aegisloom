@@ -5,7 +5,7 @@ import { canonicalPath, checkRawHeaders } from "../http-boundary/index.js";
 /** Node-only transport; the engine itself imports no Node API. Never trusts X-Forwarded-For. */
 export function createNodeServer(
   handler: (request: Request, incoming: IncomingMessage) => Promise<Response>,
-  publicHost: string | (() => string),
+  publicHost: string | readonly string[] | (() => string | readonly string[]),
 ) {
   const server = createServer(
     {
@@ -22,11 +22,13 @@ export function createNodeServer(
         if (!outgoing.writableFinished) abort.abort();
       });
       try {
-        const expectedHost = typeof publicHost === "string" ? publicHost : publicHost();
+        const hosts = typeof publicHost === "function" ? publicHost() : publicHost;
+        const allowed = typeof hosts === "string" ? [hosts] : hosts;
+        const expectedHost = incoming.headers.host ?? "";
         checkRawHeaders(incoming.rawHeaders);
         canonicalPath(incoming.url ?? "");
         if (
-          incoming.headers.host !== expectedHost ||
+          !allowed.includes(expectedHost) ||
           !incoming.url?.startsWith("/") ||
           incoming.url.startsWith("//")
         )

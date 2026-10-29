@@ -1,5 +1,6 @@
 import {
   digest,
+  type Fetch,
   requireInteger,
   type SecurityEvent,
   ShieldError,
@@ -27,6 +28,8 @@ export type { ProxyOptions } from "./proxy.js";
 
 export interface Route {
   path: string;
+  host?: string;
+  prefix?: boolean;
   business: string;
   methods: string[];
   authenticated: boolean;
@@ -102,12 +105,16 @@ export async function createShield(input: ShieldOptions) {
     eventFailures: 0,
   };
   const routes = new Map<string, Route>();
+  const prefixRoutes: Route[] = [];
+  const routeKey = (host: string | undefined, path: string) => `${host ?? ""}\0${path}`;
   for (const route of options.routes) {
     validateBrowserCache(route.browserCache);
     if (route.browserCache && (route.authenticated || route.websocket))
       throw new Error("Browser caching requires an anonymous HTTP route");
     if (
       typeof route.authenticated !== "boolean" ||
+      (route.host !== undefined && !options.publicHosts.includes(route.host)) ||
+      (route.prefix !== undefined && typeof route.prefix !== "boolean") ||
       !proxies.has(route.business) ||
       (route.websocket !== undefined && typeof route.websocket !== "boolean") ||
       !Array.isArray(route.methods) ||
@@ -118,13 +125,17 @@ export async function createShield(input: ShieldOptions) {
       );
     if (
       canonicalPath(route.path) !== route.path ||
-      routes.has(route.path) ||
+      (route.prefix
+        ? prefixRoutes.some((other) => other.host === route.host && other.path === route.path)
+        : routes.has(routeKey(route.host, route.path))) ||
       !route.methods.length ||
       route.methods.some((m) => !/^[A-Z]{1,20}$/.test(m) || ["CONNECT", "TRACE"].includes(m))
     )
       throw new Error("Invalid/duplicate route");
-    routes.set(route.path, route);
+    if (route.prefix) prefixRoutes.push(route);
+    else routes.set(routeKey(route.host, route.path), route);
   }
+  prefixRoutes.sort((left, right) => right.path.length - left.path.length);
   let active = 0;
   const isAllowlisted = createAllowlist(options.allowlist);
   const nativeProgram = input.secLang
@@ -145,7 +156,7 @@ export async function createShield(input: ShieldOptions) {
     request: Request,
     context: TrustedContext,
     rawTarget?: string,
-    hooks: { event?: (event: SecurityEvent) => void } = {},
+    hooks: { event?: (event: SecurityEvent) => void; originFetches?: Record<string, Fetch> } = {},
   ): Promise<Response> {
     const emit = (
       kind: SecurityEvent["kind"],
@@ -224,7 +235,14 @@ export async function createShield(input: ShieldOptions) {
         upgrade ? "websocket" : "http",
       );
       source = "route";
-      const route = routes.get(path);
+      const route =
+        routes.get(routeKey(url.host, path)) ??
+        routes.get(routeKey(undefined, path)) ??
+        prefixRoutes.find(
+          (candidate) =>
+            (candidate.host === undefined || candidate.host === url.host) &&
+            path.startsWith(candidate.path),
+        );
       if (!route) throw new ShieldError("unknown-route", 404);
       if (!route.methods.includes(request.method)) throw new ShieldError("method-not-allowed", 405);
       if (upgrade && !route.websocket) throw new ShieldError("websocket-route-required", 426);
@@ -324,6 +342,7 @@ export async function createShield(input: ShieldOptions) {
         inspectResponse ? () => {} : release,
         upgrade,
         context.identity ? undefined : route.browserCache,
+        hooks.originFetches?.[route.business],
       );
       if (response.status === 101) pendingUpgrade = response;
       if (nativeProgram && inspectResponse && nativeTransaction) {
@@ -474,7 +493,7 @@ export async function createShield(input: ShieldOptions) {
       request: Request,
       context: TrustedContext,
       rawTarget?: string,
-      hooks?: { event?: (event: SecurityEvent) => void },
+      hooks?: { event?: (event: SecurityEvent) => void; originFetches?: Record<string, Fetch> },
     ) => handle(request, context, rawTarget, hooks),
     version,
     dispose() {

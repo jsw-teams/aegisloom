@@ -62,6 +62,7 @@ export function createProxy(options: ProxyOptions) {
     onComplete: () => void = () => {},
     websocket = false,
     browserCache?: BrowserCachePolicy,
+    requestTransport?: Fetch,
   ): Promise<Response> => {
     if (Date.now() < openUntil) throw new ShieldError("origin-circuit-open", 503);
     const target = new URL(origin);
@@ -110,7 +111,7 @@ export function createProxy(options: ProxyOptions) {
       };
       if (!["GET", "HEAD"].includes(incoming.method) && body.length) init.body = body as BodyInit;
       if (incoming.signal.aborted) throw new ShieldError("client-aborted", 408);
-      const upstream = await transport(target, init);
+      const upstream = await (requestTransport ?? transport)(target, init);
       if (abort.signal.aborted) {
         void upstream.body?.cancel().catch(() => {});
         throw new ShieldError("origin-timeout-or-abort", 504);

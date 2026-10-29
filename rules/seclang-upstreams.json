@@ -4,8 +4,7 @@
     {
       "id": "owasp-crs",
       "repository": "coreruleset/coreruleset",
-      "ref": "v4.30.0",
-      "commit": "e03a4f6dabc7a30ebd8c52c97d28a154f590a48f",
+      "ref": "latest",
       "rulesDirectory": "rules",
       "setup": "crs-setup.conf.example",
       "license": "LICENSE"

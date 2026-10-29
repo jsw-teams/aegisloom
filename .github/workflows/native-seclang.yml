@@ -44,7 +44,7 @@ jobs:
       - name: Validate current releases before replacing the bundle
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/sync-native-seclang.mjs --latest
+        run: node tools/sync-native-seclang.mjs
       - run: npm run check
       - run: npm run cloudflare:dry-run
       - run: npm run audit

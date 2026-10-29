@@ -20,6 +20,8 @@ export async function initProject(target: string) {
   const directory = resolve(target);
   const files = [
     "config.yml",
+    "origin/config.yml",
+    "rules/config.yml",
     "rules/seclang-bundle.json",
     "rules/seclang-upstreams.json",
     "rules/allowlist.yml",
@@ -31,7 +33,6 @@ export async function initProject(target: string) {
     "respond/403.json",
     "secret/relay-server.example.yml",
     ...["cloudflare", "vercel", "netlify", "esa", "edgeone"].flatMap((platform) => [
-      `origin/${platform}/app/config.yml`,
       `origin/${platform}/app/index.js`,
     ]),
   ];
@@ -47,7 +48,7 @@ export async function initProject(target: string) {
   for (const file of files) await put(file, await readFile(join(root, file)));
   await put(
     "secret/credentials.yml",
-    `originToken: ${randomBytes(32).toString("base64url")}\ningressKey: ${randomBytes(32).toString("base64url")}\n`,
+    `originKeys:\n  app: ${randomBytes(32).toString("base64url")}\ningressKey: ${randomBytes(32).toString("base64url")}\n`,
   );
   const scripts: Record<string, string> = {};
   for (const platform of ["cloudflare", "vercel", "netlify", "esa", "edgeone", "local"])

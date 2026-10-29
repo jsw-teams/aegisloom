@@ -13,8 +13,10 @@ export interface DeploymentConfig {
   setupRulesFile?: string;
   allowlistFile?: string;
   secretFile: string;
-  originDirectory: string;
-  origins: Record<string, { origin: string; allowedOrigins: string[] }>;
+  rulesFile: string;
+  originsFile: string;
+  upstreams?: Record<string, { url: string; binding?: string; key: string }>;
+  origins: Record<string, { origin: string; allowedOrigins: string[]; key: string }>;
   listen: { host: "127.0.0.1" | "::1" | "0.0.0.0" | "::"; port: number };
   allowLoopbackHttp?: boolean;
   limits?: Partial<BoundaryLimits>;
@@ -22,7 +24,7 @@ export interface DeploymentConfig {
   responses?: { directory: string; contentSecurityPolicy: string };
 }
 export interface ProjectCredentials {
-  originToken: string;
+  originKeys: Record<string, string>;
   clientToken?: string;
   ingressKey?: string;
 }
@@ -46,7 +48,9 @@ export function validateDeploymentConfig(value: unknown): DeploymentConfig {
     "setupRulesFile",
     "allowlistFile",
     "secretFile",
-    "originDirectory",
+    "rulesFile",
+    "originsFile",
+    "upstreams",
     "origins",
     "listen",
     "allowLoopbackHttp",
@@ -63,7 +67,7 @@ export function validateDeploymentConfig(value: unknown): DeploymentConfig {
     !Array.isArray(config.publicHosts) ||
     config.publicHosts.length < 1 ||
     config.publicHosts.length > 16 ||
-    !["tenant", "service", "secLangFile", "secretFile", "originDirectory"].every(
+    !["tenant", "service", "secLangFile", "secretFile", "rulesFile", "originsFile"].every(
       (k) => typeof (config as any)[k] === "string" && (config as any)[k].length,
     ) ||
     !config.origins ||
@@ -115,16 +119,32 @@ export function validateCredentials(value: unknown): ProjectCredentials {
     !credentials ||
     typeof credentials !== "object" ||
     Object.keys(credentials).some(
-      (k) => !["originToken", "clientToken", "ingressKey"].includes(k),
+      (k) => !["originKeys", "clientToken", "ingressKey"].includes(k),
     ) ||
-    typeof credentials.originToken !== "string" ||
-    !/^[\x21-\x7e]{32,2048}$/.test(credentials.originToken) ||
+    !credentials.originKeys ||
+    typeof credentials.originKeys !== "object" ||
+    Array.isArray(credentials.originKeys) ||
+    !Object.keys(credentials.originKeys).length ||
+    Object.entries(credentials.originKeys).some(
+      ([name, token]) =>
+        !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(name) ||
+        typeof token !== "string" ||
+        !/^[\x21-\x7e]{32,2048}$/.test(token),
+    ) ||
+    new Set(Object.values(credentials.originKeys)).size !==
+      Object.keys(credentials.originKeys).length ||
     (credentials.clientToken !== undefined &&
       (!/^[\x21-\x7e]{32,2048}$/.test(credentials.clientToken) ||
-        credentials.clientToken === credentials.originToken))
+        Object.values(credentials.originKeys).includes(credentials.clientToken)))
   )
     throw new Error("Invalid project credentials");
   if (credentials.ingressKey !== undefined && !/^[\w-]{43,256}$/.test(credentials.ingressKey))
     throw new Error("Invalid ingress signing key");
   return credentials;
+}
+export function originCredential(credentials: ProjectCredentials, key: string): string {
+  const token = credentials.originKeys[key];
+  if (!Object.hasOwn(credentials.originKeys, key) || !token)
+    throw new Error(`Missing private origin key: ${key}`);
+  return token;
 }

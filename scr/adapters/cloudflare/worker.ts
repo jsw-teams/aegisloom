@@ -1,5 +1,5 @@
 import deployment from "edgeaegis:deployment";
-import originFetches from "edgeaegis:origin";
+import createOriginFetches from "edgeaegis:origin";
 import { INJECTION, PCRE2 } from "edgeaegis:wasm";
 import { createCloudflareRuntime } from "./runtime.js";
 
@@ -8,12 +8,12 @@ const runtime = await createCloudflareRuntime({
   ...deployment,
   pcre2: PCRE2,
   libinjection: INJECTION,
-  originFetches,
+  originFetches: createOriginFetches(),
 });
 export default {
-  async fetch(request: Request) {
+  async fetch(request: Request, env: Record<string, unknown>) {
     try {
-      return runtime.handle(request);
+      return await runtime.handle(request, createOriginFetches(env));
     } catch {
       return Response.json(
         { error: "shield_unavailable" },

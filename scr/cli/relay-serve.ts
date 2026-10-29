@@ -1,6 +1,7 @@
 import { once } from "node:events";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { originCredential } from "../config.js";
 import { createRelayServer } from "../origin/relay.js";
 import { SqliteReplayStore } from "../origin/replay-node.js";
 import { createNodeServer } from "../runtime/node.js";
@@ -12,6 +13,7 @@ export async function serveRelay(path: string) {
     privateKeyFile: string;
     authenticationKeyFile: string;
     credentialsFile: string;
+    key: string;
     businessFile: string;
     stateFile: string;
     listen: { host: string; port: number };
@@ -34,7 +36,7 @@ export async function serveRelay(path: string) {
   const handler = await createRelayServer({
     serverPrivateKey: JSON.parse(await readFile(resolve(base, input.privateKeyFile), "utf8")),
     authenticationKey: (await readFile(resolve(base, input.authenticationKeyFile), "utf8")).trim(),
-    originToken: credentials.originToken,
+    originToken: originCredential(credentials, input.key),
     business: (request) => Promise.resolve(business.fetch(request)),
     replay: store,
     ...(input.maxBytes ? { maxBytes: input.maxBytes } : {}),

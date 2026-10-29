@@ -1,4 +1,4 @@
-/** Real X11 guest capture, using the shared EdgePress recording tools. No host input/capture. */
+/** Actual xterm input and X11 recording in the existing disposable recording VM. */
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -7,67 +7,56 @@ import { pathToFileURL } from "node:url";
 
 const root = resolve(import.meta.dirname, "../.."),
   recording = resolve(process.argv[2] ?? "../edgepress");
-const require = createRequire(resolve(recording, "package.json"));
-const { chromium } = require("playwright");
+const require = createRequire(resolve(recording, "package.json")),
+  { chromium } = require("playwright");
 const { guest, openApp, typeCommand, activate, guestPath } = await import(
   pathToFileURL(resolve(recording, "tools/recordings/vm-desktop.mjs"))
 );
 const { recordingContext, record, closeRecording } = await import(
   pathToFileURL(resolve(recording, "tools/recordings/desktop-recording.mjs"))
 );
-const artifact = resolve(root, "tools/.cache/vm-recording"),
+const artifact = resolve(root, "tools/.cache/vm-routing-recording"),
   output = resolve(root, "tools/demo");
 await mkdir(artifact, { recursive: true });
-await mkdir(output, { recursive: true });
 const mounted = root
   .replaceAll("\\", "/")
   .replace(/^([a-z]):/i, (_, drive) => `/mnt/${drive.toLowerCase()}`);
+const version = JSON.parse(await readFile(resolve(root, "package.json"))).version;
+const demo = "/opt/recording/edgeaegis-routing-demo",
+  archive = `/opt/recording/packages/edgeaegis-${version}.tgz`;
+await guest(["mkdir", "-p", "/opt/recording/packages"]);
+await guest(["cp", `${mounted}/tools/.cache/edgeaegis-${version}.tgz`, archive]);
+// The package and its dependencies are installed before recording; the visible commands operate the real CLI and server.
 await guest([
   "bash",
   "-lc",
-  `test -e /opt/recording/workspace/api-shield || ln -s '${mounted}' /opt/recording/workspace/api-shield`,
+  `cd /opt/recording/edgeaegis-cli && npm install --offline --no-audit --no-fund '${archive}'`,
 ]);
-assert.equal(await guest(["readlink", "-f", "/opt/recording/workspace/api-shield"]), mounted);
-const demo = "/opt/recording/edgeaegis-native-demo",
-  archive = `/opt/recording/packages/edgeaegis-${JSON.parse(await readFile(resolve(root, "package.json"))).version}.tgz`;
 await guest(["/opt/recording/edgeaegis-cli/node_modules/.bin/edgeaegis", "init", demo]);
 await guest([
   "node",
   "--input-type=module",
   "-e",
-  `
-import{readFileSync,writeFileSync,copyFileSync,rmSync}from'node:fs';const root=${JSON.stringify(demo)},archive=${JSON.stringify(archive)};
-for(const file of ['setup.conf','emergency.conf'])copyFileSync('/opt/recording/edgeaegis-cli/node_modules/edgeaegis/rules/'+file,root+'/rules/'+file);
-for(const file of ['.install-complete','.probe-complete'])rmSync(root+'/'+file,{force:true});
-const p=JSON.parse(readFileSync(root+'/package.json'));p.dependencies['edgeaegis']='file:'+archive;writeFileSync(root+'/package.json',JSON.stringify(p,null,2));
-let c=readFileSync(root+'/config.yml','utf8').replace('publicHosts: [api.example]',"publicHosts: ['127.0.0.1:8787']");writeFileSync(root+'/config.yml',c);
-let s=readFileSync(root+'/rules/setup.conf','utf8').replaceAll('expirevar:ip.edgeshield_blocked=300','expirevar:ip.edgeshield_blocked=5');writeFileSync(root+'/rules/setup.conf',s);
-writeFileSync(root+'/origin/cloudflare/app/index.js','export default {async fetch(){return Response.json({ok:true,business:"demo"});}};');
-writeFileSync(root+'/probe.mjs',${JSON.stringify(`import assert from 'node:assert/strict';import{writeFileSync}from'node:fs';
-async function probe(label,path,expected,headers={}){const r=await fetch('http://127.0.0.1:8787'+path,{headers});await r.text();console.log(label+' -> '+r.status);assert.equal(r.status,expected);}
-await probe('Normal traffic','/health',200);
-await probe('Native CVE-2025-29927 patch','/api',403,{'x-middleware-subrequest':''});
-await probe('Complete CRS: SQL injection','/api?q=1%20UNION%20SELECT%20password%20FROM%20users',403);
-await probe('Repeated CRS attack','/api?q=1%20UNION%20SELECT%20password%20FROM%20users',403);
-await probe('Temporary IP protection','/health',403);
-console.log('Waiting for the demo TTL (5 seconds)...');await new Promise(r=>setTimeout(r,5500));
-await probe('Automatic TTL recovery','/health',200);
-writeFileSync('.probe-complete','all assertions passed');
-`)});
-`,
+  `import{readFileSync,writeFileSync}from'node:fs';const p='${demo}/package.json',j=JSON.parse(readFileSync(p));j.dependencies.edgeaegis='file:${archive}';writeFileSync(p,JSON.stringify(j));`,
 ]);
+await guest(["bash", "-lc", `cd '${demo}' && npm install --offline --no-audit --no-fund`]);
+await guest(["node", `${mounted}/tools/demo/prepare-lab.mjs`, demo, archive]);
 const rc = resolve(artifact, "bashrc");
-await writeFile(rc, `export PATH=/usr/local/bin:/usr/bin:/bin\ncd '${demo}'\nexport PS1='❯ '\n`);
+await writeFile(
+  rc,
+  `export PATH=/usr/local/bin:/usr/bin:/bin\ncd '${demo}'\nexport PS1='edgeaegis ❯ '\n`,
+);
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
 const context = await recordingContext(browser, { locale: "en" }, artifact);
-const terminal = "EdgeAegis native demo",
-  probeTerminal = "EdgeAegis verification";
-try {
-  await openApp(
+const server = "EdgeAegis server",
+  terminal = "EdgeAegis curl verification",
+  backend = "EdgeAegis TLS origins";
+const term = async (title) =>
+  openApp(
     [
       "xterm",
       "-T",
-      terminal,
+      title,
       "-fa",
       "Monospace",
       "-fs",
@@ -77,90 +66,117 @@ try {
       "-fg",
       "#e8edf2",
       "-geometry",
-      "100x30+40+30",
+      "90x32+20+20",
       "-e",
       "bash",
       "--rcfile",
       guestPath(rc),
     ],
-    terminal,
+    title,
   );
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+try {
+  await term(backend);
+  await typeCommand(artifact, backend, "node tools/lab/origins.mjs");
+  await term(server);
+  await typeCommand(artifact, server, "npm run deploy:local");
+  for (let n = 0; n < 40; n++) {
+    try {
+      const text = await guest([
+        "curl",
+        "-fsS",
+        "-H",
+        "Host: demo.test",
+        "http://127.0.0.1:8787/app",
+      ]);
+      assert.equal(JSON.parse(text).business, "app");
+      break;
+    } catch (error) {
+      if (n === 39) throw error;
+      await wait(300);
+    }
+  }
+  await term(terminal);
   const page = await context.newPage();
+  const command = async (value, delay = 1700) => {
+    const file = resolve(artifact, ".curl-command.txt");
+    await writeFile(file, value);
+    await activate(terminal);
+    await guest([
+      "xdotool",
+      "type",
+      "--clearmodifiers",
+      "--delay",
+      "15",
+      "--file",
+      guestPath(file),
+    ]);
+    await guest(["xdotool", "key", "Return"]);
+    await wait(delay);
+  };
   await record(
     page,
-    "edgeaegis-native",
+    "edgeaegis-routing",
     async () => {
-      await typeCommand(
-        artifact,
-        terminal,
-        "npm install --no-audit --no-fund && touch .install-complete",
+      await command("cat origin/config.yml", 2800);
+      await command("sed -E 's/(: ).{32,}/\\1[redacted]/' secret/credentials.yml", 2200);
+      await command("clear; curl -si -H 'Host: demo.test' http://127.0.0.1:8787/app");
+      await command("curl -si -H 'Host: demo.test' http://127.0.0.1:8787/shop");
+      for (const name of ["vps", "balance", "external"])
+        await command(`clear; curl -si -H 'Host: demo.test' http://127.0.0.1:8787/${name}`);
+      await command("cat tools/origin-requests.log");
+      await command(
+        "clear; curl -si -H 'Host: demo.test' 'http://127.0.0.1:8787/vps?q=1%20UNION%20SELECT%20password%20FROM%20users'",
+        2600,
       );
-      for (let n = 0; n < 60; n++) {
-        if (
-          (await guest([
-            "bash",
-            "-lc",
-            `test -f '${demo}/.install-complete' && echo ready || true`,
-          ])) === "ready"
-        )
-          break;
-        await new Promise((done) => setTimeout(done, 500));
-      }
-      await typeCommand(artifact, terminal, "npm run deploy:local");
-      for (let n = 0; n < 60; n++) {
-        try {
-          if ((await fetch("http://127.0.0.1:8787/health")).status === 200) break;
-        } catch {}
-        if (n === 59) throw new Error("Actual guest engine did not start");
-        await new Promise((done) => setTimeout(done, 300));
-      }
-      await openApp(["geany", "-i", `${demo}/rules/setup.conf`], "Geany");
-      await new Promise((done) => setTimeout(done, 2000));
-      await openApp(
-        [
-          "xterm",
-          "-T",
-          probeTerminal,
-          "-fa",
-          "Monospace",
-          "-fs",
-          "17",
-          "-bg",
-          "#17212c",
-          "-fg",
-          "#e8edf2",
-          "-geometry",
-          "100x30+40+30",
-          "-e",
-          "bash",
-          "--rcfile",
-          guestPath(rc),
-        ],
-        probeTerminal,
+      await command("cat tools/origin-requests.log", 2200);
+      // Make the configured native TTL protection visible through actual curl responses.
+      await command(
+        "curl -s -o /dev/null -H 'Host: demo.test' 'http://127.0.0.1:8787/vps?q=1%20UNION%20SELECT%20password%20FROM%20users'",
+        200,
       );
-      await typeCommand(artifact, probeTerminal, "node probe.mjs");
-      await new Promise((done) => setTimeout(done, 6500));
-      assert.equal(await guest(["cat", `${demo}/.probe-complete`]), "all assertions passed");
-      // Independent assertion on the actual recovered engine, before showing its rejection page.
-      assert.equal((await fetch("http://127.0.0.1:8787/health")).status, 200);
-      await activate("Chromium");
-      const response = await page.goto(
-        "http://127.0.0.1:8787/api?q=1%20UNION%20SELECT%20password%20FROM%20users",
+      await command(
+        "curl -s -o /dev/null -H 'Host: demo.test' 'http://127.0.0.1:8787/vps?q=1%20UNION%20SELECT%20password%20FROM%20users'",
+        200,
       );
-      assert.equal(response.status(), 403);
-      await new Promise((done) => setTimeout(done, 2200));
+      await command("clear; curl -si -H 'Host: demo.test' http://127.0.0.1:8787/app", 1500);
+      assert.equal(
+        await guest([
+          "curl",
+          "-s",
+          "-o",
+          "/dev/null",
+          "-w",
+          "%{http_code}",
+          "-H",
+          "Host: demo.test",
+          "http://127.0.0.1:8787/app",
+        ]),
+        "403",
+      );
+      await command("sleep 6; curl -si -H 'Host: demo.test' http://127.0.0.1:8787/app", 9900);
     },
     { foreground: () => activate(terminal) },
   );
+  const lines = (await guest(["cat", `${demo}/tools/origin-requests.log`])).split("\n");
+  assert.deepEqual(lines, ["vps GET /vps", "balance GET /balance", "external GET /external"]);
+  const recovered = await guest([
+    "curl",
+    "-fsS",
+    "-H",
+    "Host: demo.test",
+    "http://127.0.0.1:8787/app",
+  ]);
+  assert.equal(JSON.parse(recovered).business, "app");
   const entries = await closeRecording(context, {
     artifact,
     output,
     source: "tools/demo/record-vm.mjs",
-    kind: "FFmpeg capture of real VM xterm, Geany and Chromium; actual complete CRS; demo-only ban TTL 5 seconds",
+    kind: "Actual VM xterm: curl HTTP responses; two functions; three authenticated TLS origins; complete CRS SQLi block; unchanged origin access log; demo-only 5s native TTL",
   });
   await writeFile(resolve(artifact, "result.json"), `${JSON.stringify(entries, null, 2)}\n`);
 } finally {
-  for (const title of [terminal, probeTerminal, "Geany"]) {
+  for (const title of [server, terminal, backend])
     try {
       const ids = await guest(["xdotool", "search", "--onlyvisible", "--name", title]);
       for (const id of ids.split(/\s+/)) {
@@ -168,6 +184,5 @@ try {
         if (/^\d+$/.test(pid)) await guest(["kill", "-TERM", pid]);
       }
     } catch {}
-  }
   await browser.close();
 }

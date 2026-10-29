@@ -1,6 +1,6 @@
 {
   "name": "edgeaegis",
-  "version": "2026.10.1",
+  "version": "2026.10.2",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -24,6 +24,7 @@
     "./seclang/node": "./tools/.build/scr/seclang/node.js",
     "./seclang/pcre2.wasm": "./tools/.build/scr/seclang/vendor/pcre2.wasm",
     "./seclang/libinjection.wasm": "./tools/.build/scr/seclang/vendor/libinjection.wasm",
+    "./build": "./tools/build-platform.mjs",
     "./deployment": "./tools/.build/scr/cli/deployment.js",
     "./config": "./tools/.build/scr/config.js",
     "./responses": "./tools/.build/scr/runtime/error-pages.js"
@@ -35,6 +36,7 @@
     "LICENSE",
     "NOTICE",
     "rules/seclang-bundle.json",
+    "rules/config.yml",
     "rules/seclang-upstreams.json",
     "rules/allowlist.yml",
     "rules/local.conf",
@@ -89,7 +91,8 @@
     "deploy:edgeone": "node tools/.build/scr/cli/main.js deploy edgeone",
     "build:local": "node tools/.build/scr/cli/main.js build local",
     "start:local": "node tools/.build/scr/cli/main.js start local",
-    "deploy:local": "node tools/.build/scr/cli/main.js deploy local"
+    "deploy:local": "node tools/.build/scr/cli/main.js deploy local",
+    "deploy": "npm run deploy:cloudflare"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",

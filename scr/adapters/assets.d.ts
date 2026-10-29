@@ -16,7 +16,7 @@ declare module "edgeaegis:deployment" {
 declare module "edgeaegis:origin" {
   import type { Fetch } from "../core/types.js";
 
-  const value: Record<string, Fetch>;
+  const value: (env?: Record<string, unknown>) => Record<string, Fetch>;
   export default value;
 }
 declare module "edgeaegis:wasm" {

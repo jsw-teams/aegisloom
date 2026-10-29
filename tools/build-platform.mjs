@@ -5,10 +5,50 @@ import { build } from "esbuild";
 import { readCredentials, readData } from "./.build/scr/cli/config.js";
 import { readDeployment } from "./.build/scr/cli/deployment.js";
 import { readResponsePages } from "./.build/scr/cli/responses.js";
+import { originCredential } from "./.build/scr/config.js";
 import { compileSecLang } from "./.build/scr/seclang/index.js";
 import { loadSecLangDeployment } from "./.build/scr/seclang/node.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+export async function originTransportsModule(businesses, config, credentials, contexts = {}) {
+  const rel = (path) => JSON.stringify(path.replaceAll("\\", "/"));
+  const imports = [],
+    transports = [];
+  for (const [name, { settings, businessFile }] of Object.entries(businesses)) {
+    const id = imports.length;
+    if (settings.mode === "function") {
+      imports.push(`import business${id} from ${rel(businessFile)};`);
+      const upstreams = Object.fromEntries(
+        (settings.upstreams ?? []).map((name) => [name, config.upstreams[name]]),
+      );
+      const keys = new Set([
+        config.origins[name].key,
+        ...Object.values(upstreams).map((upstream) => upstream.key),
+      ]);
+      const context = contexts[name] ?? {
+        secrets: settings.secretsFile ? await readData(settings.secretsFile, 65536) : {},
+        upstreams,
+        originKeys: Object.fromEntries(
+          [...keys].map((key) => [key, originCredential(credentials, key)]),
+        ),
+      };
+      imports.push(`const context${id}=${JSON.stringify(context)};`);
+      transports.push(
+        `${JSON.stringify(name)}:(input,init)=>Promise.resolve(business${id}.fetch(new Request(input,init),env,context${id}))`,
+      );
+    } else if (settings.mode === "proxy")
+      transports.push(`${JSON.stringify(name)}:(input,init)=>fetch(input,init)`);
+    else {
+      imports.push(
+        `import {createRelayTransport as createRelay${id}}from ${rel(resolve(root, "tools/.build/scr/origin/relay.js"))};const transport${id}=createRelay${id}(${JSON.stringify({ endpoint: settings.endpoint, serverPublicKey: await readData(settings.publicKeyFile, 16384), authenticationKey: await readData(settings.authenticationKeyFile, 4096), maxBytes: config.limits?.maxBodyBytes ?? 8388608 })});`,
+      );
+      transports.push(
+        `${JSON.stringify(name)}:async(input,init)=>(await transport${id})(input,init)`,
+      );
+    }
+  }
+  return `${imports.join("\n")}\nexport default function createOriginFetches(env={}){return {${transports.join(",")}};}`;
+}
 export async function buildPlatform(
   platform,
   configFile = resolve("config.yml"),
@@ -38,31 +78,12 @@ export async function buildPlatform(
       ? await readResponsePages(config.responses.directory, config.responses.contentSecurityPolicy)
       : {},
   };
-  // Only the selected platform's business is bundled.
+  for (const origin of [...Object.values(config.origins), ...Object.values(config.upstreams ?? {})])
+    originCredential(credentials, origin.key);
+  // Only the selected platform's configured businesses are bundled.
   const directory = resolve(outputDirectory);
   await mkdir(directory, { recursive: true });
-  const rel = (path) => JSON.stringify(path.replaceAll("\\", "/"));
-  const imports = [],
-    transports = [];
-  for (const [name, { settings, businessFile }] of Object.entries(businesses)) {
-    const id = imports.length;
-    if (settings.mode === "function") {
-      imports.push(`import business${id} from ${rel(businessFile)};`);
-      transports.push(
-        `${JSON.stringify(name)}:(input,init)=>Promise.resolve(business${id}.fetch(new Request(input,init)))`,
-      );
-    } else if (settings.mode === "proxy")
-      transports.push(`${JSON.stringify(name)}:(input,init)=>fetch(input,init)`);
-    else {
-      imports.push(
-        `import {createRelayTransport as createRelay${id}}from ${rel(resolve(root, "tools/.build/scr/origin/relay.js"))};const transport${id}=createRelay${id}(${JSON.stringify({ endpoint: settings.endpoint, serverPublicKey: await readData(settings.publicKeyFile, 16384), authenticationKey: await readData(settings.authenticationKeyFile, 4096), maxBytes: config.limits?.maxBodyBytes ?? 8388608 })});`,
-      );
-      transports.push(
-        `${JSON.stringify(name)}:async(input,init)=>(await transport${id})(input,init)`,
-      );
-    }
-  }
-  const origin = `${imports.join("\n")}\nexport default {${transports.join(",")}};`;
+  const origin = await originTransportsModule(businesses, config, credentials);
   const wasm = [];
   for (const name of ["pcre2", "libinjection"])
     wasm.push(await readFile(resolve(root, "tools/.build/scr/seclang/vendor", `${name}.wasm`)));

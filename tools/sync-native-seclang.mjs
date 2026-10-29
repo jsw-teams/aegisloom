@@ -18,7 +18,9 @@ const registryUrl = option(
 const registry = JSON.parse(await readFile(registryUrl, "utf8"));
 if (registry.version !== 1 || !Array.isArray(registry.sources) || !registry.sources.length)
   throw new Error("Invalid SecLang upstream registry");
-const update = process.argv.includes("--latest");
+for (let index = 2; index < process.argv.length; index += 2)
+  if (!["--registry", "--output"].includes(process.argv[index]))
+    throw new Error(`Unknown sync option: ${process.argv[index]}`);
 const files = {},
   upstreams = [];
 let total = 0,
@@ -67,7 +69,9 @@ for (const spec of registry.sources) {
   if (
     !/^[a-z0-9-]{1,64}$/.test(spec.id) ||
     ids.has(spec.id) ||
-    !/^[a-f0-9]{40}$/.test(spec.commit) ||
+    typeof spec.ref !== "string" ||
+    !spec.ref ||
+    Object.hasOwn(spec, "commit") ||
     !/^[\w.-]+\/[\w.-]+$/.test(spec.repository) ||
     ![spec.rulesDirectory, spec.setup, spec.license].every(
       (path) =>
@@ -76,15 +80,13 @@ for (const spec of registry.sources) {
   )
     throw new Error("Invalid SecLang source");
   ids.add(spec.id);
-  const ref = update
-    ? (await github(`repos/${spec.repository}/releases/latest`)).tag_name
-    : spec.ref;
+  const ref =
+    spec.ref === "latest"
+      ? (await github(`repos/${spec.repository}/releases/latest`)).tag_name
+      : spec.ref;
   if (typeof ref !== "string" || ref.length > 128) throw new Error("Invalid upstream ref");
-  const revision = update ? ref : spec.commit;
-  const commit = (await github(`repos/${spec.repository}/commits/${encodeURIComponent(revision)}`))
-    .sha;
+  const commit = (await github(`repos/${spec.repository}/commits/${encodeURIComponent(ref)}`)).sha;
   if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error("Invalid upstream commit");
-  if (!update && commit !== spec.commit) throw new Error("Upstream commit differs from its pin");
   const tree = await github(
     `repos/${spec.repository}/git/trees/${commit}?recursive=1`,
     8 * 1024 * 1024,
@@ -136,8 +138,6 @@ for (const spec of registry.sources) {
   }
   source += `Include ${spec.id}/setup.conf\nInclude ${spec.id}/${spec.rulesDirectory}/*.conf\n`;
   upstreams.push({ id: spec.id, repository: spec.repository, ref, commit, files: manifest });
-  spec.ref = ref;
-  spec.commit = commit;
 }
 const bundle = { version: 1, format: "seclang-source-bundle", source, files, upstreams };
 const validation = await verifyFullCrs(bundle);
@@ -146,7 +146,6 @@ await mkdir(new URL("./", destination), { recursive: true });
 const temporary = new URL(`${destination.href}.tmp`);
 await writeFile(temporary, `${JSON.stringify(bundle, null, 2)}\n`);
 await rename(temporary, destination);
-if (update) await writeFile(registryUrl, `${JSON.stringify(registry, null, 2)}\n`);
 console.log(
   JSON.stringify({
     upstreams: upstreams.map(({ id, ref, commit }) => ({ id, ref, commit })),

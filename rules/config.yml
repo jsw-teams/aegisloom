@@ -1,0 +1,4 @@
+source: seclang-bundle.json
+setup: setup.conf
+local: local.conf
+allowlist: allowlist.yml

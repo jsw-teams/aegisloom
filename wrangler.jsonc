@@ -1,0 +1,11 @@
+{
+  "name": "edgeaegis",
+  "main": "tools/.build/cloudflare/deploy/worker.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "no_bundle": true,
+  "rules": [{"type":"CompiledWasm","globs":["**/*.wasm"],"fallthrough":false}],
+  "build": {"command":"npm run build:cloudflare"}
+}

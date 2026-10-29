@@ -25,4 +25,6 @@ tools/.cache/
 scr/adapters/cloudflare/wrangler.operator.jsonc
 
 package-lock.json
+.vercel/
+edge-functions/
 artifacts-dependency-*.log

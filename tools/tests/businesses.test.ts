@@ -88,3 +88,105 @@ test("named function, VPS and CNAME businesses share full request/response inspe
     /configured business/,
   );
 });
+
+test("hostname and longest prefix select a fixed origin; concurrent request transports stay isolated", async () => {
+  const native = await loadSecLangFile("rules/seclang-bundle.json");
+  const calls: string[] = [];
+  const origin = (name: string): ProxyOptions => ({
+    origin: `https://${name}.example`,
+    allowedOrigins: [`https://${name}.example`],
+    originToken: `test-${name}-authentication-secret-`.repeat(2),
+    fetch: async () => {
+      throw Error("Per-request transport was not selected");
+    },
+  });
+  const engine = await createShield({
+    tenant: "test",
+    service: "hosts",
+    publicHosts: ["one.test", "two.test"],
+    ...native,
+    origins: { one: origin("one"), two: origin("two"), special: origin("special") },
+    routes: [
+      {
+        host: "one.test",
+        path: "/",
+        prefix: true,
+        business: "one",
+        methods: ["GET"],
+        authenticated: false,
+      },
+      {
+        host: "two.test",
+        path: "/",
+        prefix: true,
+        business: "two",
+        methods: ["GET"],
+        authenticated: false,
+      },
+      {
+        host: "one.test",
+        path: "/special/",
+        prefix: true,
+        business: "special",
+        methods: ["GET"],
+        authenticated: false,
+      },
+    ],
+  });
+  const dispatch = async (host: string, path: string, label: string) => {
+    const originFetches = Object.fromEntries(
+      ["one", "two", "special"].map((name) => [
+        name,
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          await new Promise((resolve) => setTimeout(resolve, name === "one" ? 10 : 1));
+          assert.equal(new URL(String(input)).hostname, `${name}.example`);
+          assert.equal(
+            new Headers(init?.headers).get("x-shield-origin-auth"),
+            `test-${name}-authentication-secret-`.repeat(2),
+          );
+          calls.push(`${label}:${name}`);
+          return new Response(`${label}:${name}`);
+        },
+      ]),
+    );
+    const response = await engine.handle(
+      new Request(`https://${host}${path}`, {
+        headers: {
+          host,
+          "user-agent": "Mozilla/5.0",
+          "x-shield-origin-auth": "forged-key",
+          "x-forwarded-host": "attacker.example",
+        },
+      }),
+      { tenant: "test", verifiedClientIp: "192.0.2.20", httpProtocol: "HTTP/1.1" },
+      undefined,
+      { originFetches },
+    );
+    return { status: response.status, body: await response.text() };
+  };
+  try {
+    const replies = await Promise.all([
+      dispatch("one.test", "/products", "first"),
+      dispatch("two.test", "/products", "second"),
+      dispatch("one.test", "/special/products", "third"),
+    ]);
+    assert.deepEqual(
+      replies.map((r) => r.body),
+      ["first:one", "second:two", "third:special"],
+    );
+    assert.equal(calls.length, 3);
+    assert.equal(
+      (
+        await dispatch(
+          "two.test",
+          "/products?q=1%20UNION%20SELECT%20password%20FROM%20users",
+          "blocked",
+        )
+      ).status,
+      403,
+    );
+    assert.equal(calls.length, 3);
+  } finally {
+    engine.dispose();
+  }
+});

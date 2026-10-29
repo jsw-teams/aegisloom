@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { once } from "node:events";
+import { originCredential } from "../config.js";
 import { digest, stableJson } from "../core/types.js";
 import { createRelayTransport } from "../origin/relay.js";
 import { type AllowlistEntry, createShield } from "../runtime/index.js";
@@ -31,12 +32,35 @@ export async function serve(path: string): Promise<void> {
       ? await readResponsePages(config.responses.directory, config.responses.contentSecurityPolicy)
       : {};
     const origins: Record<string, import("../runtime/proxy.js").ProxyOptions> = Object.create(null);
+    const contexts: Record<string, unknown> = Object.create(null);
     for (const [name, { settings, businessFile }] of Object.entries(businesses)) {
       const business =
         settings.mode === "function" ? await readBusinessFunction(businessFile) : undefined;
+      const upstreams =
+        settings.mode === "function"
+          ? Object.fromEntries(
+              (settings.upstreams ?? []).map((key) => [key, config.upstreams![key]!]),
+            )
+          : {};
+      const context = {
+        secrets:
+          settings.mode === "function" && settings.secretsFile
+            ? ((await readData(settings.secretsFile, 65536)) as Record<string, unknown>)
+            : {},
+        upstreams,
+        originKeys: Object.fromEntries(
+          [
+            ...new Set([
+              config.origins[name]!.key,
+              ...Object.values(upstreams).map((value) => value.key),
+            ]),
+          ].map((key) => [key, originCredential(credentials, key)]),
+        ),
+      };
+      contexts[name] = context;
       const originFetch = business
         ? (input: RequestInfo | URL, init?: RequestInit) =>
-            Promise.resolve(business.fetch(new Request(input, init)))
+            Promise.resolve(business.fetch(new Request(input, init), {}, context))
         : settings.mode === "relay"
           ? await createRelayTransport({
               endpoint: settings.endpoint,
@@ -47,7 +71,7 @@ export async function serve(path: string): Promise<void> {
           : undefined;
       origins[name] = {
         ...config.origins[name]!,
-        originToken: credentials.originToken,
+        originToken: originCredential(credentials, config.origins[name]!.key),
         allowLoopbackHttp: config.allowLoopbackHttp ?? false,
         ...(originFetch ? { fetch: originFetch } : {}),
       };
@@ -58,6 +82,7 @@ export async function serve(path: string): Promise<void> {
         businesses,
         errorPages,
         credentials,
+        contexts,
         source: native.secLang,
         files: native.secLangOptions.files,
         allowlist,
@@ -123,7 +148,7 @@ export async function serve(path: string): Promise<void> {
         incoming.url,
       );
     },
-    () => current.config.publicHosts[0]!,
+    () => current.config.publicHosts,
   );
   server.listen(current.config.listen.port, current.config.listen.host);
   await once(server, "listening");

@@ -1,24 +1,7 @@
-# Native SecLang deployment. Configure the public host, routes and origin before serving.
 tenant: local
 service: api
 platform: cloudflare
-publicHosts: [api.example]
-secLangFile: rules/seclang-bundle.json
-localRulesFile: rules/local.conf
-setupRulesFile: rules/setup.conf
-allowlistFile: rules/allowlist.yml
-originDirectory: origin
 secretFile: secret/credentials.yml
-routes:
-  - business: app
-    path: /health
-    methods: [GET]
-    authenticated: false
-  - business: app
-    path: /api
-    methods: [GET, POST]
-    authenticated: false
-    body: text
 listen:
   host: 127.0.0.1
   port: 8787
@@ -26,4 +9,4 @@ limits:
   maxBodyBytes: 8388608
 responses:
   directory: respond
-  contentSecurityPolicy: "default-src 'none'; frame-ancestors 'none'"
+  contentSecurityPolicy: default-src 'none'; frame-ancestors 'none'
