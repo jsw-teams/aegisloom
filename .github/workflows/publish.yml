@@ -1,5 +1,8 @@
 name: Publish npm and GitHub Release
 on:
+  push:
+    branches: [main]
+    paths: [scr/core/version.ts]
   workflow_dispatch:
     inputs:
       publish:
@@ -67,7 +70,7 @@ jobs:
           retention-days: 7
   publish:
     needs: verify
-    if: inputs.publish && inputs.tag_version == ''
+    if: (github.event_name == 'push' || inputs.publish) && inputs.tag_version == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
