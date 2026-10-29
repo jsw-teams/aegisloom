@@ -19,6 +19,8 @@
 
 实现 CRS 使用的变量集合、计数、选择和排除、PCRE2、转换链、multiMatch、宏、TX、capture、chain、phase 1–5、SecDefaultAction、setvar、initcol、skip/skipAfter、ctl、异常评分及匹配日志。请求中断后仍执行 phase 5。实际解析 URL 编码、JSON、XML/XPath、multipart 和二进制请求；响应阶段检查源站返回的头与正文。
 
+编译时为每个阶段建立保留源文件顺序的指令索引，标记在各阶段保持可见，减少运行时扫描其他阶段的开销；没有变量排除或白名单时不重复分配、检查空列表。优化不缓存规则决策、TX 状态或匹配结果。
+
 PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调用，来源、哈希及许可证在 `scr/seclang/vendor/`。规则解析、事务、状态与决策由 EdgeShield 实现，不依赖第三方 WAF 引擎，没有正则翻译、RE2 回退或按平台裁剪规则。
 
 兼容范围以锁定的完整 CRS 和执行回归为依据。Apache 服务器配置、外部脚本等不属于已验证的规则指令范围。

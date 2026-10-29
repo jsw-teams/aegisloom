@@ -4,6 +4,36 @@ import { compileSecLang, executeSecLang } from "./seclang-helpers.js";
 
 const request = (query = "") => ({ url: `https://test/?${query}`, method: "GET", headers: {} });
 
+test("phase indexing preserves marker order, phase-local skipAfter, chains and logging", () => {
+  const program = compileSecLang(
+    [
+      'SecAction "id:42901,phase:1,pass,skipAfter:END"',
+      'SecAction "id:42902,phase:1,pass,setvar:tx.must_skip=1"',
+      'SecRule ARGS:q "@streq attack" "id:42903,phase:2,deny,chain"',
+      'SecRule REQUEST_METHOD "@streq GET" "setvar:tx.chain_seen=1"',
+      "SecMarker END",
+      'SecAction "id:42904,phase:1,pass,setvar:tx.resumed=1"',
+      'SecAction "id:42905,phase:5,pass,setvar:tx.logged=1"',
+    ].join("\n"),
+    { strict: true },
+  );
+  try {
+    const attack = executeSecLang(program, request("q=attack"));
+    assert.equal(attack.blocked, true);
+    assert.equal(attack.tx.must_skip, undefined);
+    assert.equal(attack.tx.resumed, "1");
+    assert.equal(attack.tx.chain_seen, "1");
+    const logged = executeSecLang(program, request("q=attack"), {
+      transaction: attack.transaction,
+      phases: [5],
+    });
+    assert.equal(logged.tx.logged, "1");
+    assert.equal(executeSecLang(program, request("q=normal")).blocked, false);
+  } finally {
+    program.dispose();
+  }
+});
+
 test("ctl runs only after the entire chain matches and is isolated per transaction", () => {
   const program = compileSecLang(
     'SecRule ARGS:exception "@streq yes" "id:42001,phase:1,pass,chain"\n' +

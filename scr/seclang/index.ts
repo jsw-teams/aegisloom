@@ -683,8 +683,17 @@ export function compileSecLang(
       `SecLang unsupported at ${first.file ?? "main.conf"}:${first.line}: ${first.reason}`,
     );
   }
+  const executable = instructions.filter((item) => !item.invalid);
+  // Markers participate in every phase; keep their original positions for skipAfter.
+  const phaseInstructions = new Map(
+    [1, 2, 3, 4, 5].map((phase) => [
+      phase,
+      executable.filter((item) => item.type === "marker" || item.actions.phase === phase),
+    ]),
+  );
   return {
-    instructions: instructions.filter((item) => !item.invalid),
+    instructions: executable,
+    phaseInstructions,
     unsupported,
     supportedRules: instructions.filter((item) => item.type === "rule" && !item.invalid).length,
     sourceRules: statements.filter((item) => item.directive === "SecRule").length,
@@ -999,17 +1008,20 @@ function selectorKeyMatches(selector, key) {
   return asciiLower(key) === selector.foldedKey;
 }
 function getValues(selectors, request, tx, phase, context) {
-  selectors = [...selectors, ...(context.excludedTargets ?? [])];
+  if (context.excludedTargets?.length) selectors = [...selectors, ...context.excludedTargets];
+  const hasExclusions = selectors.some((item) => item.negative);
   const selected = [];
   for (const item of selectors) {
     if (item.negative) continue;
-    const entries = values(item, request, tx, phase, context).filter(([key]) => {
-      const excluded = selectors.some(
-        (negative) =>
-          negative.negative && negative.name === item.name && selectorKeyMatches(negative, key),
-      );
-      return !excluded;
-    });
+    let entries = values(item, request, tx, phase, context);
+    if (hasExclusions)
+      entries = entries.filter(([key]) => {
+        const excluded = selectors.some(
+          (negative) =>
+            negative.negative && negative.name === item.name && selectorKeyMatches(negative, key),
+        );
+        return !excluded;
+      });
     if (item.count) selected.push([item.name, String(entries.length)]);
     else
       for (const [key, value] of entries)
@@ -1167,6 +1179,7 @@ function validateMacros(value) {
   if (value.replace(/%\{[^}]+\}/g, "").includes("%{")) throw new Error("Malformed macro");
 }
 function macro(value, tx, context = {}) {
+  if (!value.includes("%{")) return value;
   return value.replace(/%\{([^}]+)\}/gi, (_, name) => {
     const key = asciiLower(name);
     if (key.startsWith("tx.")) return String(tx.get(key.slice(3)) ?? "");
@@ -1318,7 +1331,7 @@ export interface ExecuteSecLangOptions {
   tx?: Record<string, string | number>;
   phases?: number[];
   anomalyThreshold?: number;
-  shouldSkip?: (id: string) => boolean;
+  shouldSkip?: ((id: string) => boolean) | undefined;
   transaction?: SecLangTransaction;
 }
 export function executeSecLang(
@@ -1392,7 +1405,7 @@ export function executeSecLang(
       values({ name: "REQBODY_ERROR" }, request, tx, phase, context);
     let skipUntil: string | undefined;
     let skip = 0;
-    for (const rule of program.instructions) {
+    for (const rule of program.phaseInstructions.get(phase)) {
       if (rule.type === "marker") {
         if (skipUntil === rule.name) skipUntil = undefined;
         continue;

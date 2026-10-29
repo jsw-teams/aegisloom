@@ -268,9 +268,11 @@ export async function createShield(input: ShieldOptions) {
         remoteAddr: context.verifiedClientIp,
         rawTarget,
       };
-      const skipNativeRule = (id: string) =>
-        isAllowlisted(path, request.method, context, id, now()) ||
-        isAllowlisted(path, request.method, context, `sec-${id}`, now());
+      const skipNativeRule = options.allowlist.length
+        ? (id: string) =>
+            isAllowlisted(path, request.method, context, id, now()) ||
+            isAllowlisted(path, request.method, context, `sec-${id}`, now())
+        : undefined;
       let nativeTransaction: import("../seclang/index.js").SecLangTransaction | undefined;
       if (nativeProgram) {
         // Native SecLang runs AFTER route/auth/body limits and BEFORE origin forwarding.
