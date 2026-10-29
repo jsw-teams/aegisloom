@@ -6,9 +6,7 @@ Edge + Aegis（盾牌、庇护）：运行在边缘与服务器上的应用防�
 
 真实 VM 录制：实际终端安装与启动、Geany 中的原生规则、完整 CRS 拦截和 TTL 恢复。演示将封禁 TTL 调为 5 秒；项目默认仍为 300 秒。
 
-[![原生 SecLang 防护的真实 VM 演示](tools/demo/edgeaegis-native.d1ce9a3778e5e1ee.webp)](tools/demo/edgeaegis-native.1bdc3f50e62f9c2f.mp4)
-
-[播放录像](tools/demo/edgeaegis-native.1bdc3f50e62f9c2f.mp4) · [GIF](tools/demo/edgeaegis-native.2c24d6106b040847.gif)
+![原生 SecLang 防护的真实 VM 终端演示](tools/demo/edgeaegis-native.2c24d6106b040847.gif)
 
 ## 目录
 
@@ -37,7 +35,7 @@ PCRE2 和 libinjection 仅作为匹配原语库，通过自研 WASM 适配层调
 
 ## 版本
 
-EdgeAegis 的首个正式版本为 `2026.10.1`，版本号采用 `年.月.本月正式发布序号`。更名前的发布属于测试历史，不延续为新包的正式版本序列。
+EdgeAegis 的首个正式版本为 `2026.10.1`，Git 标签为 `v2026.10.1`，与 EdgePress 使用相同格式。版本号采用 `年.月.本月正式发布序号`。更名前的发布属于测试历史，不延续为新包的正式版本序列。
 
 ## 安装和运行
 
