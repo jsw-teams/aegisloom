@@ -19,6 +19,8 @@ for (const file of [
   "tools/.build/scr/seclang/vendor/pcre2.wasm",
   "tools/.build/scr/seclang/vendor/libinjection.wasm",
   "rules/seclang-bundle.json",
+  "README.md",
+  "AGENTS.md",
   "LICENSE",
 ])
   if (!paths.has(file)) throw new Error(`Missing package file: ${file}`);

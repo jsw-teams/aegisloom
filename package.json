@@ -1,6 +1,6 @@
 {
   "name": "edgeaegis",
-  "version": "2026.10.3",
+  "version": "2026.10.4",
   "description": "First-party portable SecLang engine with complete OWASP CRS execution",
   "license": "Apache-2.0",
   "type": "module",
@@ -33,6 +33,7 @@
     "tools/.build/scr",
     "config.yml",
     "README.md",
+    "AGENTS.md",
     "LICENSE",
     "NOTICE",
     "rules/seclang-bundle.json",
